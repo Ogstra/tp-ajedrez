@@ -2,6 +2,8 @@
 
 Ajedrez para jugar en consola o en una ventana, hecho para el TPO de Ingeniería de Software (UADE). La idea del trabajo es que las reglas del juego no dependan de cómo se muestra ni de cómo se juega, así que casi todo el código está pensado para poder cambiarse sin romper el resto.
 
+![La ventana, con una partida a medias](docs/captura.png)
+
 ## Cómo correrlo
 
 Se abre la carpeta en IntelliJ y se corre `Main` (consola), `MainSwing` (ventana) o `ChessCoreTests` (tests). También por terminal:
