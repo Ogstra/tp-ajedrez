@@ -2,7 +2,9 @@
 
 Ajedrez para jugar en consola o en una ventana, hecho para el TPO de Ingeniería de Software (UADE). La idea del trabajo es que las reglas del juego no dependan de cómo se muestra ni de cómo se juega, así que casi todo el código está pensado para poder cambiarse sin romper el resto.
 
-![La ventana, con una partida a medias](docs/captura.png)
+<p align="center">
+  <img src="docs/captura.png" alt="La ventana, con una partida a medias" width="460">
+</p>
 
 ## Cómo correrlo
 
