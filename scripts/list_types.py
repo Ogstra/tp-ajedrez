@@ -31,6 +31,10 @@ def names(text):
 
 
 def main():
+    # Conserva la seccion manual de patrones al regenerar el inventario.
+    marker = "## Dónde está cada patrón"
+    previous = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+    manual = previous[previous.index(marker):].strip() if marker in previous else ""
     files = [p for p in sorted(SRC.rglob("*.java")) if p.name not in SKIP_FILES]
     parsed = []
     for path in files:
@@ -96,7 +100,9 @@ def main():
                     imported.add(imp)
         lines.append("| `" + package + "` | " + (", ".join("`" + i + "`" for i in sorted(imported)) or "nada del proyecto") + " |")
     lines.append("")
-    OUT.write_text("\n".join(lines), encoding="utf-8")
+    if manual:
+        lines += [manual, ""]
+    OUT.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
     print("escrito " + str(OUT) + " con " + str(len(parsed)) + " tipos")
 
 

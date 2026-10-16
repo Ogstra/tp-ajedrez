@@ -254,6 +254,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 | `nucleo.estrategias` | `nucleo` |
 | `nucleo.tablas` | `nucleo` |
 | `puertos` | `nucleo` |
+
 ## Dónde está cada patrón (para marcarlo en el diagrama)
 
 - Strategy: `IMovementStrategy` y sus seis implementaciones; `ISpecialMove` (`CastlingMove`, `EnPassantMove`, `PromotionMove`); `IDrawRule` (`InsufficientMaterialRule`, `FiftyMoveRule`, `ThreefoldRepetitionRule`); `IOpponent` (`RandomOpponent`, `GreedyOpponent`, `MinimaxOpponent`).
@@ -263,4 +264,3 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Observer: `IMoveListener` e `IGameStatusListener`, implementadas por `ConsoleRenderer` y `SwingChessView`.
 - Puertos: de entrada `IChessGame`; de salida `IMoveListener`, `IGameStatusListener`, `IPromotionChooser`.
 - Composition roots: `Main` y `MainSwing`.
-
