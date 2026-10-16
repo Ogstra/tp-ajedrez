@@ -45,6 +45,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
     private static final java.awt.Color DARK = new java.awt.Color(0x76, 0x96, 0x56);
     private static final java.awt.Color SELECTED = new java.awt.Color(0xF6, 0xF6, 0x69);
+    private static final java.awt.Color LEGAL = new java.awt.Color(0xF2, 0xC9, 0x6B);   // destino libre
+    private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B); // destino con captura
     private static final int SQUARE_SIZE = 80;
     private static final int PIECE_SIZE = 68; // deja un margen chico dentro de cada casilla
 
@@ -186,12 +188,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private void onSquareClicked(Position pos) {
         if (game == null || game.isGameOver() || thinking) return;
 
+        Piece clicked = game.getBoard().pieceAt(pos);
+        boolean ownPiece = clicked != null && clicked.getColor() == game.getTurn();
+
         if (selection == null) {
-            Piece piece = game.getBoard().pieceAt(pos);
-            if (piece != null && piece.getColor() == game.getTurn()) {
-                selection = pos;
-                squares[pos.getRow()][pos.getColumn()].setBackground(SELECTED);
-            }
+            if (ownPiece) select(pos);
+            return;
+        }
+        if (ownPiece && !pos.equals(selection)) { // clickear otra pieza propia cambia la selección
+            select(pos);
             return;
         }
 
@@ -204,6 +209,21 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         game.tryMove(origin, pos);
         render(game.getBoard());
         playOpponentIfNeeded();
+    }
+
+    // Selecciona la pieza de "pos" y marca adónde puede ir, usando las jugadas legales
+    // que ofrece el puerto de entrada: amarillo la pieza, ámbar los destinos libres
+    // y rojizo los destinos donde captura.
+    private void select(Position pos) {
+        render(game.getBoard()); // limpia lo que hubiera marcado de una selección anterior
+        selection = pos;
+        squares[pos.getRow()][pos.getColumn()].setBackground(SELECTED);
+        for (Move move : game.legalMoves()) {
+            if (!move.getFrom().equals(pos)) continue;
+            Position target = move.getTo();
+            boolean captures = game.getBoard().pieceAt(target) != null;
+            squares[target.getRow()][target.getColumn()].setBackground(captures ? CAPTURE : LEGAL);
+        }
     }
 
     // La IA piensa en otro hilo para no congelar la ventana, y la jugada se

@@ -17,7 +17,7 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza y después en el destino; arriba se elige el oponente y abajo están Deshacer y Rehacer.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba se elige el oponente y abajo están Deshacer y Rehacer.
 
 ## Verificación
 
