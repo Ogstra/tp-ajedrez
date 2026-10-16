@@ -40,6 +40,6 @@ Estas observaciones no bloquean la entrega. Las simplificaciones funcionales ace
 
 ## Datos y UML que completa el grupo
 
-El usuario pidio conservar campos editables de integrantes y fecha en la portada del PPTX. Se completan en la presentacion o en MEMBERS y DATE de scripts/build_pptx.py antes de regenerar.
+La portada de la presentacion lleva a Franco Beron y la fecha de entrega. Para sumar integrantes o cambiar la fecha se editan AUTHORS y DATE al principio de scripts/build_deck.js y se regenera.
 
-Franco dibuja el UML usando docs/uml-checklist.md. No se genero ningun diagrama. Cuando lo exporte como docs/uml.png, ejecutar python3 scripts/build_pptx.py para insertarlo en la diapositiva 4. La lista conserva la seccion manual de patrones al regenerarse.
+Franco dibuja el UML usando docs/uml-checklist.md. No se genero ningun diagrama. Cuando lo exporte como docs/uml.png, ejecutar node scripts/build_deck.js para insertarlo en la diapositiva 4.

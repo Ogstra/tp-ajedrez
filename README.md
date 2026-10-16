@@ -75,7 +75,7 @@ La repetición de posición ignora los derechos de enroque y de captura al paso.
 
 En `docs/` están la justificación de las decisiones (`justificacion.md` y `.docx`), la presentación, la lista de clases para el UML y la spec y los planes con los que se terminó el trabajo.
 
-La presentación conserva campos editables para los integrantes y la fecha. Franco dibuja el UML con `docs/uml-checklist.md`. Cuando esté `docs/uml.png`, ejecutar `python3 scripts/build_pptx.py` para incorporarlo en la diapositiva 4. Los generadores de documentos usan `python-docx` y `python-pptx`.
+Franco dibuja el UML con `docs/uml-checklist.md`. Cuando esté `docs/uml.png`, se regenera la presentación con `node scripts/build_deck.js` (hace falta `npm install pptxgenjs` una vez) para que aparezca en la diapositiva 4.
 
 ## Piezas
 

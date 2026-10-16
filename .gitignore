@@ -4,3 +4,6 @@ out/
 .idea/*
 !.idea/misc.xml
 !.idea/modules.xml
+node_modules/
+package-lock.json
+package.json
