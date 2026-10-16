@@ -1,6 +1,6 @@
 # Fase 5: oponente con IA
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`. TDD: test primero, verlo fallar, implementar.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`. TDD: test primero, verlo fallar, implementar.
 
 **Goal:** poder jugar contra la computadora en consola y en la ventana, con tres niveles: fácil (al azar), medio (prefiere capturar la pieza de más valor) y difícil (minimax de profundidad 2).
 
@@ -20,7 +20,7 @@
 - Create: `src/ai/OpponentLevel.java`, `src/ai/Opponents.java`, `src/ai/OpponentController.java`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 Agregar los imports `ai.AutoPromotionChooser`, `ai.GreedyOpponent`, `ai.MinimaxOpponent`, `ai.OpponentController`, `ai.RandomOpponent`, `java.util.Random`. Agregar a `ChessCoreTests` y registrar en `main`:
 
@@ -153,12 +153,12 @@ Agregar los imports `ai.AutoPromotionChooser`, `ai.GreedyOpponent`, `ai.MinimaxO
         testHardLevelRespondsInReasonableTime();
 ```
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: `package ai does not exist`.
 
-- [ ] **Step 3: Crear las interfaces y utilidades de `ai/`**
+- [x] **Step 3: Crear las interfaces y utilidades de `ai/`**
 
 `src/ai/IOpponent.java`:
 
@@ -303,7 +303,7 @@ public final class SearchGames {
 }
 ```
 
-- [ ] **Step 4: Crear los tres oponentes**
+- [x] **Step 4: Crear los tres oponentes**
 
 `src/ai/RandomOpponent.java`:
 
@@ -476,7 +476,7 @@ public class MinimaxOpponent implements IOpponent {
 }
 ```
 
-- [ ] **Step 5: Crear los niveles y el controlador**
+- [x] **Step 5: Crear los niveles y el controlador**
 
 `src/ai/OpponentLevel.java`:
 
@@ -560,14 +560,14 @@ public class OpponentController {
 }
 ```
 
-- [ ] **Step 6: Correr los tests**
+- [x] **Step 6: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `61 pasados, 0 fallados.` y una línea `(nivel difícil, profundidad 2: NNN ms)`.
 
 Si `testHardLevelRespondsInReasonableTime` falla por tiempo, no subas el límite: medí con un perfilador simple (`System.nanoTime` alrededor de `legalMoves` y de `tryMove`), y optimizá en `ChessGame` solo si el cambio es chico y claro; si no, dejá la profundidad en 2 y avisale a Franco.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -581,7 +581,7 @@ git commit -m "oponente con tres niveles de dificultad"
 **Files:**
 - Modify: `src/Main.java` (reemplazo completo)
 
-- [ ] **Step 1: Reemplazar `src/Main.java` por esta versión completa**
+- [x] **Step 1: Reemplazar `src/Main.java` por esta versión completa**
 
 ```java
 import adaptadores.ConsolePromotionChooser;
@@ -731,22 +731,22 @@ public class Main {
 }
 ```
 
-- [ ] **Step 2: Compilar**
+- [x] **Step 2: Compilar**
 
 Run: `./scripts/build.sh`
 Expected: `compilado en out/`.
 
-- [ ] **Step 3: Jugar contra el nivel medio**
+- [x] **Step 3: Jugar contra el nivel medio**
 
 Run: `printf "2\ne2 e4\nsalir\n" | java -cp out Main | tail -14`
 Expected: el tablero con `e2 e4` jugado y, después de `El oponente piensa...`, una jugada negra (`Negras: ...`) en el tablero siguiente.
 
-- [ ] **Step 4: Dos jugadores sigue funcionando**
+- [x] **Step 4: Dos jugadores sigue funcionando**
 
 Run: `printf "0\ne2 e4\ne7 e5\nundo\nsalir\n" | java -cp out Main | tail -12`
 Expected: sin oponente; el `undo` quita `e7 e5`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/Main.java
@@ -761,7 +761,7 @@ git commit -m "elegir el oponente en la consola"
 - Modify: `src/adaptadores/SwingChessView.java` (reemplazo completo)
 - Modify: `src/MainSwing.java` (reemplazo completo)
 
-- [ ] **Step 1: Reemplazar `src/adaptadores/SwingChessView.java` por esta versión completa**
+- [x] **Step 1: Reemplazar `src/adaptadores/SwingChessView.java` por esta versión completa**
 
 ```java
 package adaptadores;
@@ -1113,7 +1113,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 }
 ```
 
-- [ ] **Step 2: Reemplazar `src/MainSwing.java` por esta versión completa**
+- [x] **Step 2: Reemplazar `src/MainSwing.java` por esta versión completa**
 
 ```java
 import adaptadores.SwingChessView;
@@ -1173,18 +1173,18 @@ public class MainSwing {
 }
 ```
 
-- [ ] **Step 3: Compilar y correr los tests**
+- [x] **Step 3: Compilar y correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `61 pasados, 0 fallados.`
 
-- [ ] **Step 4: Probar la ventana a mano**
+- [x] **Step 4: Probar la ventana a mano**
 
 Run: `java -cp out MainSwing`
 
 Comprobar: (a) con "Dos jugadores" se juega como antes; (b) al elegir "Medio" y mover una pieza blanca, la ventana muestra "El oponente piensa..." y después aparece la jugada negra sin congelarse; (c) los botones Deshacer y Rehacer funcionan, y contra la IA deshacen la jugada propia y la respuesta; (d) en "Difícil" la respuesta tarda unos segundos como mucho; (e) cerrar la ventana termina el programa.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1195,16 +1195,16 @@ git commit -m "oponente en la ventana, rehacer y desplegable de nivel"
 
 ### Task 5.4: verificación de la fase
 
-- [ ] **Step 1: `nucleo/` no conoce a `ai/` ni a los adaptadores**
+- [x] **Step 1: `nucleo/` no conoce a `ai/` ni a los adaptadores**
 
 Run: `grep -rn "import ai\|import adaptadores" src/nucleo | wc -l`
 Expected: `0`
 
-- [ ] **Step 2: Sin identificadores en español ni raya**
+- [x] **Step 2: Sin identificadores en español ni raya**
 
 Run: `python3 scripts/find_spanish_identifiers.py && grep -rn $'\xe2\x80\x94' src | wc -l`
 Expected: `0 identificadores en español` y `0`.
 
-- [ ] **Step 3: Revisión y push**
+- [x] **Step 3: Revisión y push**
 
 Pedir revisión con `superpowers:requesting-code-review` y después `git push`.

@@ -1,6 +1,6 @@
 # Fase 3: desvíos de arquitectura
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`.
 
 **Goal:** cerrar los desvíos de la auditoría: `Move` como value object, observers segregados (ISP), State con estados terminales (sin el booleano `gameOver`) e `IChessGame` como interfaz del puerto de entrada.
 
@@ -19,7 +19,7 @@
 - Modify: `src/nucleo/IMoveCommand.java`, `src/nucleo/MoveCommand.java`, `src/nucleo/PromotionCommand.java`, `src/nucleo/CastlingCommand.java`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 Agregar a `ChessCoreTests` (antes de la llave final de la clase) y registrarlos en `main`:
 
@@ -59,12 +59,12 @@ Agregar a `ChessCoreTests` (antes de la llave final de la clase) y registrarlos 
 
 (Agregar también `import nucleo.CastlingCommand;` y `import nucleo.Move;` al principio del archivo.)
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: error de compilación `cannot find symbol: class Move`.
 
-- [ ] **Step 3: Crear `src/nucleo/Move.java`**
+- [x] **Step 3: Crear `src/nucleo/Move.java`**
 
 ```java
 package nucleo;
@@ -105,7 +105,7 @@ public final class Move {
 }
 ```
 
-- [ ] **Step 4: Agregar `getMove()` a `IMoveCommand`**
+- [x] **Step 4: Agregar `getMove()` a `IMoveCommand`**
 
 En `src/nucleo/IMoveCommand.java`, agregar dentro de la interfaz:
 
@@ -114,7 +114,7 @@ En `src/nucleo/IMoveCommand.java`, agregar dentro de la interfaz:
     Move getMove();
 ```
 
-- [ ] **Step 5: Implementarlo en los tres comandos**
+- [x] **Step 5: Implementarlo en los tres comandos**
 
 En `MoveCommand` y `PromotionCommand`:
 
@@ -134,12 +134,12 @@ En `CastlingCommand`:
     }
 ```
 
-- [ ] **Step 6: Correr los tests**
+- [x] **Step 6: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `38 pasados, 0 fallados.`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/nucleo/Move.java src/nucleo/IMoveCommand.java src/nucleo/MoveCommand.java src/nucleo/PromotionCommand.java src/nucleo/CastlingCommand.java src/ChessCoreTests.java
@@ -159,7 +159,7 @@ Es el cambio más grande de la fase. Se hace junto porque `ChessGame` es el que 
 - Modify: `src/nucleo/IGameState.java`, `WhiteTurnState.java`, `BlackTurnState.java`, `IMoveCommand.java`, `MoveCommand.java`, `PromotionCommand.java`, `CastlingCommand.java`, `ChessGame.java`
 - Modify: `src/adaptadores/ConsoleRenderer.java`, `src/adaptadores/SwingChessView.java`, `src/Main.java`, `src/MainSwing.java`, `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Hoy `undo()` no deja deshacer una partida terminada. Con estados terminales sí. Agregar y registrar:
 
@@ -188,12 +188,12 @@ Hoy `undo()` no deja deshacer una partida terminada. Con estados terminales sí.
         testUndoAfterCheckmateReopensTheGame();
 ```
 
-- [ ] **Step 2: Correr y ver que falla**
+- [x] **Step 2: Correr y ver que falla**
 
 Run: `./scripts/test.sh`
 Expected: `[FAIL] testUndoAfterCheckmateReopensTheGame` (hoy `undo()` devuelve `false` con la partida terminada).
 
-- [ ] **Step 3: Crear las dos interfaces de listeners**
+- [x] **Step 3: Crear las dos interfaces de listeners**
 
 `src/puertos/IMoveListener.java`:
 
@@ -232,11 +232,11 @@ public interface IGameStatusListener {
 }
 ```
 
-- [ ] **Step 4: Borrar `IGameObserver`**
+- [x] **Step 4: Borrar `IGameObserver`**
 
 Run: `git rm src/puertos/IGameObserver.java`
 
-- [ ] **Step 5: Reescribir los estados**
+- [x] **Step 5: Reescribir los estados**
 
 `src/nucleo/IGameState.java`:
 
@@ -335,7 +335,7 @@ public class StalemateState implements IGameState {
 }
 ```
 
-- [ ] **Step 6: Crear `HistoryEntry`**
+- [x] **Step 6: Crear `HistoryEntry`**
 
 `src/nucleo/HistoryEntry.java`:
 
@@ -357,7 +357,7 @@ final class HistoryEntry {
 }
 ```
 
-- [ ] **Step 7: Cambiar `announce` en `IMoveCommand` y en los tres comandos**
+- [x] **Step 7: Cambiar `announce` en `IMoveCommand` y en los tres comandos**
 
 En `IMoveCommand`, cambiar el import `puertos.IGameObserver` por `puertos.IMoveListener` y la firma:
 
@@ -396,7 +396,7 @@ En `CastlingCommand`:
 
 En los tres archivos, reemplazar `import puertos.IGameObserver;` por `import puertos.IMoveListener;`.
 
-- [ ] **Step 8: Reemplazar `src/nucleo/ChessGame.java` por esta versión completa**
+- [x] **Step 8: Reemplazar `src/nucleo/ChessGame.java` por esta versión completa**
 
 ```java
 package nucleo;
@@ -588,7 +588,7 @@ public class ChessGame implements IGameContext {
 }
 ```
 
-- [ ] **Step 9: Adaptar `ConsoleRenderer` y `SwingChessView`**
+- [x] **Step 9: Adaptar `ConsoleRenderer` y `SwingChessView`**
 
 En ambos archivos: reemplazar `import puertos.IGameObserver;` por
 
@@ -611,7 +611,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
 Los métodos con `@Override` no cambian de firma.
 
-- [ ] **Step 10: Adaptar `Main` y `MainSwing`**
+- [x] **Step 10: Adaptar `Main` y `MainSwing`**
 
 En los dos archivos: reemplazar `import puertos.IGameObserver;` por los imports de `IGameStatusListener` e `IMoveListener`. La construcción de `ChessGame` queda así.
 
@@ -633,7 +633,7 @@ En `MainSwing` (el listener es `view`):
                 specialMoves);
 ```
 
-- [ ] **Step 11: Adaptar los tests**
+- [x] **Step 11: Adaptar los tests**
 
 En `ChessCoreTests`: reemplazar `import puertos.IGameObserver;` por los imports de `IGameStatusListener` e `IMoveListener`, y agregar `import java.util.ArrayList;` si no está. Reemplazar `RecordingObserver`, `newGame` y `newGameChoosing` por estas versiones (borrar las viejas):
 
@@ -679,24 +679,24 @@ En `ChessCoreTests`: reemplazar `import puertos.IGameObserver;` por los imports 
 
 (Agregar `import java.util.Collections;` si no está.)
 
-- [ ] **Step 12: Compilar y correr los tests**
+- [x] **Step 12: Compilar y correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `39 pasados, 0 fallados.` (incluye `testUndoAfterCheckmateReopensTheGame`).
 
-- [ ] **Step 13: Verificar que no quedó nada del diseño viejo**
+- [x] **Step 13: Verificar que no quedó nada del diseño viejo**
 
 Run: `grep -rn "IGameObserver\|gameOver\|handleMove" src | wc -l`
 Expected: `0`
 
-- [ ] **Step 14: Jugar un rato para confirmar que consola y ventana siguen andando**
+- [x] **Step 14: Jugar un rato para confirmar que consola y ventana siguen andando**
 
 Run: `printf "e2 e4\ne7 e5\nundo\nsalir\n" | java -cp out Main | tail -15`
 Expected: el tablero con el peón blanco en e4 y después sin él (por el `undo`), mensaje "Se deshizo el último movimiento." y "Partida abandonada.".
 
 Run: `java -cp out MainSwing` y cerrarla a mano: tiene que abrir la ventana sin excepciones.
 
-- [ ] **Step 15: Commit**
+- [x] **Step 15: Commit**
 
 ```bash
 git add -A
@@ -712,7 +712,7 @@ git commit -m "observers separados en dos interfaces y estados terminales"
 - Modify: `src/nucleo/ChessGame.java`, `src/adaptadores/SwingChessView.java`, `src/Main.java`, `src/MainSwing.java`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 ```java
     // TDD: el puerto de entrada ofrece todas las jugadas legales del que tiene el turno.
@@ -737,12 +737,12 @@ git commit -m "observers separados en dos interfaces y estados terminales"
 
 (Agregar `import nucleo.IChessGame;`.)
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: error `cannot find symbol: class IChessGame`.
 
-- [ ] **Step 3: Crear `src/nucleo/IChessGame.java`**
+- [x] **Step 3: Crear `src/nucleo/IChessGame.java`**
 
 ```java
 package nucleo;
@@ -764,7 +764,7 @@ public interface IChessGame {
 }
 ```
 
-- [ ] **Step 4: Hacer que `ChessGame` la implemente**
+- [x] **Step 4: Hacer que `ChessGame` la implemente**
 
 En `src/nucleo/ChessGame.java`, cambiar la declaración:
 
@@ -788,7 +788,7 @@ Agregar `@Override` a `getTurn`, `isGameOver`, `tryMove` y `undo`, y agregar est
     }
 ```
 
-- [ ] **Step 5: Que los adaptadores usen la interfaz**
+- [x] **Step 5: Que los adaptadores usen la interfaz**
 
 En `SwingChessView`: el campo y el método quedan así (y se borra cualquier import de `nucleo.ChessGame`; se agrega `import nucleo.IChessGame;`):
 
@@ -808,12 +808,12 @@ En `Main` y `MainSwing`: la variable se declara con la interfaz (agregar `import
 
 (en `MainSwing` con la misma sangría que ya tiene la línea.)
 
-- [ ] **Step 6: Correr los tests**
+- [x] **Step 6: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `40 pasados, 0 fallados.`
 
-- [ ] **Step 7: Verificar que los adaptadores ya no conocen `ChessGame`**
+- [x] **Step 7: Verificar que los adaptadores ya no conocen `ChessGame`**
 
 Run: `grep -rn "ChessGame" src/adaptadores | wc -l`
 Expected: `0`
@@ -821,7 +821,7 @@ Expected: `0`
 Run: `grep -n "ChessGame" src/Main.java src/MainSwing.java`
 Expected: solo la línea del import y la línea `new ChessGame(`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -832,14 +832,14 @@ git commit -m "IChessGame como puerto de entrada y legalMoves"
 
 ### Task 3.4: verificación de la fase
 
-- [ ] **Step 1: `nucleo/` sigue sin conocer a los adaptadores**
+- [x] **Step 1: `nucleo/` sigue sin conocer a los adaptadores**
 
 Run: `grep -rn "import adaptadores\|import ai" src/nucleo | wc -l`
 Expected: `0`
 
-- [ ] **Step 2: Todo en verde y el buscador de español limpio**
+- [x] **Step 2: Todo en verde y el buscador de español limpio**
 
 Run: `./scripts/test.sh && python3 scripts/find_spanish_identifiers.py`
 Expected: `40 pasados, 0 fallados.` y `0 identificadores en español`.
 
-- [ ] **Step 3: Pedir revisión (`superpowers:requesting-code-review`), corregir lo que marque y `git push`.**
+- [x] **Step 3: Pedir revisión (`superpowers:requesting-code-review`), corregir lo que marque y `git push`.**

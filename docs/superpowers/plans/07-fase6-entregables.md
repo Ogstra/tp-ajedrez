@@ -1,6 +1,6 @@
 # Fase 6: entregables y cierre
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`.
 
 **Goal:** dejar listos los entregables que se describen en el TPO (documento de justificación, PPTX) más la lista de clases para que Franco dibuje el UML y el README final, y subir todo a GitHub.
 
@@ -20,7 +20,7 @@
 - Create: `scripts/Capture.java`
 - Modify: `docs/captura.png`
 
-- [ ] **Step 1: Crear `scripts/Capture.java`**
+- [x] **Step 1: Crear `scripts/Capture.java`**
 
 ```java
 import adaptadores.SwingChessView;
@@ -94,7 +94,7 @@ public class Capture {
 }
 ```
 
-- [ ] **Step 2: Generar la captura**
+- [x] **Step 2: Generar la captura**
 
 ```bash
 ./scripts/build.sh
@@ -105,11 +105,11 @@ java -cp out:/tmp/capture-out Capture docs/captura.png
 
 Expected: se crea `docs/captura.png` sin excepciones.
 
-- [ ] **Step 3: Mirar la imagen**
+- [x] **Step 3: Mirar la imagen**
 
 Abrir `docs/captura.png` y comprobar que se ven el desplegable de oponente arriba, el tablero con las piezas grandes de la apertura italiana, y abajo la barra de estado con los botones Deshacer y Rehacer. Si se ve cortada, subir el alto de `setSize` en `Capture.java`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/Capture.java docs/captura.png
@@ -124,7 +124,7 @@ git commit -m "captura nueva de la ventana"
 - Create: `scripts/list_types.py`
 - Create: `docs/uml-checklist.md` (generado)
 
-- [ ] **Step 1: Crear `scripts/list_types.py`**
+- [x] **Step 1: Crear `scripts/list_types.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -226,12 +226,12 @@ def main():
 main()
 ```
 
-- [ ] **Step 2: Generarla**
+- [x] **Step 2: Generarla**
 
 Run: `python3 scripts/list_types.py`
 Expected: `escrito docs/uml-checklist.md con NN tipos` (alrededor de 70).
 
-- [ ] **Step 3: Revisarla contra el código**
+- [x] **Step 3: Revisarla contra el código**
 
 Abrir `docs/uml-checklist.md` y comprobar a ojo estos puntos (si alguno falla, corregir el script y volver a generar):
 
@@ -240,7 +240,7 @@ Abrir `docs/uml-checklist.md` y comprobar a ojo estos puntos (si alguno falla, c
 - `SwingChessView` implementa `IMoveListener`, `IGameStatusListener` e `IPromotionChooser`.
 - La tabla de dependencias entre paquetes muestra que `nucleo` solo importa de `puertos` (y de `nucleo.*` internos), y nunca de `adaptadores` ni de `ai`.
 
-- [ ] **Step 4: Agregar al final del archivo esta sección a mano (con el editor, no con el script)**
+- [x] **Step 4: Agregar al final del archivo esta sección a mano (con el editor, no con el script)**
 
 Agregar al final de `docs/uml-checklist.md`:
 
@@ -256,7 +256,7 @@ Agregar al final de `docs/uml-checklist.md`:
 - Composition roots: `Main` y `MainSwing`.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/list_types.py docs/uml-checklist.md
@@ -270,7 +270,7 @@ git commit -m "lista de clases para el uml"
 **Files:**
 - Create: `docs/justificacion.md`
 
-- [ ] **Step 1: Crear `docs/justificacion.md` con este contenido**
+- [x] **Step 1: Crear `docs/justificacion.md` con este contenido**
 
 Es la base. Si algo no coincide con el código final, corregilo; el formato es **Qué / Por qué / Cuándo se rompería** y habla de **decisiones propias del grupo**, no de las reglas de la cátedra.
 
@@ -400,16 +400,16 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 - **Decorator**: ninguna combinación de comportamientos lo pidió.
 ````
 
-- [ ] **Step 2: Comprobar que no tiene la raya**
+- [x] **Step 2: Comprobar que no tiene la raya**
 
 Run: `grep -c $'\xe2\x80\x94' docs/justificacion.md`
 Expected: `0`
 
-- [ ] **Step 3: Contrastar cada afirmación con el código**
+- [x] **Step 3: Contrastar cada afirmación con el código**
 
 Para cada sección, abrir los archivos citados y confirmar que lo que dice el texto es verdad (nombres de clases, tests que se mencionan, tamaños probados). Corregir el texto si algo cambió. Contá los tests reales con `./scripts/test.sh | tail -2` y, si el documento menciona una cantidad, que coincida.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/justificacion.md
@@ -424,11 +424,11 @@ git commit -m "documento de justificación de las decisiones"
 - Create: `scripts/md_to_docx.py`
 - Create: `docs/justificacion.docx` (generado)
 
-- [ ] **Step 1: Instalar la dependencia**
+- [x] **Step 1: Instalar la dependencia**
 
 Run: `pip install python-docx`
 
-- [ ] **Step 2: Crear `scripts/md_to_docx.py`**
+- [x] **Step 2: Crear `scripts/md_to_docx.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -507,12 +507,12 @@ def main():
 main()
 ```
 
-- [ ] **Step 3: Generar el `.docx`**
+- [x] **Step 3: Generar el `.docx`**
 
 Run: `python3 scripts/md_to_docx.py docs/justificacion.md docs/justificacion.docx`
 Expected: `escrito docs/justificacion.docx`
 
-- [ ] **Step 4: Verificar el `.docx`**
+- [x] **Step 4: Verificar el `.docx`**
 
 ```bash
 python3 -I - <<'EOF'
@@ -530,11 +530,11 @@ EOF
 
 Expected: `tiene raya: False`, fuentes `['Courier New', 'Times New Roman']` y colores `['000000']`.
 
-- [ ] **Step 5: Mirarlo**
+- [x] **Step 5: Mirarlo**
 
 Si hay LibreOffice (`soffice`), convertir a PDF y mirar una página: `soffice --headless --convert-to pdf --outdir /tmp docs/justificacion.docx`. Comprobar que los títulos son negros y que los bloques de código no se salen de la página. Si no hay LibreOffice, saltear este paso.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/md_to_docx.py docs/justificacion.docx
@@ -549,15 +549,15 @@ git commit -m "versión en word del documento de justificación"
 - Create: `scripts/build_pptx.py`
 - Create: `docs/presentacion.pptx` (generado)
 
-- [ ] **Step 1: Pedirle a Franco los datos de la portada**
+- [x] **Step 1: Pedirle a Franco los datos de la portada**
 
 Preguntale a Franco los nombres de todos los integrantes del grupo y la fecha de la exposición (20/11 según el cronograma). No inventes nombres. Con esos datos completá `MEMBERS` y `DATE` al principio del script del Step 3.
 
-- [ ] **Step 2: Instalar la dependencia**
+- [x] **Step 2: Instalar la dependencia**
 
 Run: `pip install python-pptx`
 
-- [ ] **Step 3: Crear `scripts/build_pptx.py`**
+- [x] **Step 3: Crear `scripts/build_pptx.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -863,12 +863,12 @@ def main():
 main()
 ```
 
-- [ ] **Step 4: Generar**
+- [x] **Step 4: Generar**
 
 Run: `python3 scripts/build_pptx.py`
 Expected: `escrito docs/presentacion.pptx con 18 slides`
 
-- [ ] **Step 5: Verificar el contenido**
+- [x] **Step 5: Verificar el contenido**
 
 ```bash
 python3 -I - <<'EOF'
@@ -882,11 +882,11 @@ EOF
 
 Expected: `slides: 18` y `tiene raya: False`.
 
-- [ ] **Step 6: Mirar las slides**
+- [x] **Step 6: Mirar las slides**
 
 Si hay LibreOffice: `soffice --headless --convert-to pdf --outdir /tmp docs/presentacion.pptx` y `pdftoppm -jpeg -r 60 /tmp/presentacion.pdf /tmp/slide`, y revisar que ningún texto se salga de su caja ni se superponga con el código o la imagen. Si algo se desborda, acortar el texto de esa slide en `SLIDES` (no achicar la letra por debajo de 18) y regenerar. Si no hay LibreOffice, abrir el `.pptx` y revisar a ojo las slides con código.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/build_pptx.py docs/presentacion.pptx
@@ -900,7 +900,7 @@ git commit -m "presentación del tpo"
 **Files:**
 - Modify: `README.md` (reemplazo completo)
 
-- [ ] **Step 1: Reemplazar `README.md` por este contenido**
+- [x] **Step 1: Reemplazar `README.md` por este contenido**
 
 El tono es simple y natural, sin exceso de formato. Mantener el bloque de la captura centrado.
 
@@ -979,17 +979,17 @@ En `docs/` están la justificación de las decisiones (`justificacion.md` y `.do
 Las imágenes están en `src/assets/piezas/` y son el set Cburnett de Wikimedia Commons (el mismo de lichess.org), licencia CC BY-SA 3.0, autor Colin M.L. Burnett. Si falta alguna, la ventana usa un símbolo de texto.
 ```
 
-- [ ] **Step 2: Comprobar los comandos del README**
+- [x] **Step 2: Comprobar los comandos del README**
 
 Run: `./scripts/build.sh && printf "0\ne2 e4\nsalir\n" | java -cp out Main | tail -4`
 Expected: compila y muestra el tablero con el peón en e4.
 
-- [ ] **Step 3: Sin raya**
+- [x] **Step 3: Sin raya**
 
 Run: `grep -c $'\xe2\x80\x94' README.md`
 Expected: `0`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md
@@ -1000,12 +1000,12 @@ git commit -m "readme al día"
 
 ### Task 6.7: verificación final y push
 
-- [ ] **Step 1: Todo en verde**
+- [x] **Step 1: Todo en verde**
 
 Run: `./scripts/test.sh`
 Expected: `61 pasados, 0 fallados.` (o más, si se sumaron tests) y código 0.
 
-- [ ] **Step 2: Reglas de estilo del repo**
+- [x] **Step 2: Reglas de estilo del repo**
 
 ```bash
 python3 scripts/find_spanish_identifiers.py
@@ -1016,7 +1016,7 @@ grep -rn "import adaptadores\|import ai" src/nucleo | wc -l
 
 Expected: `0 identificadores en español`, `0`, `0` y `0`.
 
-- [ ] **Step 3: Los dos documentos binarios no tienen la raya**
+- [x] **Step 3: Los dos documentos binarios no tienen la raya**
 
 ```bash
 python3 -I - <<'EOF'
@@ -1032,12 +1032,12 @@ EOF
 
 Expected: `docx: False pptx: False`
 
-- [ ] **Step 4: Entregables presentes**
+- [x] **Step 4: Entregables presentes**
 
 Run: `ls docs/justificacion.md docs/justificacion.docx docs/presentacion.pptx docs/uml-checklist.md docs/captura.png`
 Expected: los cinco archivos listados, sin errores.
 
-- [ ] **Step 5: Revisión final y push**
+- [x] **Step 5: Revisión final y push**
 
 Pedir una revisión completa con `superpowers:requesting-code-review` sobre todo lo hecho desde el commit `spec del cierre del tp`. Corregir lo que marque. Después:
 
@@ -1048,6 +1048,6 @@ git push
 
 Expected: `git status --short` vacío y el push a `origin/main` sin errores.
 
-- [ ] **Step 6: Avisarle a Franco**
+- [x] **Step 6: Avisarle a Franco**
 
 Contarle en pocas líneas: qué se hizo en cada fase, el número final de tests, que `docs/uml-checklist.md` ya está listo para dibujar el UML (y que cuando lo exporte como `docs/uml.png` hay que volver a correr `python3 scripts/build_pptx.py` para que aparezca en la slide 4), y que quedaron declaradas las simplificaciones de la sección 13 del documento de justificación.

@@ -1,6 +1,6 @@
 # Fase 1: red de seguridad de tests
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`.
 
 **Goal:** cubrir con tests todo el alcance obligatorio del TPO que hoy no tiene test, contra la API actual, para que los renombres y la refactorización de las fases siguientes tengan una red de seguridad.
 
@@ -17,7 +17,7 @@
 **Files:**
 - Modify: `src/ChessCoreTests.java` (agregar métodos antes de la llave final de la clase, y registrarlos en `main`)
 
-- [ ] **Step 1: Agregar estos métodos al final de la clase `ChessCoreTests`**
+- [x] **Step 1: Agregar estos métodos al final de la clase `ChessCoreTests`**
 
 ```java
     // ---------- movimiento de las piezas que faltaban ----------
@@ -112,7 +112,7 @@
     }
 ```
 
-- [ ] **Step 2: Registrar los cinco tests en `main`**
+- [x] **Step 2: Registrar los cinco tests en `main`**
 
 Agregar estas líneas en `main`, justo antes de `System.out.println("\n" + pasados ...`:
 
@@ -124,12 +124,12 @@ Agregar estas líneas en `main`, justo antes de `System.out.println("\n" + pasad
         testPawnCapturesOnlyDiagonally();
 ```
 
-- [ ] **Step 3: Correr los tests**
+- [x] **Step 3: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `25 pasados, 0 fallados.`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/ChessCoreTests.java
@@ -143,7 +143,7 @@ git commit -m "tests de alfil, reina, rey y peón"
 **Files:**
 - Modify: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Agregar estos métodos al final de la clase**
+- [x] **Step 1: Agregar estos métodos al final de la clase**
 
 ```java
     // ---------- reglas de la partida ----------
@@ -263,7 +263,7 @@ git commit -m "tests de alfil, reina, rey y peón"
     }
 ```
 
-- [ ] **Step 2: Registrar en `main`** (antes del `System.out.println("\n" + pasados ...`)
+- [x] **Step 2: Registrar en `main`** (antes del `System.out.println("\n" + pasados ...`)
 
 ```java
         testRookCapturesThroughTryMove();
@@ -275,12 +275,12 @@ git commit -m "tests de alfil, reina, rey y peón"
         testInvalidMoveNotifiesObserver();
 ```
 
-- [ ] **Step 3: Correr los tests**
+- [x] **Step 3: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `32 pasados, 0 fallados.`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/ChessCoreTests.java
@@ -294,7 +294,7 @@ git commit -m "tests de captura, pieza clavada, ahogado y deshacer"
 **Files:**
 - Modify: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Agregar un helper y los tests al final de la clase**
+- [x] **Step 1: Agregar un helper y los tests al final de la clase**
 
 ```java
     // ---------- coronación y enroque, casos que faltaban ----------
@@ -390,7 +390,7 @@ git commit -m "tests de captura, pieza clavada, ahogado y deshacer"
     }
 ```
 
-- [ ] **Step 2: Registrar en `main`**
+- [x] **Step 2: Registrar en `main`**
 
 ```java
         testPromotionToKnight();
@@ -399,12 +399,12 @@ git commit -m "tests de captura, pieza clavada, ahogado y deshacer"
         testCannotCastleWithPieceBetween();
 ```
 
-- [ ] **Step 3: Correr los tests**
+- [x] **Step 3: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `36 pasados, 0 fallados.`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/ChessCoreTests.java
@@ -415,5 +415,5 @@ git commit -m "tests de coronación y enroque que faltaban"
 
 ### Cierre de la fase 1
 
-- [ ] `./scripts/test.sh` termina con `36 pasados, 0 fallados.` y código 0.
-- [ ] Pedir revisión (`superpowers:requesting-code-review`) y `git push`.
+- [x] `./scripts/test.sh` termina con `36 pasados, 0 fallados.` y código 0.
+- [x] Pedir revisión (`superpowers:requesting-code-review`) y `git push`.

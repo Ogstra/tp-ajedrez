@@ -1,6 +1,6 @@
 # Fase 4: reglas opcionales (rehacer, tablas, captura al paso)
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`. Esta fase es TDD de verdad: en cada tarea el test se escribe primero, se ve fallar, y recién después se implementa.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`. Esta fase es TDD de verdad: en cada tarea el test se escribe primero, se ve fallar, y recién después se implementa.
 
 **Goal:** agregar rehacer (redo), las tablas (material insuficiente, 50 movimientos, repetición) y la captura al paso, sin romper nada de lo anterior.
 
@@ -19,7 +19,7 @@
 - Modify: `src/adaptadores/ConsoleRenderer.java`, `src/adaptadores/SwingChessView.java`, `src/Main.java`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 Agregar a `ChessCoreTests` y registrar en `main`:
 
@@ -107,12 +107,12 @@ Agregar a `ChessCoreTests` y registrar en `main`:
 
 (Si todavía no se llama `hasPiece` en tu copia, usá el nombre que le dejó la fase 2 al helper que antes era `hay`.)
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: error `cannot find symbol: method redo()`.
 
-- [ ] **Step 3: Agregar `redo()` al puerto de entrada**
+- [x] **Step 3: Agregar `redo()` al puerto de entrada**
 
 En `src/nucleo/IChessGame.java`, después de `boolean undo();`:
 
@@ -120,7 +120,7 @@ En `src/nucleo/IChessGame.java`, después de `boolean undo();`:
     boolean redo();
 ```
 
-- [ ] **Step 4: Agregar `onRedo()` al listener de movimientos**
+- [x] **Step 4: Agregar `onRedo()` al listener de movimientos**
 
 En `src/puertos/IMoveListener.java`, después de `void onUndo();`:
 
@@ -128,7 +128,7 @@ En `src/puertos/IMoveListener.java`, después de `void onUndo();`:
     void onRedo();
 ```
 
-- [ ] **Step 5: Implementar en `ChessGame`**
+- [x] **Step 5: Implementar en `ChessGame`**
 
 Agregar el campo junto a `history`:
 
@@ -171,7 +171,7 @@ En `tryMove`, justo antes de la línea `IMoveCommand command = createCommand(fro
         redoStack.clear(); // una jugada nueva borra lo que se podía rehacer
 ```
 
-- [ ] **Step 6: Adaptadores**
+- [x] **Step 6: Adaptadores**
 
 `ConsoleRenderer`, agregar:
 
@@ -205,7 +205,7 @@ En `tryMove`, justo antes de la línea `IMoveCommand command = createCommand(fro
 
 y cambiar el texto de ayuda a: `"Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'salir' termina."`
 
-- [ ] **Step 7: Actualizar el mock del test**
+- [x] **Step 7: Actualizar el mock del test**
 
 En `RecordingObserver` agregar:
 
@@ -213,12 +213,12 @@ En `RecordingObserver` agregar:
         @Override public void onRedo() { events.add("redo"); }
 ```
 
-- [ ] **Step 8: Correr los tests**
+- [x] **Step 8: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `44 pasados, 0 fallados.`
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A
@@ -236,7 +236,7 @@ git commit -m "rehacer jugadas"
 - Modify: `src/puertos/IGameStatusListener.java`, `src/adaptadores/ConsoleRenderer.java`, `src/adaptadores/SwingChessView.java`, `src/Main.java`, `src/MainSwing.java`, `AGENTS.md`, `scripts/find_spanish_identifiers.py`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 Primero, `buildGame` pasa a recibir las reglas de tablas. Reemplazar el método `buildGame` actual por estos cuatro métodos:
 
@@ -437,12 +437,12 @@ Ahora los tests nuevos:
         testStatusListenerReceivesDraw();
 ```
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: errores `cannot find symbol` (`IDrawRule`, `InsufficientMaterialRule`, etc.).
 
-- [ ] **Step 3: Crear `IDrawRule`, `DrawState` y las tres reglas**
+- [x] **Step 3: Crear `IDrawRule`, `DrawState` y las tres reglas**
 
 `src/nucleo/IDrawRule.java`:
 
@@ -592,7 +592,7 @@ public class ThreefoldRepetitionRule implements IDrawRule {
 }
 ```
 
-- [ ] **Step 4: `MoveOutcome` y los listeners de estado**
+- [x] **Step 4: `MoveOutcome` y los listeners de estado**
 
 `src/nucleo/MoveOutcome.java`:
 
@@ -610,7 +610,7 @@ En `src/puertos/IGameStatusListener.java`, agregar:
     void onDraw(String reason);
 ```
 
-- [ ] **Step 5: Ampliar `IGameContext` y `IMoveCommand`**
+- [x] **Step 5: Ampliar `IGameContext` y `IMoveCommand`**
 
 `src/nucleo/IGameContext.java` completo:
 
@@ -675,7 +675,7 @@ En `CastlingCommand`:
     }
 ```
 
-- [ ] **Step 6: `HistoryEntry` con foto del tablero**
+- [x] **Step 6: `HistoryEntry` con foto del tablero**
 
 `src/nucleo/HistoryEntry.java` completo:
 
@@ -699,7 +699,7 @@ final class HistoryEntry {
 }
 ```
 
-- [ ] **Step 7: Reemplazar `src/nucleo/ChessGame.java` por la versión completa**
+- [x] **Step 7: Reemplazar `src/nucleo/ChessGame.java` por la versión completa**
 
 ```java
 package nucleo;
@@ -975,7 +975,7 @@ public class ChessGame implements IChessGame, IGameContext {
 }
 ```
 
-- [ ] **Step 8: Adaptadores y composition roots**
+- [x] **Step 8: Adaptadores y composition roots**
 
 `ConsoleRenderer`:
 
@@ -1015,18 +1015,18 @@ public class ChessGame implements IChessGame, IGameContext {
 
 (En `MainSwing` el listener es `view`.)
 
-- [ ] **Step 9: Documentar el paquete nuevo**
+- [x] **Step 9: Documentar el paquete nuevo**
 
 En `AGENTS.md`, en la regla de estilo de los idiomas, sumar `tablas` a la lista de paquetes que no se renombran. En `scripts/find_spanish_identifiers.py`, agregar `"tablas"` al conjunto `ALLOWED`.
 
-- [ ] **Step 10: Correr los tests**
+- [x] **Step 10: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `50 pasados, 0 fallados.`
 
 Si `testInsufficientMaterialCases` falla en el caso de los alfiles de distinto color, revisá el cálculo del color de casilla: `c1` es fila 0, columna 2 (suma par) y `c8` es fila 7, columna 2 (suma impar).
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add -A
@@ -1042,7 +1042,7 @@ git commit -m "tablas por material, 50 movimientos y repetición"
 - Modify: `src/Main.java`, `src/MainSwing.java`
 - Test: `src/ChessCoreTests.java`
 
-- [ ] **Step 1: Escribir los tests que fallan**
+- [x] **Step 1: Escribir los tests que fallan**
 
 `buildGame` suma la regla nueva (para que los tests la tengan armada). Reemplazar la creación de `specialMoves` dentro del `buildGame` de 5 parámetros por:
 
@@ -1127,12 +1127,12 @@ git commit -m "tablas por material, 50 movimientos y repetición"
         testEnPassantUndoRestoresTheCapturedPawn();
 ```
 
-- [ ] **Step 2: Correr y ver que no compila**
+- [x] **Step 2: Correr y ver que no compila**
 
 Run: `./scripts/build.sh`
 Expected: `cannot find symbol: class EnPassantMove`.
 
-- [ ] **Step 3: Crear `EnPassantCommand`**
+- [x] **Step 3: Crear `EnPassantCommand`**
 
 `src/nucleo/EnPassantCommand.java`:
 
@@ -1197,7 +1197,7 @@ public class EnPassantCommand implements IMoveCommand {
 }
 ```
 
-- [ ] **Step 4: Crear `EnPassantMove`**
+- [x] **Step 4: Crear `EnPassantMove`**
 
 `src/nucleo/especiales/EnPassantMove.java`:
 
@@ -1265,7 +1265,7 @@ public class EnPassantMove implements ISpecialMove {
 }
 ```
 
-- [ ] **Step 5: Armarla en los composition roots**
+- [x] **Step 5: Armarla en los composition roots**
 
 En `Main` y `MainSwing`: importar `nucleo.especiales.EnPassantMove` y sumarla a la lista, entre el enroque y la coronación:
 
@@ -1278,17 +1278,17 @@ En `Main` y `MainSwing`: importar `nucleo.especiales.EnPassantMove` y sumarla a 
 
 (En `MainSwing` el segundo argumento de `PromotionMove` es `view`.)
 
-- [ ] **Step 6: Correr los tests**
+- [x] **Step 6: Correr los tests**
 
 Run: `./scripts/test.sh`
 Expected: `53 pasados, 0 fallados.`
 
-- [ ] **Step 7: Jugar una captura al paso por consola**
+- [x] **Step 7: Jugar una captura al paso por consola**
 
 Run: `printf "e2 e4\na7 a6\ne4 e5\nd7 d5\ne5 d6\nsalir\n" | java -cp out Main | tail -14`
 Expected: el peón blanco en d6, d5 vacía y el mensaje `Blancas: Peón e5 -> d6 (captura Peón)`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -1299,7 +1299,7 @@ git commit -m "captura al paso"
 
 ### Task 4.4: verificación de la fase
 
-- [ ] **Step 1: Se puede extender sin tocar clases existentes**
+- [x] **Step 1: Se puede extender sin tocar clases existentes**
 
 Los tests `testNewPieceWithoutTouchingExistingClasses` y `testBoardOfAnotherSize` ya cubren pieza nueva y tablero. Agregar un último test que pruebe una regla de tablas propia, definida dentro del test, y registrarlo:
 
@@ -1330,17 +1330,17 @@ Los tests `testNewPieceWithoutTouchingExistingClasses` y `testBoardOfAnotherSize
 Run: `./scripts/test.sh`
 Expected: `54 pasados, 0 fallados.`
 
-- [ ] **Step 2: Nada de nucleo importa hacia afuera**
+- [x] **Step 2: Nada de nucleo importa hacia afuera**
 
 Run: `grep -rn "import adaptadores\|import ai" src/nucleo | wc -l`
 Expected: `0`
 
-- [ ] **Step 3: Sin identificadores en español ni raya**
+- [x] **Step 3: Sin identificadores en español ni raya**
 
 Run: `python3 scripts/find_spanish_identifiers.py && grep -rn $'\xe2\x80\x94' src | wc -l`
 Expected: `0 identificadores en español` y `0`.
 
-- [ ] **Step 4: Commit del test de extensibilidad, revisión y push**
+- [x] **Step 4: Commit del test de extensibilidad, revisión y push**
 
 ```bash
 git add -A

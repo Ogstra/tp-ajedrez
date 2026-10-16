@@ -1,6 +1,6 @@
 # Fase 2: identificadores en inglés
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`.
 
 **Goal:** que todos los identificadores (clases, métodos, campos, variables, constantes y métodos de test) estén en inglés. Comentarios y textos para el usuario quedan en español.
 
@@ -18,7 +18,7 @@
 - Create: `scripts/find_spanish_identifiers.py`
 - Create: `scripts/rename_identifier.py`
 
-- [ ] **Step 1: Crear `scripts/find_spanish_identifiers.py`**
+- [x] **Step 1: Crear `scripts/find_spanish_identifiers.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -89,7 +89,7 @@ def main():
 main()
 ```
 
-- [ ] **Step 2: Crear `scripts/rename_identifier.py`**
+- [x] **Step 2: Crear `scripts/rename_identifier.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -135,12 +135,12 @@ for path in pathlib.Path("src").rglob("*.java"):
 print(f"{total} líneas cambiadas")
 ```
 
-- [ ] **Step 3: Probar el buscador**
+- [x] **Step 3: Probar el buscador**
 
 Run: `python3 scripts/find_spanish_identifiers.py | tail -3`
 Expected: una lista larga y la última línea `NN identificadores en español` con NN mayor a cero.
 
-- [ ] **Step 4: Commit de los scripts**
+- [x] **Step 4: Commit de los scripts**
 
 ```bash
 git add scripts/find_spanish_identifiers.py scripts/rename_identifier.py
@@ -157,7 +157,7 @@ git commit -m "scripts para encontrar y renombrar identificadores en español"
 
 **Método:** repetir "buscar, renombrar de a un identificador, compilar" hasta que el buscador no marque nada. Mantené los tests en verde: después de cada tanda corré `./scripts/test.sh`.
 
-- [ ] **Step 1: Renombrar la clase y su archivo**
+- [x] **Step 1: Renombrar la clase y su archivo**
 
 ```bash
 git mv src/nucleo/estrategias/MovimientoDeslizante.java src/nucleo/estrategias/SlidingMovement.java
@@ -168,7 +168,7 @@ python3 scripts/rename_identifier.py enDirecciones inDirections
 
 Expected: `36 pasados, 0 fallados.`
 
-- [ ] **Step 2: Renombrar los identificadores ya conocidos**
+- [x] **Step 2: Renombrar los identificadores ya conocidos**
 
 Cada fila es un comando `python3 scripts/rename_identifier.py VIEJO NUEVO`. Hacelos en tandas por archivo y corré `./scripts/test.sh` entre tandas.
 
@@ -209,7 +209,7 @@ Estrategias y `SlidingMovement`: `comoTorre` a `asRook`, `comoAlfil` a `asBishop
 
 Helpers del test: `tableroParaEnrocar` a `castlingBoard`, `hay` a `hasPiece`, `tableroAntes` a `boardBefore`, `ChancellorMovementStrategy` ya está en inglés.
 
-- [ ] **Step 3: Pasar el buscador y renombrar lo que falte**
+- [x] **Step 3: Pasar el buscador y renombrar lo que falte**
 
 Run: `python3 scripts/find_spanish_identifiers.py`
 
@@ -217,11 +217,11 @@ Por cada línea que marque, elegí un nombre en inglés claro y usá `rename_ide
 
 Cuidado con falsos positivos: si una palabra marcada es una palabra inglesa válida (por ejemplo `no` o `con` dentro de un nombre), no la renombres: agregá la palabra a la lista de excepciones `ALLOWED` del script y dejá un comentario en el commit.
 
-- [ ] **Step 4: Alinear los rótulos de los tests (opcional pero recomendado)**
+- [x] **Step 4: Alinear los rótulos de los tests (opcional pero recomendado)**
 
 Los textos del primer argumento de `assertTrue` de los 20 tests viejos (por ejemplo `"Peon_AvanzaUnPaso"`) quedan como están o se cambian al nombre inglés del método. Elegí una de las dos y aplicala a todos por igual.
 
-- [ ] **Step 5: Verificar que no cambió el comportamiento**
+- [x] **Step 5: Verificar que no cambió el comportamiento**
 
 Run: `./scripts/test.sh`
 Expected: `36 pasados, 0 fallados.`
@@ -229,7 +229,7 @@ Expected: `36 pasados, 0 fallados.`
 Run: `java -cp out Main < /dev/null | head -12`
 Expected: el tablero impreso con las piezas en su lugar (no tiene que fallar ni lanzar excepciones).
 
-- [ ] **Step 6: Verificar que ninguna línea nueva tiene la raya y que los paquetes no cambiaron**
+- [x] **Step 6: Verificar que ninguna línea nueva tiene la raya y que los paquetes no cambiaron**
 
 Run: `grep -rn $'\xe2\x80\x94' src | wc -l`
 Expected: `0`
@@ -237,7 +237,7 @@ Expected: `0`
 Run: `ls src`
 Expected: `ChessCoreTests.java  Main.java  MainSwing.java  adaptadores  assets  nucleo  puertos`
 
-- [ ] **Step 7: Commit único**
+- [x] **Step 7: Commit único**
 
 ```bash
 git add -A
@@ -248,6 +248,6 @@ git commit -m "renombro los identificadores a inglés"
 
 ### Cierre de la fase 2
 
-- [ ] `python3 scripts/find_spanish_identifiers.py` termina con `0 identificadores en español`.
-- [ ] `./scripts/test.sh` termina con `36 pasados, 0 fallados.`
-- [ ] `git push`.
+- [x] `python3 scripts/find_spanish_identifiers.py` termina con `0 identificadores en español`.
+- [x] `./scripts/test.sh` termina con `36 pasados, 0 fallados.`
+- [x] `git push`.

@@ -1,6 +1,6 @@
 # Fase 0: base del agente
 
-> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [ ]`.
+> **Para el agente:** REQUIRED SUB-SKILL: `superpowers:subagent-driven-development` (recomendado) o `superpowers:executing-plans`. Pasos con casillas `- [x]`.
 
 **Goal:** tener scripts para compilar y correr los tests con código de salida correcto, y un `AGENTS.md` con las reglas del trabajo.
 
@@ -17,7 +17,7 @@
 - Create: `scripts/test.sh`
 - Modify: `src/ChessCoreTests.java` (el final de `main`)
 
-- [ ] **Step 1: Crear `scripts/build.sh`**
+- [x] **Step 1: Crear `scripts/build.sh`**
 
 ```bash
 #!/usr/bin/env bash
@@ -29,7 +29,7 @@ find src -name "*.java" -print0 | xargs -0 javac -d out -encoding UTF-8
 echo "compilado en out/"
 ```
 
-- [ ] **Step 2: Crear `scripts/test.sh`**
+- [x] **Step 2: Crear `scripts/test.sh`**
 
 ```bash
 #!/usr/bin/env bash
@@ -40,11 +40,11 @@ cd "$(dirname "$0")/.."
 java -cp out ChessCoreTests
 ```
 
-- [ ] **Step 3: Darles permiso de ejecución**
+- [x] **Step 3: Darles permiso de ejecución**
 
 Run: `chmod +x scripts/build.sh scripts/test.sh`
 
-- [ ] **Step 4: Hacer que `ChessCoreTests` termine con código de salida**
+- [x] **Step 4: Hacer que `ChessCoreTests` termine con código de salida**
 
 En `src/ChessCoreTests.java`, la última línea de `main` es:
 
@@ -59,16 +59,16 @@ Dejala así:
         System.exit(fallados > 0 ? 1 : 0);
 ```
 
-- [ ] **Step 5: Verificar que pasa y devuelve 0**
+- [x] **Step 5: Verificar que pasa y devuelve 0**
 
 Run: `./scripts/test.sh; echo "codigo=$?"`
 Expected: 20 líneas `[OK]`, luego `20 pasados, 0 fallados.` y `codigo=0`.
 
-- [ ] **Step 6: Verificar que un fallo devuelve distinto de cero**
+- [x] **Step 6: Verificar que un fallo devuelve distinto de cero**
 
 Cambiá temporalmente en algún test la condición de un `assertTrue` por `false`, corré `./scripts/test.sh; echo "codigo=$?"` y comprobá `codigo=1`. Deshacé el cambio con `git checkout src/ChessCoreTests.java` y volvé a aplicar el Step 4.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/build.sh scripts/test.sh src/ChessCoreTests.java
@@ -82,7 +82,7 @@ git commit -m "scripts para compilar y correr los tests"
 **Files:**
 - Create: `AGENTS.md`
 
-- [ ] **Step 1: Crear `AGENTS.md` en la raíz del repo con este contenido exacto**
+- [x] **Step 1: Crear `AGENTS.md` en la raíz del repo con este contenido exacto**
 
 ```markdown
 # Reglas para quien trabaje en este repo
@@ -124,12 +124,12 @@ Este es el TPO de Ingeniería de Software (UADE): un ajedrez en Java con núcleo
 - No pushear a otra rama que no sea `main` ni reescribir el historial.
 ```
 
-- [ ] **Step 2: Verificar que no tiene el carácter raya**
+- [x] **Step 2: Verificar que no tiene el carácter raya**
 
 Run: `grep -c $'\xe2\x80\x94' AGENTS.md`
 Expected: `0`
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add AGENTS.md
@@ -140,5 +140,5 @@ git commit -m "reglas de trabajo para el agente"
 
 ### Cierre de la fase 0
 
-- [ ] Correr `./scripts/test.sh` y confirmar `20 pasados, 0 fallados.`
-- [ ] `git push`
+- [x] Correr `./scripts/test.sh` y confirmar `20 pasados, 0 fallados.`
+- [x] `git push`
