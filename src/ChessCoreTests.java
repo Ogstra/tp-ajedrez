@@ -119,6 +119,8 @@ public class ChessCoreTests {
         testOpponentControllerPlaysOnlyOnItsTurn();
         testAutoPromotionChooserDoesNotAskForTheOpponent();
         testHardLevelRespondsInReasonableTime();
+        testHardLevelDoesNotWalkTheKingOutInTheOpening();
+        testHardLevelDevelopsPiecesInTheOpening();
         testMinimaxRespectsLostCastlingRights();
         testGreedyOpponentPrefersEnPassantToQuietMoves();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
@@ -1358,5 +1360,45 @@ public class ChessCoreTests {
         }
         assertTrue("testGreedyOpponentPrefersEnPassantToQuietMoves", alwaysCaptures,
             "la unica captura tiene mas valor que cualquier jugada tranquila");
+    }
+
+    // TDD: sin nada que capturar, el nivel difícil no pasea al rey por el tablero.
+    private static void testHardLevelDoesNotWalkTheKingOutInTheOpening() {
+        // Arrange: 1.e4 d6 2.d4, le toca a las negras y el rey ya tiene la casilla d7 libre.
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.tryMove(at("d7"), at("d6"));
+        game.tryMove(at("d2"), at("d4"));
+
+        // Act: muchas semillas, porque los empates se resuelven al azar.
+        int kingMoves = 0;
+        for (long seed = 1; seed <= 200; seed++) {
+            Move move = new MinimaxOpponent(2, new Random(seed)).chooseMove(game);
+            if (game.getBoard().pieceAt(move.getFrom()).getType().equals(PieceType.KING)) kingMoves++;
+        }
+
+        // Assert
+        assertTrue("testHardLevelDoesNotWalkTheKingOutInTheOpening", kingMoves == 0,
+            "el rey se movió " + kingMoves + " de 200 veces en la apertura");
+    }
+
+    // TDD: en la apertura prefiere desarrollar caballos y alfiles antes que mover torres o el rey.
+    private static void testHardLevelDevelopsPiecesInTheOpening() {
+        // Arrange: 1.e4 h6 2.Cf3, le toca a las negras y la torre de h8 ya puede subir a h7.
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.tryMove(at("h7"), at("h6"));
+        game.tryMove(at("g1"), at("f3"));
+
+        // Act
+        int rookMoves = 0;
+        for (long seed = 1; seed <= 200; seed++) {
+            Move move = new MinimaxOpponent(2, new Random(seed)).chooseMove(game);
+            if (game.getBoard().pieceAt(move.getFrom()).getType().equals(PieceType.ROOK)) rookMoves++;
+        }
+
+        // Assert
+        assertTrue("testHardLevelDevelopsPiecesInTheOpening", rookMoves == 0,
+            "movió una torre " + rookMoves + " de 200 veces en la apertura");
     }
 }

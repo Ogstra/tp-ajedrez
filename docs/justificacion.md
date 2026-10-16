@@ -94,7 +94,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 11. La IA vive afuera del núcleo
 
-**Qué.** El oponente está en el paquete `ai`: una interfaz `IOpponent` con tres niveles (azar, captura codiciosa y minimax de profundidad 2). Piensa sobre una partida de búsqueda propia y juega su jugada por `IChessGame`.
+**Qué.** El oponente está en el paquete `ai`: una interfaz `IOpponent` con tres niveles (azar, captura codiciosa y minimax de profundidad 2). El minimax evalúa con el material y un poco de criterio posicional (`Evaluation`: peones y piezas hacia el centro, desarrollo de caballos y alfiles, y el rey en su fila mientras haya damas), para que no juegue al azar cuando ninguna jugada gana material. Piensa sobre una partida de búsqueda propia y juega su jugada por `IChessGame`.
 
 **Por qué.** No es parte de las reglas del juego, así que no puede ensuciar el núcleo. Como solo conoce la interfaz del puerto de entrada, se agregó sin modificar ninguna clase del núcleo, y no abre diálogos ni toca la pantalla mientras piensa.
 

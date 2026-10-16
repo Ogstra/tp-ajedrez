@@ -513,11 +513,11 @@ function callout(slide, head, text, x, y, w) {
 // ---------- 16. IA ----------
 {
   const s = content("Oponente", "Tres niveles, afuera del núcleo",
-    "La IA no forma parte de las reglas, por eso vive en el paquete ai y solo conoce IChessGame. Piensa sobre una copia de la partida, así que nunca toca la pantalla. El nivel difícil es un minimax de dos jugadas con el material como evaluación; no ve más allá de eso y puede equivocarse con el enroque, porque la copia no tiene historial.");
+    "La IA no forma parte de las reglas, por eso vive en el paquete ai y solo conoce IChessGame. Piensa sobre una copia de la partida, así que nunca toca la pantalla. El nivel difícil es un minimax de dos jugadas que evalúa con el material y un poco de criterio posicional (centro, desarrollo, seguridad del rey); no ve más allá de dos jugadas y puede equivocarse con el enroque, porque la copia no tiene historial.");
   const cards = [
     { x: 0.7, name: "Fácil", cls: "RandomOpponent", text: "Elige una jugada legal al azar." },
     { x: 4.75, name: "Medio", cls: "GreedyOpponent", text: "Prefiere la captura de la pieza de más valor. Si no hay, al azar." },
-    { x: 8.8, name: "Difícil", cls: "MinimaxOpponent", text: "Prueba su jugada y la respuesta del rival, y se queda con la que deja mejor material." },
+    { x: 8.8, name: "Difícil", cls: "MinimaxOpponent", text: "Prueba su jugada y la respuesta del rival, y se queda con la que deja mejor material y posición." },
   ];
   cards.forEach((c) => {
     panel(s, c.x, 1.95, 3.8, 3.0);
@@ -527,7 +527,7 @@ function callout(slide, head, text, x, y, w) {
   });
   rows(s, [
     "Solo conoce IChessGame y piensa en una copia de la partida",
-    "Puntaje: material propio menos material rival; el mate vale más que todo",
+    "Puntaje: material más centro, desarrollo y rey seguro; el mate vale más que todo",
   ], 0.7, 5.3, 11.9, 0.65, 17);
 }
 

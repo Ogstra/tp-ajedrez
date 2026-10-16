@@ -1,18 +1,16 @@
 package ai;
 
-import nucleo.Board;
 import nucleo.Color;
 import nucleo.IChessGame;
 import nucleo.Move;
 import nucleo.MoveOutcome;
-import nucleo.Piece;
-import nucleo.Position;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-// Nivel difícil: minimax con la diferencia de material como evaluación.
+// Nivel difícil: minimax que evalúa con el material y un poco de criterio
+// posicional (ver Evaluation).
 // "depth" cuenta las jugadas que mira, incluida la suya: con 2 mira su jugada
 // y la respuesta del rival. Juega en una partida de búsqueda propia
 // (SearchGames) y la deshace con undo() después de cada rama.
@@ -65,7 +63,7 @@ public class MinimaxOpponent implements IOpponent {
         } else if (outcome == MoveOutcome.STALEMATE || outcome == MoveOutcome.DRAW) {
             value = 0;
         } else if (remainingDepth <= 1) {
-            value = material(game.getBoard(), me);
+            value = Evaluation.score(game.getBoard(), me);
         } else {
             value = bestValue(game, remainingDepth - 1, me);
         }
@@ -83,18 +81,5 @@ public class MinimaxOpponent implements IOpponent {
             best = maximizing ? Math.max(best, value) : Math.min(best, value);
         }
         return best;
-    }
-
-    // Material propio menos material rival.
-    private int material(Board board, Color me) {
-        int total = 0;
-        for (Color color : new Color[]{Color.WHITE, Color.BLACK}) {
-            for (Position position : board.positionsOfColor(color)) {
-                Piece piece = board.pieceAt(position);
-                int value = PieceValues.of(piece.getType());
-                total += color == me ? value : -value;
-            }
-        }
-        return total;
     }
 }
