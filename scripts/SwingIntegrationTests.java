@@ -32,9 +32,11 @@ public class SwingIntegrationTests {
                 view.render(board);
                 inspect(view.getContentPane());
                 view.setVisible(true);
-                levelBox.setSelectedIndex(2);
                 square("e2").doClick();
                 square("e4").doClick();
+                button(view.getContentPane(), "Deshacer").doClick();
+                levelBox.setSelectedIndex(2);
+                button(view.getContentPane(), "Rehacer").doClick();
                 require(!levelBox.isEnabled(), "el selector debe bloquearse mientras piensa la IA");
             });
             awaitReply();

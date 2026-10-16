@@ -3,6 +3,8 @@ package ai;
 import nucleo.IChessGame;
 import nucleo.Move;
 import nucleo.Piece;
+import nucleo.PieceType;
+import nucleo.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,12 @@ public class GreedyOpponent implements IOpponent {
         List<Move> best = new ArrayList<>();
         for (Move move : game.legalMoves()) {
             Piece target = game.getBoard().pieceAt(move.getTo());
+            Piece moving = game.getBoard().pieceAt(move.getFrom());
+            // Un peon que captura en diagonal a casilla vacia captura al paso.
+            if (target == null && moving.getType().equals(PieceType.PAWN)
+                    && move.getFrom().getColumn() != move.getTo().getColumn()) {
+                target = game.getBoard().pieceAt(new Position(move.getFrom().getRow(), move.getTo().getColumn()));
+            }
             int value = target == null ? 0 : PieceValues.of(target.getType());
             if (value > bestValue) {
                 bestValue = value;

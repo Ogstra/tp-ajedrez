@@ -120,6 +120,7 @@ public class ChessCoreTests {
         testAutoPromotionChooserDoesNotAskForTheOpponent();
         testHardLevelRespondsInReasonableTime();
         testMinimaxRespectsLostCastlingRights();
+        testGreedyOpponentPrefersEnPassantToQuietMoves();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -1342,5 +1343,20 @@ public class ChessCoreTests {
         }
         assertTrue("testMinimaxRespectsLostCastlingRights", allLegal,
             "el oponente solo puede elegir jugadas legales en la partida real");
+    }
+    // TDD: la captura al paso vale un peon aunque la casilla de destino este vacia.
+    private static void testGreedyOpponentPrefersEnPassantToQuietMoves() {
+        Board board = enPassantBoard();
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("f1"));
+        game.tryMove(at("d7"), at("d5"));
+        Move capture = new Move(at("e5"), at("d6"));
+        boolean alwaysCaptures = true;
+        for (int seed = 0; seed < 16; seed++) {
+            Move chosen = new GreedyOpponent(new Random(seed)).chooseMove(game);
+            alwaysCaptures = alwaysCaptures && capture.equals(chosen);
+        }
+        assertTrue("testGreedyOpponentPrefersEnPassantToQuietMoves", alwaysCaptures,
+            "la unica captura tiene mas valor que cualquier jugada tranquila");
     }
 }

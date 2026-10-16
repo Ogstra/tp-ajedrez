@@ -151,6 +151,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             if (game == null || thinking) return;
             if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
             render(game.getBoard());
+            playOpponentIfNeeded();
         });
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
