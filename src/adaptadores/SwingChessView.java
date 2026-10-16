@@ -15,6 +15,7 @@ import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -47,6 +48,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final java.awt.Color SELECTED = new java.awt.Color(0xF6, 0xF6, 0x69);
     private static final java.awt.Color LEGAL = new java.awt.Color(0xF2, 0xC9, 0x6B);   // destino libre
     private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B); // destino con captura
+    private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);         // marco de las casillas marcadas
+    private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E);  // marco de las capturas
     private static final int SQUARE_SIZE = 80;
     private static final int PIECE_SIZE = 68; // deja un margen chico dentro de cada casilla
 
@@ -217,13 +220,22 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private void select(Position pos) {
         render(game.getBoard()); // limpia lo que hubiera marcado de una selección anterior
         selection = pos;
-        squares[pos.getRow()][pos.getColumn()].setBackground(SELECTED);
+        mark(pos, SELECTED, FRAME);
         for (Move move : game.legalMoves()) {
             if (!move.getFrom().equals(pos)) continue;
             Position target = move.getTo();
             boolean captures = game.getBoard().pieceAt(target) != null;
-            squares[target.getRow()][target.getColumn()].setBackground(captures ? CAPTURE : LEGAL);
+            mark(target, captures ? CAPTURE : LEGAL, captures ? CAPTURE_FRAME : FRAME);
         }
+    }
+
+    // Pinta la casilla y le pone un marco, así dos casillas marcadas pegadas
+    // no se funden en una sola mancha.
+    private void mark(Position pos, java.awt.Color fill, java.awt.Color frame) {
+        JButton button = squares[pos.getRow()][pos.getColumn()];
+        button.setBackground(fill);
+        button.setBorder(BorderFactory.createLineBorder(frame, 3));
+        button.setBorderPainted(true);
     }
 
     // La IA piensa en otro hilo para no congelar la ventana, y la jugada se
@@ -270,6 +282,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             for (int col = 0; col < columns; col++) {
                 applyIcon(squares[row][col], board.pieceAt(new Position(row, col)));
                 squares[row][col].setBackground(squareColor(row, col));
+                squares[row][col].setBorderPainted(false); // quita el marco de una selección anterior
             }
         }
     }

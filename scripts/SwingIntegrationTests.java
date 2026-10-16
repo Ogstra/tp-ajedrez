@@ -40,8 +40,11 @@ public class SwingIntegrationTests {
                 require(!background("e3").equals(normalE3), "al seleccionar el peon de e2 se debe marcar e3");
                 require(background("e3").equals(background("e4")) && background("e5").equals(normalE5),
                     "al seleccionar el peon de e2 se marcan e3 y e4, y e5 queda igual");
+                require(square("e3").isBorderPainted() && square("e4").isBorderPainted() && !square("e5").isBorderPainted(),
+                    "cada casilla marcada lleva su marco, para que las pegadas no se fundan");
                 square("g1").doClick();
-                require(background("e3").equals(normalE3), "al cambiar de pieza se limpian los destinos anteriores");
+                require(background("e3").equals(normalE3) && !square("e3").isBorderPainted(),
+                    "al cambiar de pieza se limpian los destinos anteriores y sus marcos");
                 require(!background("f3").equals(normalF3) && background("g3").equals(normalG3),
                     "el caballo de g1 marca f3 y no marca g3");
                 square("g1").doClick();
