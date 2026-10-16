@@ -11,7 +11,7 @@ import puertos.IMoveListener;
 import java.util.HashMap;
 import java.util.Map;
 
-// Adaptador de salida (Clase 2): implementa el puerto IGameObserver con
+// Adaptador de salida (Clase 2): implementa el puerto IMoveListener e IGameStatusListener con
 // tecnología concreta (consola). El núcleo no sabe que esto existe. Los
 // símbolos unicode y los nombres en español son un detalle de presentación,
 // por eso viven acá y no en PieceType. Una pieza que este adaptador no

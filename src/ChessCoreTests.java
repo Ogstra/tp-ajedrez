@@ -1,3 +1,4 @@
+import nucleo.IChessGame;
 import java.util.Collections;
 import nucleo.CastlingCommand;
 import nucleo.Move;
@@ -81,6 +82,8 @@ public class ChessCoreTests {
         testCommandsExposeTheirMove();
 
         testUndoAfterCheckmateReopensTheGame();
+
+        testLegalMovesAtStartIsTwenty();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -836,5 +839,19 @@ public class ChessCoreTests {
     private static ChessGame newGameChoosing(Board board, PieceType choice) {
         return buildGame(board, new ArrayList<IMoveListener>(), new ArrayList<IGameStatusListener>(),
             new FixedChooser(choice));
+    }
+    // TDD: el puerto de entrada ofrece todas las jugadas legales del que tiene el turno.
+    private static void testLegalMovesAtStartIsTwenty() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+
+        // Act
+        List<Move> moves = game.legalMoves();
+
+        // Assert
+        assertTrue("testLegalMovesAtStartIsTwenty",
+            moves.size() == 20 && moves.contains(new Move(at("e2"), at("e4")))
+                && moves.contains(new Move(at("g1"), at("f3"))),
+            "al empezar hay 20 jugadas legales (16 de peón y 4 de caballo)");
     }
 }

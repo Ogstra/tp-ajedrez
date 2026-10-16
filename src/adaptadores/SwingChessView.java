@@ -1,7 +1,7 @@
 package adaptadores;
 
 import nucleo.Board;
-import nucleo.ChessGame;
+import nucleo.IChessGame;
 import nucleo.Color;
 import nucleo.Piece;
 import nucleo.PieceType;
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-// Adaptador de salida Y de entrada (Clase 2): implementa IGameObserver
+// Adaptador de salida Y de entrada (Clase 2): implementa IMoveListener e IGameStatusListener
 // igual que ConsoleRenderer (mismo puerto de salida, otra tecnología),
 // implementa IPromotionChooser con un diálogo, y además traduce clicks del
 // mouse en llamadas a ChessGame.tryMove(): el mismo rol que cumple Main.java
@@ -72,7 +72,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final JButton[][] squares;
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
 
-    private ChessGame game;
+    private IChessGame game;
     private Position selection = null;
 
     public SwingChessView(int rows, int columns) {
@@ -86,7 +86,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // El observer se registra en el constructor de ChessGame, pero la vista
     // necesita la referencia al juego para poder mandarle movimientos: por
     // eso se inyecta después, desde el composition root (MainSwing).
-    public void attachGame(ChessGame game) {
+    public void attachGame(IChessGame game) {
         this.game = game;
     }
 
@@ -181,7 +181,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     // Solo redibuja el tablero. El texto de estado lo maneja exclusivamente
-    // IGameObserver: si render() también lo tocara, pisaría el mensaje que
+    // IMoveListener e IGameStatusListener: si render() también lo tocara, pisaría el mensaje que
     // onInvalidMove/onMoveMade acaban de poner.
     public void render(Board board) {
         for (int row = 0; row < rows; row++) {

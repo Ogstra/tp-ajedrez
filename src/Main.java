@@ -3,6 +3,7 @@ import adaptadores.ConsoleRenderer;
 import nucleo.Board;
 import nucleo.BoardSetup;
 import nucleo.ChessGame;
+import nucleo.IChessGame;
 import nucleo.Color;
 import nucleo.ISpecialMove;
 import nucleo.MoveOutcome;
@@ -35,7 +36,7 @@ public class Main {
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
             new PromotionMove(pieces, chooser));
-        ChessGame game = new ChessGame(board,
+        IChessGame game = new ChessGame(board,
             Collections.<IMoveListener>singletonList(renderer),
             Collections.<IGameStatusListener>singletonList(renderer),
             specialMoves);

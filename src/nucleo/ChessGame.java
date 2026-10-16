@@ -14,7 +14,7 @@ import java.util.List;
 // contra una interfaz (Clase 3: DIP + inyección de dependencias nivel 4):
 // los listeners (cómo se avisa lo que pasa) y las reglas especiales
 // (enroque, coronación, lo que se sume). ChessGame no sabe cuáles son.
-public class ChessGame implements IGameContext {
+public class ChessGame implements IChessGame, IGameContext {
     private final Board board;
     private final List<IMoveListener> moveListeners;
     private final List<IGameStatusListener> statusListeners;
@@ -41,9 +41,12 @@ public class ChessGame implements IGameContext {
 
     @Override
     public Board getBoard() { return board; }
+    @Override
     public Color getTurn() { return state.currentColor(); }
+    @Override
     public boolean isGameOver() { return state.isOver(); }
 
+    @Override
     public MoveOutcome tryMove(Position from, Position to) {
         if (state.isOver()) {
             notifyInvalid("La partida ya terminó.");
@@ -98,6 +101,7 @@ public class ChessGame implements IGameContext {
         return outcome;
     }
 
+    @Override
     public boolean undo() {
         if (history.isEmpty()) return false;
         HistoryEntry entry = history.pop();
@@ -183,5 +187,16 @@ public class ChessGame implements IGameContext {
             }
         }
         return false;
+    }
+    @Override
+    public List<Move> legalMoves() {
+        List<Move> moves = new ArrayList<>();
+        if (state.isOver()) return moves;
+        for (Position from : board.positionsOfColor(state.currentColor())) {
+            for (Position to : legalMovesFrom(from)) {
+                moves.add(new Move(from, to));
+            }
+        }
+        return moves;
     }
 }

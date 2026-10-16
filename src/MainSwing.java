@@ -2,6 +2,7 @@ import adaptadores.SwingChessView;
 import nucleo.Board;
 import nucleo.BoardSetup;
 import nucleo.ChessGame;
+import nucleo.IChessGame;
 import nucleo.ISpecialMove;
 import nucleo.PieceFactory;
 import nucleo.especiales.CastlingMove;
@@ -28,7 +29,7 @@ public class MainSwing {
             List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                 new CastlingMove(),
                 new PromotionMove(pieces, view));
-            ChessGame game = new ChessGame(board,
+            IChessGame game = new ChessGame(board,
                 Collections.<IMoveListener>singletonList(view),
                 Collections.<IGameStatusListener>singletonList(view),
                 specialMoves);
