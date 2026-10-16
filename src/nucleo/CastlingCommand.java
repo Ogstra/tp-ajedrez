@@ -45,7 +45,7 @@ public class CastlingCommand implements IMoveCommand {
 
     @Override
     public void announce(IGameObserver observer) {
-        boolean corto = kingTo.getColumn() > kingFrom.getColumn();
-        observer.onCastling(color, corto);
+        boolean kingSide = kingTo.getColumn() > kingFrom.getColumn();
+        observer.onCastling(color, kingSide);
     }
 }

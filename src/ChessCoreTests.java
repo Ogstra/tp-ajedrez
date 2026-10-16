@@ -135,10 +135,10 @@ public class ChessCoreTests {
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
 
         // Act
-        boolean puedeAvanzar = board.pieceAt(at("e2")).possibleMoves(board, at("e2")).contains(at("e3"));
+        boolean canAdvance = board.pieceAt(at("e2")).possibleMoves(board, at("e2")).contains(at("e3"));
 
         // Assert
-        assertTrue("Peon_AvanzaUnPaso", puedeAvanzar, "e2->e3 debería ser un movimiento posible");
+        assertTrue("Peon_AvanzaUnPaso", canAdvance, "e2->e3 debería ser un movimiento posible");
     }
 
     private static void testPawnCannotCaptureStraightAhead() {
@@ -148,10 +148,10 @@ public class ChessCoreTests {
         board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("e3"));
 
         // Act
-        boolean intentaCapturarDeFrente = board.pieceAt(at("e2")).possibleMoves(board, at("e2")).contains(at("e3"));
+        boolean attemptsForwardCapture = board.pieceAt(at("e2")).possibleMoves(board, at("e2")).contains(at("e3"));
 
         // Assert
-        assertTrue("Peon_NoCapturaDeFrente", !intentaCapturarDeFrente,
+        assertTrue("Peon_NoCapturaDeFrente", !attemptsForwardCapture,
             "un peón no debería poder capturar la pieza que tiene justo enfrente");
     }
 
@@ -272,9 +272,9 @@ public class ChessCoreTests {
         return board;
     }
 
-    private static boolean hasPiece(Board board, String square, PieceType tipo) {
+    private static boolean hasPiece(Board board, String square, PieceType type) {
         Piece p = board.pieceAt(at(square));
-        return p != null && p.getType().equals(tipo);
+        return p != null && p.getType().equals(type);
     }
 
     private static void testShortCastlingMovesKingAndRook() {
