@@ -6,7 +6,8 @@ import nucleo.ISpecialMove;
 import nucleo.PieceFactory;
 import nucleo.especiales.CastlingMove;
 import nucleo.especiales.PromotionMove;
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 
 import javax.swing.SwingUtilities;
 import java.util.Arrays;
@@ -27,7 +28,10 @@ public class MainSwing {
             List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                 new CastlingMove(),
                 new PromotionMove(pieces, view));
-            ChessGame game = new ChessGame(board, Collections.<IGameObserver>singletonList(view), specialMoves);
+            ChessGame game = new ChessGame(board,
+                Collections.<IMoveListener>singletonList(view),
+                Collections.<IGameStatusListener>singletonList(view),
+                specialMoves);
 
             view.attachGame(game);
             view.render(board);

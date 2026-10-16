@@ -1,9 +1,10 @@
 package nucleo;
 
-// State (Clase 3): cada estado sabe de quién es el turno y a qué estado
-// transicionar. Agregar una fase nueva (por ejemplo un futuro estado de
-// jaque) sería agregar una clase, sin tocar las que ya existen.
+// State (Clase 3): cada estado sabe de quién es el turno, si la partida
+// terminó y a qué estado pasa después de una jugada. Los estados terminales
+// (mate, ahogado) devuelven this: de ahí no se sale jugando, solo deshaciendo.
 public interface IGameState {
     Color currentColor();
-    IGameState handleMove();
+    boolean isOver();
+    IGameState afterMove();
 }

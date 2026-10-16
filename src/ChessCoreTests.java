@@ -1,3 +1,4 @@
+import java.util.Collections;
 import nucleo.CastlingCommand;
 import nucleo.Move;
 import nucleo.Board;
@@ -16,7 +17,8 @@ import nucleo.especiales.CastlingMove;
 import nucleo.especiales.PromotionMove;
 import nucleo.estrategias.KnightMovementStrategy;
 import nucleo.estrategias.RookMovementStrategy;
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 
 import java.util.ArrayList;
@@ -78,6 +80,8 @@ public class ChessCoreTests {
         testMoveValueEquality();
         testCommandsExposeTheirMove();
 
+        testUndoAfterCheckmateReopensTheGame();
+
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -111,26 +115,10 @@ public class ChessCoreTests {
     }
 
     // Mock (Clase 4): registra qué le avisaron, para verificarlo en el Assert.
-    private static class RecordingObserver implements IGameObserver {
-        final List<String> events = new ArrayList<>();
 
-        @Override public void onMoveMade(Position from, Position to, Piece piece, Piece captured) { events.add("move"); }
-        @Override public void onInvalidMove(String reason) { events.add("invalid"); }
-        @Override public void onCheck(Color colorInCheck) { events.add("check"); }
-        @Override public void onCheckmate(Color winnerColor) { events.add("checkmate"); }
-        @Override public void onStalemate() { events.add("stalemate"); }
-        @Override public void onUndo() { events.add("undo"); }
-        @Override public void onCastling(Color color, boolean kingSide) { events.add("castling"); }
-        @Override public void onPromotion(Color color, Position pos, PieceType newPiece) { events.add("promotion"); }
-    }
 
     // El armado que hace Main, sin consola: enroque + coronación (siempre a reina).
-    private static ChessGame newGame(Board board, IGameObserver... observers) {
-        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-            new CastlingMove(),
-            new PromotionMove(PIECES, new AlwaysQueenChooser()));
-        return new ChessGame(board, Arrays.asList(observers), specialMoves);
-    }
+
 
     // ---------- movimiento de cada pieza ----------
 
@@ -698,12 +686,7 @@ public class ChessCoreTests {
         }
     }
 
-    private static ChessGame newGameChoosing(Board board, PieceType choice) {
-        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-            new CastlingMove(),
-            new PromotionMove(PIECES, new FixedChooser(choice)));
-        return new ChessGame(board, Arrays.<IGameObserver>asList(), specialMoves);
-    }
+
 
     private static Board boardWithPawnOnSeventh() {
         Board board = new Board();
@@ -798,5 +781,60 @@ public class ChessCoreTests {
             simple.getMove().equals(new Move(at("e2"), at("e4")))
                 && castling.getMove().equals(new Move(at("e1"), at("g1"))),
             "el enroque se representa con el movimiento del rey");
+    }
+    // TDD: se puede deshacer la jugada que terminó la partida y seguir jugando.
+    private static void testUndoAfterCheckmateReopensTheGame() {
+        // Arrange: mate del loco.
+        ChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("f2"), at("f3"));
+        game.tryMove(at("e7"), at("e5"));
+        game.tryMove(at("g2"), at("g4"));
+        game.tryMove(at("d8"), at("h4"));
+
+        // Act
+        boolean undone = game.undo();
+        MoveOutcome again = game.tryMove(at("d8"), at("h4"));
+
+        // Assert
+        assertTrue("testUndoAfterCheckmateReopensTheGame",
+            undone && again == MoveOutcome.CHECKMATE && game.isGameOver(),
+            "al deshacer el mate la partida sigue; al repetir la jugada vuelve a terminar");
+    }
+    // Mock (Clase 4): registra qué le avisaron, para verificarlo en el Assert.
+    private static class RecordingObserver implements IMoveListener, IGameStatusListener {
+        final List<String> events = new ArrayList<>();
+
+        @Override public void onMoveMade(Position from, Position to, Piece piece, Piece captured) { events.add("move"); }
+        @Override public void onCastling(Color color, boolean kingside) { events.add("castling"); }
+        @Override public void onPromotion(Color color, Position position, PieceType newPiece) { events.add("promotion"); }
+        @Override public void onUndo() { events.add("undo"); }
+        @Override public void onInvalidMove(String reason) { events.add("invalid"); }
+        @Override public void onCheck(Color colorInCheck) { events.add("check"); }
+        @Override public void onCheckmate(Color winner) { events.add("checkmate"); }
+        @Override public void onStalemate() { events.add("stalemate"); }
+    }
+
+    // El armado que hace Main, sin consola. Un solo lugar para armar partidas de prueba.
+    private static ChessGame buildGame(Board board, List<IMoveListener> moveListeners,
+                                       List<IGameStatusListener> statusListeners, IPromotionChooser chooser) {
+        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
+            new CastlingMove(),
+            new PromotionMove(PIECES, chooser));
+        return new ChessGame(board, moveListeners, statusListeners, specialMoves);
+    }
+
+    private static ChessGame newGame(Board board) {
+        return buildGame(board, new ArrayList<IMoveListener>(), new ArrayList<IGameStatusListener>(),
+            new AlwaysQueenChooser());
+    }
+
+    private static ChessGame newGame(Board board, RecordingObserver observer) {
+        return buildGame(board, Collections.<IMoveListener>singletonList(observer),
+            Collections.<IGameStatusListener>singletonList(observer), new AlwaysQueenChooser());
+    }
+
+    private static ChessGame newGameChoosing(Board board, PieceType choice) {
+        return buildGame(board, new ArrayList<IMoveListener>(), new ArrayList<IGameStatusListener>(),
+            new FixedChooser(choice));
     }
 }

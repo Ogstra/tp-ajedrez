@@ -6,7 +6,8 @@ import nucleo.Color;
 import nucleo.Piece;
 import nucleo.PieceType;
 import nucleo.Position;
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 
 import javax.imageio.ImageIO;
@@ -32,7 +33,7 @@ import java.util.Map;
 // mouse en llamadas a ChessGame.tryMove(): el mismo rol que cumple Main.java
 // con el teclado, pero con Swing. ChessGame no se modificó en absoluto para
 // que esto funcione: es exactamente el punto de la frontera núcleo/adaptador.
-public class SwingChessView extends JFrame implements IGameObserver, IPromotionChooser {
+public class SwingChessView extends JFrame implements IMoveListener, IGameStatusListener, IPromotionChooser {
 
     private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
     private static final java.awt.Color DARK = new java.awt.Color(0x76, 0x96, 0x56);

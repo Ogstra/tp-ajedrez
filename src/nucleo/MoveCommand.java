@@ -1,6 +1,6 @@
 package nucleo;
 
-import puertos.IGameObserver;
+import puertos.IMoveListener;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,8 +46,8 @@ public class MoveCommand implements IMoveCommand {
     }
 
     @Override
-    public void announce(IGameObserver observer) {
-        observer.onMoveMade(from, to, movedPiece, capturedPiece);
+    public void announce(IMoveListener listener) {
+        listener.onMoveMade(from, to, movedPiece, capturedPiece);
     }
     @Override
     public Move getMove() {

@@ -1,6 +1,7 @@
 package nucleo;
 
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -11,29 +12,40 @@ import java.util.List;
 // consola, UI ni ningún detalle técnico: solo reglas de negocio del
 // ajedrez. Todo lo que puede variar entra por constructor, inyectado y
 // contra una interfaz (Clase 3: DIP + inyección de dependencias nivel 4):
-// los observers (cómo se avisa lo que pasa) y las reglas especiales (enroque,
-// coronación, lo que se sume). ChessGame no sabe cuáles son ni cuántas.
+// los listeners (cómo se avisa lo que pasa) y las reglas especiales
+// (enroque, coronación, lo que se sume). ChessGame no sabe cuáles son.
 public class ChessGame implements IGameContext {
     private final Board board;
-    private final List<IGameObserver> observers;
+    private final List<IMoveListener> moveListeners;
+    private final List<IGameStatusListener> statusListeners;
     private final List<ISpecialMove> specialMoves;
-    private final Deque<IMoveCommand> history = new ArrayDeque<>();
-    private IGameState state = new WhiteTurnState();
-    private boolean gameOver = false;
+    private final Deque<HistoryEntry> history = new ArrayDeque<>();
+    private IGameState state;
 
-    public ChessGame(Board board, List<IGameObserver> observers, List<ISpecialMove> specialMoves) {
+    public ChessGame(Board board, List<IMoveListener> moveListeners,
+                     List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves) {
+        this(board, moveListeners, statusListeners, specialMoves, Color.WHITE);
+    }
+
+    // Con firstToMove se arma una partida que arranca con el turno de las negras
+    // (la usa la IA para buscar jugadas desde una posición a mitad de partida).
+    public ChessGame(Board board, List<IMoveListener> moveListeners,
+                     List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
+                     Color firstToMove) {
         this.board = board;
-        this.observers = observers;
+        this.moveListeners = moveListeners;
+        this.statusListeners = statusListeners;
         this.specialMoves = specialMoves;
+        this.state = firstToMove == Color.WHITE ? new WhiteTurnState() : new BlackTurnState();
     }
 
     @Override
     public Board getBoard() { return board; }
     public Color getTurn() { return state.currentColor(); }
-    public boolean isGameOver() { return gameOver; }
+    public boolean isGameOver() { return state.isOver(); }
 
     public MoveOutcome tryMove(Position from, Position to) {
-        if (gameOver) {
+        if (state.isOver()) {
             notifyInvalid("La partida ya terminó.");
             return MoveOutcome.INVALID;
         }
@@ -55,48 +67,51 @@ public class ChessGame implements IGameContext {
 
         IMoveCommand command = createCommand(from, to);
         command.execute();
-        history.push(command);
+        HistoryEntry entry = new HistoryEntry(command, state);
+        history.push(entry);
 
-        Color currentTurn = state.currentColor();
-        Color opponent = currentTurn.opposite();
-        state = state.handleMove();
+        Color mover = state.currentColor();
+        Color opponent = mover.opposite();
+        state = state.afterMove();
 
-        for (IGameObserver o : observers) command.announce(o);
+        for (IMoveListener listener : moveListeners) command.announce(listener);
 
         boolean check = isInCheck(opponent, board);
         boolean hasMoves = hasAnyLegalMove(opponent);
 
+        MoveOutcome outcome;
         if (check && !hasMoves) {
-            gameOver = true;
-            for (IGameObserver o : observers) o.onCheckmate(currentTurn);
-            return MoveOutcome.CHECKMATE;
+            state = new CheckmateState(opponent);
+            for (IGameStatusListener listener : statusListeners) listener.onCheckmate(mover);
+            outcome = MoveOutcome.CHECKMATE;
+        } else if (!check && !hasMoves) {
+            state = new StalemateState(opponent);
+            for (IGameStatusListener listener : statusListeners) listener.onStalemate();
+            outcome = MoveOutcome.STALEMATE;
+        } else if (check) {
+            for (IGameStatusListener listener : statusListeners) listener.onCheck(opponent);
+            outcome = MoveOutcome.CHECK;
+        } else {
+            outcome = MoveOutcome.OK;
         }
-        if (!check && !hasMoves) {
-            gameOver = true;
-            for (IGameObserver o : observers) o.onStalemate();
-            return MoveOutcome.STALEMATE;
-        }
-        if (check) {
-            for (IGameObserver o : observers) o.onCheck(opponent);
-            return MoveOutcome.CHECK;
-        }
-        return MoveOutcome.OK;
+        entry.stateAfter = state;
+        return outcome;
     }
 
     public boolean undo() {
-        if (history.isEmpty() || gameOver) return false;
-        IMoveCommand command = history.pop();
-        command.undo();
-        state = state.handleMove(); // alternar el turno dos veces vuelve al mismo: sirve para deshacer.
-        for (IGameObserver o : observers) o.onUndo();
+        if (history.isEmpty()) return false;
+        HistoryEntry entry = history.pop();
+        entry.command.undo();
+        state = entry.stateBefore;
+        for (IMoveListener listener : moveListeners) listener.onUndo();
         return true;
     }
 
     // IGameContext: lo que las reglas especiales pueden preguntar.
     @Override
     public boolean hasBeenTouched(Position pos) {
-        for (IMoveCommand command : history) {
-            if (command.touchedSquares().contains(pos)) return true;
+        for (HistoryEntry entry : history) {
+            if (entry.command.touchedSquares().contains(pos)) return true;
         }
         return false;
     }
@@ -117,7 +132,7 @@ public class ChessGame implements IGameContext {
     }
 
     private void notifyInvalid(String reason) {
-        for (IGameObserver o : observers) o.onInvalidMove(reason);
+        for (IGameStatusListener listener : statusListeners) listener.onInvalidMove(reason);
     }
 
     // Movimientos legales de una pieza: los pseudo-legales de su Strategy

@@ -10,7 +10,8 @@ import nucleo.PieceFactory;
 import nucleo.Position;
 import nucleo.especiales.CastlingMove;
 import nucleo.especiales.PromotionMove;
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 
 import java.util.Arrays;
@@ -34,7 +35,10 @@ public class Main {
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
             new PromotionMove(pieces, chooser));
-        ChessGame game = new ChessGame(board, Collections.<IGameObserver>singletonList(renderer), specialMoves);
+        ChessGame game = new ChessGame(board,
+            Collections.<IMoveListener>singletonList(renderer),
+            Collections.<IGameStatusListener>singletonList(renderer),
+            specialMoves);
 
         renderer.render(board);
 

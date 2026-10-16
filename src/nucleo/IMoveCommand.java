@@ -1,6 +1,6 @@
 package nucleo;
 
-import puertos.IGameObserver;
+import puertos.IMoveListener;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
 //     en vez de un if por tipo).
 public interface IMoveCommand extends ICommand {
     List<Position> touchedSquares();
-    void announce(IGameObserver observer);
+    void announce(IMoveListener observer);
     // La jugada que representa (en el enroque, el movimiento del rey).
     Move getMove();
 }

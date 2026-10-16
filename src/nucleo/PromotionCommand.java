@@ -1,6 +1,6 @@
 package nucleo;
 
-import puertos.IGameObserver;
+import puertos.IMoveListener;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,9 +47,9 @@ public class PromotionCommand implements IMoveCommand {
     }
 
     @Override
-    public void announce(IGameObserver observer) {
-        observer.onMoveMade(from, to, originalPawn, capturedPiece);
-        observer.onPromotion(promotedPiece.getColor(), to, promotedPiece.getType());
+    public void announce(IMoveListener listener) {
+        listener.onMoveMade(from, to, originalPawn, capturedPiece);
+        listener.onPromotion(promotedPiece.getColor(), to, promotedPiece.getType());
     }
     @Override
     public Move getMove() {

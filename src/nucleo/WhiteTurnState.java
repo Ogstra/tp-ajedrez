@@ -5,5 +5,8 @@ public class WhiteTurnState implements IGameState {
     public Color currentColor() { return Color.WHITE; }
 
     @Override
-    public IGameState handleMove() { return new BlackTurnState(); }
+    public boolean isOver() { return false; }
+
+    @Override
+    public IGameState afterMove() { return new BlackTurnState(); }
 }

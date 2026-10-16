@@ -5,7 +5,8 @@ import nucleo.Color;
 import nucleo.Piece;
 import nucleo.PieceType;
 import nucleo.Position;
-import puertos.IGameObserver;
+import puertos.IGameStatusListener;
+import puertos.IMoveListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,7 @@ import java.util.Map;
 // símbolos unicode y los nombres en español son un detalle de presentación,
 // por eso viven acá y no en PieceType. Una pieza que este adaptador no
 // conoce (una nueva del núcleo) se dibuja con la inicial de su nombre.
-public class ConsoleRenderer implements IGameObserver {
+public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
 
     private static final Map<PieceType, String> WHITE_SYMBOLS = new HashMap<>();
     private static final Map<PieceType, String> BLACK_SYMBOLS = new HashMap<>();

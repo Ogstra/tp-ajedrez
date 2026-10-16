@@ -1,6 +1,6 @@
 package nucleo;
 
-import puertos.IGameObserver;
+import puertos.IMoveListener;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,9 +44,9 @@ public class CastlingCommand implements IMoveCommand {
     }
 
     @Override
-    public void announce(IGameObserver observer) {
-        boolean kingSide = kingTo.getColumn() > kingFrom.getColumn();
-        observer.onCastling(color, kingSide);
+    public void announce(IMoveListener listener) {
+        boolean kingside = kingTo.getColumn() > kingFrom.getColumn();
+        listener.onCastling(color, kingside);
     }
     @Override
     public Move getMove() {
