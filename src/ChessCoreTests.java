@@ -1,3 +1,4 @@
+import nucleo.IGameContext;
 import nucleo.especiales.EnPassantMove;
 import nucleo.IDrawRule;
 import nucleo.tablas.FiftyMoveRule;
@@ -104,6 +105,7 @@ public class ChessCoreTests {
         testEnPassantIsAllowedRightAfterTheDoubleStep();
         testEnPassantExpiresAfterOneMove();
         testEnPassantUndoRestoresTheCapturedPawn();
+        testNewDrawRuleWithoutTouchingExistingClasses();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -1170,5 +1172,24 @@ public class ChessCoreTests {
         // Assert
         assertTrue("testEnPassantUndoRestoresTheCapturedPawn", afterDoubleStep.equals(board),
             "al deshacer vuelven el peón blanco a e5 y el negro a d5");
+    }
+    // Una regla de tablas inventada en el test: declara tablas apenas hay una jugada hecha.
+    private static class AlwaysDrawRule implements IDrawRule {
+        @Override
+        public String reason(IGameContext context) {
+            return context.lastMove() != null ? "regla de prueba" : null;
+        }
+    }
+
+    private static void testNewDrawRuleWithoutTouchingExistingClasses() {
+        // Arrange
+        IChessGame game = newGameWithDrawRules(BoardSetup.standard(PIECES), new AlwaysDrawRule());
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e2"), at("e4"));
+
+        // Assert
+        assertTrue("testNewDrawRuleWithoutTouchingExistingClasses", outcome == MoveOutcome.DRAW,
+            "una regla de tablas nueva se enchufa por constructor sin editar ChessGame");
     }
 }
