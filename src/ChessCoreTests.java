@@ -60,6 +60,14 @@ public class ChessCoreTests {
         testPawnDoubleStepOnlyFromStartAndWithFreePath();
         testPawnCapturesOnlyDiagonally();
 
+        testRookCapturesThroughTryMove();
+        testInvalidMoveLeavesBoardUntouched();
+        testPinnedPieceCannotMove();
+        testStalemateEndsTheGame();
+        testFinishedGameRejectsMoves();
+        testUndoRestoresTheTurn();
+        testInvalidMoveNotifiesObserver();
+
         System.out.println("\n" + pasados + " pasados, " + fallados + " fallados.");
         System.exit(fallados > 0 ? 1 : 0);
     }
@@ -548,5 +556,120 @@ public class ChessCoreTests {
             withEnemies.contains(at("d5")) && withEnemies.contains(at("f5")) && withEnemies.contains(at("e5"))
                 && !withoutEnemies.contains(at("d5")) && !withoutEnemies.contains(at("f5")),
             "el peón captura en diagonal solo si hay una pieza rival, y avanza recto");
+    }
+    // ---------- reglas de la partida ----------
+
+    private static void testRookCapturesThroughTryMove() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("h8"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("a5"));
+        ChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("a1"), at("a5"));
+
+        // Assert
+        assertTrue("testRookCapturesThroughTryMove",
+            outcome == MoveOutcome.OK && hay(board, "a5", PieceType.ROOK)
+                && board.pieceAt(at("a5")).getColor() == Color.WHITE,
+            "la torre blanca debería quedar en a5 después de capturar el peón");
+    }
+
+    private static void testInvalidMoveLeavesBoardUntouched() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("h8"));
+        Board before = board.cloneBoard();
+        ChessGame game = newGame(board);
+
+        // Act: la torre no se mueve en diagonal.
+        MoveOutcome outcome = game.tryMove(at("a1"), at("b2"));
+
+        // Assert
+        assertTrue("testInvalidMoveLeavesBoardUntouched",
+            outcome == MoveOutcome.INVALID && before.equals(board),
+            "un movimiento inválido no debe cambiar el tablero");
+    }
+
+    private static void testPinnedPieceCannotMove() {
+        // Arrange: el alfil blanco en e2 está clavado a su rey por la torre negra de e8.
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("e2"));
+        board.placePiece(piece(PieceType.ROOK, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("h8"));
+        ChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e2"), at("d3"));
+
+        // Assert
+        assertTrue("testPinnedPieceCannotMove", outcome == MoveOutcome.INVALID,
+            "mover el alfil dejaría al rey en jaque por la columna e");
+    }
+
+    private static void testStalemateEndsTheGame() {
+        // Arrange: ahogado clásico. Si la reina blanca va a g3, el rey negro de h1 no tiene casillas y no está en jaque.
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("f2"));
+        board.placePiece(piece(PieceType.QUEEN, Color.WHITE), at("g5"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("h1"));
+        ChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("g5"), at("g3"));
+
+        // Assert
+        assertTrue("testStalemateEndsTheGame", outcome == MoveOutcome.STALEMATE && game.isGameOver(),
+            "Dg3 deja a las negras sin movimientos y sin jaque: ahogado");
+    }
+
+    private static void testFinishedGameRejectsMoves() {
+        // Arrange: mate del loco.
+        ChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("f2"), at("f3"));
+        game.tryMove(at("e7"), at("e5"));
+        game.tryMove(at("g2"), at("g4"));
+        game.tryMove(at("d8"), at("h4"));
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e2"), at("e3"));
+
+        // Assert
+        assertTrue("testFinishedGameRejectsMoves", outcome == MoveOutcome.INVALID,
+            "con la partida terminada no se puede mover");
+    }
+
+    private static void testUndoRestoresTheTurn() {
+        // Arrange
+        ChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+
+        // Act
+        boolean undone = game.undo();
+        MoveOutcome blackFirst = game.tryMove(at("e7"), at("e5"));
+
+        // Assert
+        assertTrue("testUndoRestoresTheTurn",
+            undone && game.getTurn() == Color.WHITE && blackFirst == MoveOutcome.INVALID,
+            "después de deshacer la jugada blanca, vuelve a mover blancas");
+    }
+
+    private static void testInvalidMoveNotifiesObserver() {
+        // Arrange
+        RecordingObserver observer = new RecordingObserver();
+        ChessGame game = newGame(BoardSetup.standard(PIECES), observer);
+
+        // Act
+        game.tryMove(at("e7"), at("e5"));
+
+        // Assert
+        assertTrue("testInvalidMoveNotifiesObserver", observer.events.equals(Arrays.asList("invalid")),
+            "esperaba [invalid] y llegó " + observer.events);
     }
 }
