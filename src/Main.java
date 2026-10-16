@@ -46,7 +46,7 @@ public class Main {
         System.out.println("Ajedrez: TP Ingeniería de Software (UADE)");
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace. 'salir' termina.");
 
-        while (!game.isGameOver()) {
+        while (true) {
             System.out.print("\nTurno de " + (game.getTurn() == Color.WHITE ? "Blancas" : "Negras") + " > ");
             if (!scanner.hasNextLine()) break;
             String input = scanner.nextLine().trim();
