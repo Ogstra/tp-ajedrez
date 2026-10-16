@@ -280,4 +280,9 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     public void onPromotion(Color color, Position pos, PieceType newPiece) {
         status.setText(name(color) + ": corona en " + pos + " a " + name(newPiece) + ".");
     }
+    @Override
+    public void onDraw(String reason) {
+        status.setText("Tablas: " + reason + ".");
+        JOptionPane.showMessageDialog(this, "Tablas: " + reason + ".");
+    }
 }

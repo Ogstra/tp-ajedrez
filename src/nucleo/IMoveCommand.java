@@ -16,4 +16,6 @@ public interface IMoveCommand extends ICommand {
     void announce(IMoveListener observer);
     // La jugada que representa (en el enroque, el movimiento del rey).
     Move getMove();
+    // true si la jugada mueve un peón o captura (reinicia el contador de los 50 movimientos).
+    boolean resetsHalfMoveClock();
 }

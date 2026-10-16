@@ -53,4 +53,8 @@ public class MoveCommand implements IMoveCommand {
     public Move getMove() {
         return new Move(from, to);
     }
+    @Override
+    public boolean resetsHalfMoveClock() {
+        return movedPiece.getType().equals(PieceType.PAWN) || capturedPiece != null;
+    }
 }

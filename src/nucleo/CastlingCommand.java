@@ -52,4 +52,8 @@ public class CastlingCommand implements IMoveCommand {
     public Move getMove() {
         return new Move(kingFrom, kingTo);
     }
+    @Override
+    public boolean resetsHalfMoveClock() {
+        return false;
+    }
 }

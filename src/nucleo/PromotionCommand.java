@@ -55,4 +55,8 @@ public class PromotionCommand implements IMoveCommand {
     public Move getMove() {
         return new Move(from, to);
     }
+    @Override
+    public boolean resetsHalfMoveClock() {
+        return true;
+    }
 }

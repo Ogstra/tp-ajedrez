@@ -8,4 +8,5 @@ public interface IGameStatusListener {
     void onCheck(Color colorInCheck);
     void onCheckmate(Color winner);
     void onStalemate();
+    void onDraw(String reason);
 }

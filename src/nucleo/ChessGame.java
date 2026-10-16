@@ -12,38 +12,48 @@ import java.util.List;
 // consola, UI ni ningún detalle técnico: solo reglas de negocio del
 // ajedrez. Todo lo que puede variar entra por constructor, inyectado y
 // contra una interfaz (Clase 3: DIP + inyección de dependencias nivel 4):
-// los listeners (cómo se avisa lo que pasa) y las reglas especiales
-// (enroque, coronación, lo que se sume). ChessGame no sabe cuáles son.
+// los listeners (cómo se avisa lo que pasa), las reglas especiales
+// (enroque, coronación, captura al paso) y las reglas de tablas.
+// ChessGame no sabe cuáles son ni cuántas.
 public class ChessGame implements IChessGame, IGameContext {
     private final Board board;
     private final List<IMoveListener> moveListeners;
     private final List<IGameStatusListener> statusListeners;
     private final List<ISpecialMove> specialMoves;
+    private final List<IDrawRule> drawRules;
     private final Deque<HistoryEntry> history = new ArrayDeque<>();
     private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
+    private final Board initialBoard;
+    private final Color initialColor;
     private IGameState state;
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
-                     List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves) {
-        this(board, moveListeners, statusListeners, specialMoves, Color.WHITE);
+                     List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
+                     List<IDrawRule> drawRules) {
+        this(board, moveListeners, statusListeners, specialMoves, drawRules, Color.WHITE);
     }
 
     // Con firstToMove se arma una partida que arranca con el turno de las negras
     // (la usa la IA para buscar jugadas desde una posición a mitad de partida).
     public ChessGame(Board board, List<IMoveListener> moveListeners,
                      List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
-                     Color firstToMove) {
+                     List<IDrawRule> drawRules, Color firstToMove) {
         this.board = board;
         this.moveListeners = moveListeners;
         this.statusListeners = statusListeners;
         this.specialMoves = specialMoves;
+        this.drawRules = drawRules;
+        this.initialBoard = board.cloneBoard();
+        this.initialColor = firstToMove;
         this.state = firstToMove == Color.WHITE ? new WhiteTurnState() : new BlackTurnState();
     }
 
     @Override
     public Board getBoard() { return board; }
+
     @Override
     public Color getTurn() { return state.currentColor(); }
+
     @Override
     public boolean isGameOver() { return state.isOver(); }
 
@@ -72,12 +82,13 @@ public class ChessGame implements IChessGame, IGameContext {
         redoStack.clear(); // una jugada nueva borra lo que se podía rehacer
         IMoveCommand command = createCommand(from, to);
         command.execute();
-        HistoryEntry entry = new HistoryEntry(command, state);
+        HistoryEntry entry = new HistoryEntry(command, state, board.cloneBoard());
         history.push(entry);
 
         Color mover = state.currentColor();
         Color opponent = mover.opposite();
         state = state.afterMove();
+        entry.stateAfter = state;
 
         for (IMoveListener listener : moveListeners) command.announce(listener);
 
@@ -93,11 +104,18 @@ public class ChessGame implements IChessGame, IGameContext {
             state = new StalemateState(opponent);
             for (IGameStatusListener listener : statusListeners) listener.onStalemate();
             outcome = MoveOutcome.STALEMATE;
-        } else if (check) {
-            for (IGameStatusListener listener : statusListeners) listener.onCheck(opponent);
-            outcome = MoveOutcome.CHECK;
         } else {
-            outcome = MoveOutcome.OK;
+            String drawReason = findDrawReason();
+            if (drawReason != null) {
+                state = new DrawState(opponent, drawReason);
+                for (IGameStatusListener listener : statusListeners) listener.onDraw(drawReason);
+                outcome = MoveOutcome.DRAW;
+            } else if (check) {
+                for (IGameStatusListener listener : statusListeners) listener.onCheck(opponent);
+                outcome = MoveOutcome.CHECK;
+            } else {
+                outcome = MoveOutcome.OK;
+            }
         }
         entry.stateAfter = state;
         return outcome;
@@ -128,7 +146,19 @@ public class ChessGame implements IChessGame, IGameContext {
         return true;
     }
 
-    // IGameContext: lo que las reglas especiales pueden preguntar.
+    @Override
+    public List<Move> legalMoves() {
+        List<Move> moves = new ArrayList<>();
+        if (state.isOver()) return moves;
+        for (Position from : board.positionsOfColor(state.currentColor())) {
+            for (Position to : legalMovesFrom(from)) {
+                moves.add(new Move(from, to));
+            }
+        }
+        return moves;
+    }
+
+    // IGameContext: lo que las reglas pueden preguntar.
     @Override
     public boolean hasBeenTouched(Position pos) {
         for (HistoryEntry entry : history) {
@@ -140,6 +170,39 @@ public class ChessGame implements IChessGame, IGameContext {
     @Override
     public boolean isAttacked(Position pos, Color color) {
         return isAttackedOn(board, pos, color);
+    }
+
+    @Override
+    public Move lastMove() {
+        return history.isEmpty() ? null : history.peek().command.getMove();
+    }
+
+    @Override
+    public int halfMoveClock() {
+        int count = 0;
+        for (HistoryEntry entry : history) { // de la más reciente a la más vieja
+            if (entry.command.resetsHalfMoveClock()) break;
+            count++;
+        }
+        return count;
+    }
+
+    @Override
+    public int occurrencesOfCurrentPosition() {
+        Color toMove = state.currentColor();
+        int count = (initialColor == toMove && initialBoard.equals(board)) ? 1 : 0;
+        for (HistoryEntry entry : history) {
+            if (entry.stateAfter.currentColor() == toMove && entry.boardAfter.equals(board)) count++;
+        }
+        return count;
+    }
+
+    private String findDrawReason() {
+        for (IDrawRule rule : drawRules) {
+            String reason = rule.reason(this);
+            if (reason != null) return reason;
+        }
+        return null;
     }
 
     // La primera regla especial que reconozca la jugada arma su comando; si
@@ -204,16 +267,5 @@ public class ChessGame implements IChessGame, IGameContext {
             }
         }
         return false;
-    }
-    @Override
-    public List<Move> legalMoves() {
-        List<Move> moves = new ArrayList<>();
-        if (state.isOver()) return moves;
-        for (Position from : board.positionsOfColor(state.currentColor())) {
-            for (Position to : legalMovesFrom(from)) {
-                moves.add(new Move(from, to));
-            }
-        }
-        return moves;
     }
 }

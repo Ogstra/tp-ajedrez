@@ -1,3 +1,7 @@
+import nucleo.IDrawRule;
+import nucleo.tablas.FiftyMoveRule;
+import nucleo.tablas.InsufficientMaterialRule;
+import nucleo.tablas.ThreefoldRepetitionRule;
 import nucleo.IChessGame;
 import java.util.Collections;
 import nucleo.CastlingCommand;
@@ -90,6 +94,12 @@ public class ChessCoreTests {
         testNewMoveClearsRedo();
         testRedoOfPromotionDoesNotAskAgain();
 
+        testKingAgainstKingIsDraw();
+        testInsufficientMaterialCases();
+        testFiftyMoveRuleDeclaresDraw();
+        testThreefoldRepetitionDeclaresDraw();
+        testUndoAfterDrawReopensTheGame();
+        testStatusListenerReceivesDraw();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -771,6 +781,8 @@ public class ChessCoreTests {
 
     private static Board boardWithPawnOnSeventh() {
         Board board = new Board();
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("h7"));
+
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("a7"));
         board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
         board.placePiece(piece(PieceType.KING, Color.BLACK), at("h4"));
@@ -889,6 +901,7 @@ public class ChessCoreTests {
         @Override public void onCastling(Color color, boolean kingside) { events.add("castling"); }
         @Override public void onPromotion(Color color, Position position, PieceType newPiece) { events.add("promotion"); }
         @Override public void onUndo() { events.add("undo"); }
+        @Override public void onDraw(String reason) { events.add("draw"); }
         @Override public void onRedo() { events.add("redo"); }
         @Override public void onInvalidMove(String reason) { events.add("invalid"); }
         @Override public void onCheck(Color colorInCheck) { events.add("check"); }
@@ -898,11 +911,27 @@ public class ChessCoreTests {
 
     // El armado que hace Main, sin consola. Un solo lugar para armar partidas de prueba.
     private static ChessGame buildGame(Board board, List<IMoveListener> moveListeners,
-                                       List<IGameStatusListener> statusListeners, IPromotionChooser chooser) {
+                                       List<IGameStatusListener> statusListeners,
+                                       IPromotionChooser chooser, List<IDrawRule> drawRules) {
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
             new PromotionMove(PIECES, chooser));
-        return new ChessGame(board, moveListeners, statusListeners, specialMoves);
+        return new ChessGame(board, moveListeners, statusListeners, specialMoves, drawRules);
+    }
+
+    private static List<IDrawRule> standardDrawRules() {
+        return Arrays.<IDrawRule>asList(
+            new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule());
+    }
+
+    private static ChessGame buildGame(Board board, List<IMoveListener> moveListeners,
+                                       List<IGameStatusListener> statusListeners, IPromotionChooser chooser) {
+        return buildGame(board, moveListeners, statusListeners, chooser, standardDrawRules());
+    }
+
+    private static ChessGame newGameWithDrawRules(Board board, IDrawRule... rules) {
+        return buildGame(board, new ArrayList<IMoveListener>(), new ArrayList<IGameStatusListener>(),
+            new AlwaysQueenChooser(), Arrays.asList(rules));
     }
 
     private static ChessGame newGame(Board board) {
@@ -932,5 +961,146 @@ public class ChessCoreTests {
             moves.size() == 20 && moves.contains(new Move(at("e2"), at("e4")))
                 && moves.contains(new Move(at("g1"), at("f3"))),
             "al empezar hay 20 jugadas legales (16 de peón y 4 de caballo)");
+    }
+    // TDD: rey contra rey son tablas.
+    private static void testKingAgainstKingIsDraw() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        IChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e1"), at("e2"));
+
+        // Assert
+        assertTrue("testKingAgainstKingIsDraw", outcome == MoveOutcome.DRAW && game.isGameOver(),
+            "con solo dos reyes no hay forma de ganar");
+    }
+
+    // TDD
+    private static void testInsufficientMaterialCases() {
+        // Arrange: cuatro tableros. Caso por caso: [rey+alfil vs rey, rey+torre vs rey,
+        // alfiles del mismo color, alfiles de distinto color].
+        Board bishopVsKing = new Board();
+        bishopVsKing.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        bishopVsKing.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("c1"));
+        bishopVsKing.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+
+        Board rookVsKing = new Board();
+        rookVsKing.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        rookVsKing.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
+        rookVsKing.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+
+        Board sameColorBishops = new Board();
+        sameColorBishops.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        sameColorBishops.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("c1"));
+        sameColorBishops.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        sameColorBishops.placePiece(piece(PieceType.BISHOP, Color.BLACK), at("f8"));
+
+        Board oppositeColorBishops = new Board();
+        oppositeColorBishops.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        oppositeColorBishops.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("c1"));
+        oppositeColorBishops.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        oppositeColorBishops.placePiece(piece(PieceType.BISHOP, Color.BLACK), at("c8"));
+
+        InsufficientMaterialRule rule = new InsufficientMaterialRule();
+
+        // Act
+        boolean a = rule.reason(newGameWithDrawRules(bishopVsKing)) != null;
+        boolean b = rule.reason(newGameWithDrawRules(rookVsKing)) != null;
+        boolean c = rule.reason(newGameWithDrawRules(sameColorBishops)) != null;
+        boolean d = rule.reason(newGameWithDrawRules(oppositeColorBishops)) != null;
+
+        // Assert
+        assertTrue("testInsufficientMaterialCases", a && !b && c && !d,
+            "alfil solo y alfiles del mismo color no alcanzan; torre sola y alfiles de colores distintos sí");
+    }
+
+    // TDD: 100 medias jugadas sin captura ni movimiento de peón (acá el límite es 4 para no jugar 100).
+    private static void testFiftyMoveRuleDeclaresDraw() {
+        // Arrange
+        Board board = rooksOnTheHFile();
+        IChessGame game = newGameWithDrawRules(board, new FiftyMoveRule(4));
+        String[][] moves = {{"h1", "h2"}, {"h8", "h7"}, {"h2", "h1"}, {"h7", "h8"}};
+
+        // Act
+        MoveOutcome last = null;
+        MoveOutcome beforeLast = null;
+        for (int i = 0; i < moves.length; i++) {
+            MoveOutcome outcome = game.tryMove(at(moves[i][0]), at(moves[i][1]));
+            if (i == moves.length - 2) beforeLast = outcome;
+            last = outcome;
+        }
+
+        // Assert
+        assertTrue("testFiftyMoveRuleDeclaresDraw", beforeLast == MoveOutcome.OK && last == MoveOutcome.DRAW,
+            "las tablas llegan recién en la cuarta media jugada sin captura ni peón");
+    }
+
+    private static Board rooksOnTheHFile() {
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("h1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.ROOK, Color.BLACK), at("h8"));
+        return board;
+    }
+
+    // TDD: la misma posición con el mismo turno tres veces.
+    private static void testThreefoldRepetitionDeclaresDraw() {
+        // Arrange: las dos torres van y vienen; la posición inicial reaparece cada 4 medias jugadas.
+        Board board = rooksOnTheHFile();
+        IChessGame game = newGameWithDrawRules(board, new ThreefoldRepetitionRule());
+        String[][] cycle = {{"h1", "h2"}, {"h8", "h7"}, {"h2", "h1"}, {"h7", "h8"}};
+
+        // Act
+        boolean earlyDraw = false;
+        MoveOutcome last = null;
+        for (int round = 0; round < 2; round++) {
+            for (int i = 0; i < cycle.length; i++) {
+                last = game.tryMove(at(cycle[i][0]), at(cycle[i][1]));
+                boolean isFinalMove = round == 1 && i == cycle.length - 1;
+                if (last == MoveOutcome.DRAW && !isFinalMove) earlyDraw = true;
+            }
+        }
+
+        // Assert
+        assertTrue("testThreefoldRepetitionDeclaresDraw", !earlyDraw && last == MoveOutcome.DRAW,
+            "la posición inicial aparece por tercera vez recién en la jugada 8");
+    }
+
+    // TDD: se puede deshacer la jugada que declaró las tablas.
+    private static void testUndoAfterDrawReopensTheGame() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("e2"));
+
+        // Act
+        boolean undone = game.undo();
+
+        // Assert
+        assertTrue("testUndoAfterDrawReopensTheGame", undone && !game.isGameOver(),
+            "al deshacer las tablas la partida sigue");
+    }
+
+    // TDD: los listeners de estado se enteran de las tablas.
+    private static void testStatusListenerReceivesDraw() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        RecordingObserver observer = new RecordingObserver();
+        IChessGame game = newGame(board, observer);
+
+        // Act
+        game.tryMove(at("e1"), at("e2"));
+
+        // Assert
+        assertTrue("testStatusListenerReceivesDraw", observer.events.equals(Arrays.asList("move", "draw")),
+            "esperaba [move, draw] y llegó " + observer.events);
     }
 }

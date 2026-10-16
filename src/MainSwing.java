@@ -1,3 +1,7 @@
+import nucleo.IDrawRule;
+import nucleo.tablas.FiftyMoveRule;
+import nucleo.tablas.InsufficientMaterialRule;
+import nucleo.tablas.ThreefoldRepetitionRule;
 import adaptadores.SwingChessView;
 import nucleo.Board;
 import nucleo.BoardSetup;
@@ -29,10 +33,15 @@ public class MainSwing {
             List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                 new CastlingMove(),
                 new PromotionMove(pieces, view));
-            IChessGame game = new ChessGame(board,
+            List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
+            new InsufficientMaterialRule(),
+            new FiftyMoveRule(),
+            new ThreefoldRepetitionRule());
+
+        IChessGame game = new ChessGame(board,
                 Collections.<IMoveListener>singletonList(view),
                 Collections.<IGameStatusListener>singletonList(view),
-                specialMoves);
+                specialMoves, drawRules);
 
             view.attachGame(game);
             view.render(board);

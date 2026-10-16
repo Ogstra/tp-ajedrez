@@ -117,4 +117,8 @@ public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
     public void onPromotion(Color color, Position pos, PieceType newPiece) {
         System.out.println(name(color) + ": el peón corona en " + pos + " y se convierte en " + name(newPiece) + ".");
     }
+    @Override
+    public void onDraw(String reason) {
+        System.out.println("Tablas: " + reason + ".");
+    }
 }

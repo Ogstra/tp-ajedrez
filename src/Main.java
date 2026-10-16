@@ -1,3 +1,7 @@
+import nucleo.IDrawRule;
+import nucleo.tablas.FiftyMoveRule;
+import nucleo.tablas.InsufficientMaterialRule;
+import nucleo.tablas.ThreefoldRepetitionRule;
 import adaptadores.ConsolePromotionChooser;
 import adaptadores.ConsoleRenderer;
 import nucleo.Board;
@@ -36,10 +40,15 @@ public class Main {
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
             new PromotionMove(pieces, chooser));
+        List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
+            new InsufficientMaterialRule(),
+            new FiftyMoveRule(),
+            new ThreefoldRepetitionRule());
+
         IChessGame game = new ChessGame(board,
             Collections.<IMoveListener>singletonList(renderer),
             Collections.<IGameStatusListener>singletonList(renderer),
-            specialMoves);
+            specialMoves, drawRules);
 
         renderer.render(board);
 
