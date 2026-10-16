@@ -55,6 +55,7 @@ public class ChessCoreTests {
         testObserverRecibeMovimientoYCoronacion();
 
         System.out.println("\n" + pasados + " pasados, " + fallados + " fallados.");
+        System.exit(fallados > 0 ? 1 : 0);
     }
 
     // ---------- ayudas de los tests ----------
