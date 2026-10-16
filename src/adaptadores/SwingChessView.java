@@ -1,8 +1,12 @@
 package adaptadores;
 
+import ai.OpponentController;
+import ai.OpponentLevel;
+import ai.Opponents;
 import nucleo.Board;
-import nucleo.IChessGame;
 import nucleo.Color;
+import nucleo.IChessGame;
+import nucleo.Move;
 import nucleo.Piece;
 import nucleo.PieceType;
 import nucleo.Position;
@@ -13,12 +17,15 @@ import puertos.IPromotionChooser;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -26,13 +33,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
-// Adaptador de salida Y de entrada (Clase 2): implementa IMoveListener e IGameStatusListener
-// igual que ConsoleRenderer (mismo puerto de salida, otra tecnología),
+// Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
+// igual que ConsoleRenderer (mismos puertos de salida, otra tecnología),
 // implementa IPromotionChooser con un diálogo, y además traduce clicks del
-// mouse en llamadas a ChessGame.tryMove(): el mismo rol que cumple Main.java
-// con el teclado, pero con Swing. ChessGame no se modificó en absoluto para
-// que esto funcione: es exactamente el punto de la frontera núcleo/adaptador.
+// mouse en llamadas a IChessGame.tryMove(): el mismo rol que cumple Main.java
+// con el teclado, pero con Swing. El núcleo no cambió para que esto funcione.
 public class SwingChessView extends JFrame implements IMoveListener, IGameStatusListener, IPromotionChooser {
 
     private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
@@ -71,9 +78,13 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final int columns;
     private final JButton[][] squares;
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
+    private final Random random = new Random();
+    private final JComboBox<String> levelBox = new JComboBox<>(new String[]{"Dos jugadores", "Fácil", "Medio", "Difícil"});
 
     private IChessGame game;
+    private OpponentController opponent; // null mientras juegan dos personas
     private Position selection = null;
+    private boolean thinking = false;
 
     public SwingChessView(int rows, int columns) {
         super("TP Ajedrez: Ingeniería de Software (UADE)");
@@ -83,7 +94,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         buildInterface();
     }
 
-    // El observer se registra en el constructor de ChessGame, pero la vista
+    // Los listeners se registran en el constructor de ChessGame, pero la vista
     // necesita la referencia al juego para poder mandarle movimientos: por
     // eso se inyecta después, desde el composition root (MainSwing).
     public void attachGame(IChessGame game) {
@@ -108,6 +119,12 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
+
+        levelBox.addActionListener(e -> changeOpponent(levelBox.getSelectedIndex()));
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        top.add(new JLabel("Oponente (juega con negras):"));
+        top.add(levelBox);
+
         JPanel boardPanel = new JPanel(new GridLayout(rows, columns));
         for (int row = rows - 1; row >= 0; row--) {
             for (int col = 0; col < columns; col++) {
@@ -124,18 +141,29 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         JButton undoButton = new JButton("Deshacer");
         undoButton.addActionListener(e -> {
-            if (game != null && game.undo()) {
-                render(game.getBoard());
-            }
+            if (game == null || thinking) return;
+            // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
+            if (game.undo() && opponent != null && opponent.isItsTurn()) game.undo();
+            render(game.getBoard());
+        });
+        JButton redoButton = new JButton("Rehacer");
+        redoButton.addActionListener(e -> {
+            if (game == null || thinking) return;
+            if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
+            render(game.getBoard());
         });
 
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(undoButton);
+        buttons.add(redoButton);
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.add(status, BorderLayout.CENTER);
-        bottom.add(undoButton, BorderLayout.EAST);
+        bottom.add(buttons, BorderLayout.EAST);
 
+        add(top, BorderLayout.NORTH);
         add(boardPanel, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
-        setSize(columns * SQUARE_SIZE, rows * SQUARE_SIZE + 60);
+        setSize(columns * SQUARE_SIZE, rows * SQUARE_SIZE + 110);
         setLocationRelativeTo(null);
     }
 
@@ -143,8 +171,19 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         return (row + col) % 2 == 0 ? DARK : LIGHT;
     }
 
+    // El orden de las opciones del desplegable coincide con OpponentLevel.values().
+    private void changeOpponent(int index) {
+        OpponentLevel level = OpponentLevel.values()[index];
+        if (level == OpponentLevel.NONE || game == null) {
+            opponent = null;
+        } else {
+            opponent = new OpponentController(game, Opponents.create(level, random), Color.BLACK);
+        }
+        playOpponentIfNeeded();
+    }
+
     private void onSquareClicked(Position pos) {
-        if (game == null || game.isGameOver()) return;
+        if (game == null || game.isGameOver() || thinking) return;
 
         if (selection == null) {
             Piece piece = game.getBoard().pieceAt(pos);
@@ -163,11 +202,33 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         game.tryMove(origin, pos);
         render(game.getBoard());
+        playOpponentIfNeeded();
+    }
+
+    // La IA piensa en otro hilo para no congelar la ventana, y la jugada se
+    // aplica después en el hilo de la interfaz. Mientras piensa, se ignoran los clicks.
+    private void playOpponentIfNeeded() {
+        if (opponent == null || thinking || !opponent.isItsTurn()) return;
+        thinking = true;
+        levelBox.setEnabled(false);
+        status.setText("El oponente piensa...");
+        final OpponentController controller = opponent;
+        new Thread(() -> {
+            Move move = controller.chooseMove();
+            SwingUtilities.invokeLater(() -> {
+                controller.play(move);
+                render(game.getBoard());
+                thinking = false;
+                levelBox.setEnabled(true);
+            });
+        }).start();
     }
 
     // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón.
+    // Si corona la IA, elige reina sin abrir el diálogo.
     @Override
     public PieceType choose(Color color) {
+        if (opponent != null && color == opponent.getColor()) return PieceType.QUEEN;
         String[] options = {"Reina", "Torre", "Alfil", "Caballo"};
         int choice = JOptionPane.showOptionDialog(this, "¿A qué pieza corona el peón?",
             "Coronación", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -180,8 +241,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }
     }
 
-    // Solo redibuja el tablero. El texto de estado lo maneja exclusivamente
-    // IMoveListener e IGameStatusListener: si render() también lo tocara, pisaría el mensaje que
+    // Solo redibuja el tablero. El texto de estado lo manejan exclusivamente
+    // los listeners: si render() también lo tocara, pisaría el mensaje que
     // onInvalidMove/onMoveMade acaban de poner.
     public void render(Board board) {
         for (int row = 0; row < rows; row++) {
@@ -240,25 +301,13 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     @Override
-    public void onInvalidMove(String reason) {
-        status.setText("Inválido: " + reason);
+    public void onCastling(Color color, boolean kingside) {
+        status.setText(name(color) + ": enroque " + (kingside ? "corto" : "largo") + ".");
     }
 
     @Override
-    public void onCheck(Color colorInCheck) {
-        status.setText("¡Jaque a " + name(colorInCheck) + "!");
-    }
-
-    @Override
-    public void onCheckmate(Color winnerColor) {
-        status.setText("¡Jaque mate! Ganan " + name(winnerColor) + ".");
-        JOptionPane.showMessageDialog(this, "Jaque mate. Ganan " + name(winnerColor) + ".");
-    }
-
-    @Override
-    public void onStalemate() {
-        status.setText("Ahogado: tablas.");
-        JOptionPane.showMessageDialog(this, "Ahogado: tablas, no hay movimientos legales.");
+    public void onPromotion(Color color, Position position, PieceType newPiece) {
+        status.setText(name(color) + ": corona en " + position + " a " + name(newPiece) + ".");
     }
 
     @Override
@@ -272,14 +321,27 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     @Override
-    public void onCastling(Color color, boolean kingSide) {
-        status.setText(name(color) + ": enroque " + (kingSide ? "corto" : "largo") + ".");
+    public void onInvalidMove(String reason) {
+        status.setText("Inválido: " + reason);
     }
 
     @Override
-    public void onPromotion(Color color, Position pos, PieceType newPiece) {
-        status.setText(name(color) + ": corona en " + pos + " a " + name(newPiece) + ".");
+    public void onCheck(Color colorInCheck) {
+        status.setText("¡Jaque a " + name(colorInCheck) + "!");
     }
+
+    @Override
+    public void onCheckmate(Color winner) {
+        status.setText("¡Jaque mate! Ganan " + name(winner) + ".");
+        JOptionPane.showMessageDialog(this, "Jaque mate. Ganan " + name(winner) + ".");
+    }
+
+    @Override
+    public void onStalemate() {
+        status.setText("Ahogado: tablas.");
+        JOptionPane.showMessageDialog(this, "Ahogado: tablas, no hay movimientos legales.");
+    }
+
     @Override
     public void onDraw(String reason) {
         status.setText("Tablas: " + reason + ".");
