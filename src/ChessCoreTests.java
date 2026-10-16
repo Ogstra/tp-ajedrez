@@ -54,6 +54,12 @@ public class ChessCoreTests {
         testObserverRecibeSoloEnroque();
         testObserverRecibeMovimientoYCoronacion();
 
+        testBishopSlidesAndStopsAtOwnPiece();
+        testQueenMovesLikeRookAndBishop();
+        testKingMovesOneSquareInAnyDirection();
+        testPawnDoubleStepOnlyFromStartAndWithFreePath();
+        testPawnCapturesOnlyDiagonally();
+
         System.out.println("\n" + pasados + " pasados, " + fallados + " fallados.");
         System.exit(fallados > 0 ? 1 : 0);
     }
@@ -452,5 +458,95 @@ public class ChessCoreTests {
         assertTrue("Observer_Coronacion_AvisaMovimientoYCoronacion",
             observer.events.equals(Arrays.asList("move", "promotion")),
             "esperaba [move, promotion] y llegó " + observer.events);
+    }
+    // ---------- movimiento de las piezas que faltaban ----------
+
+    private static void testBishopSlidesAndStopsAtOwnPiece() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("c1"));
+        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e3"));
+
+        // Act
+        List<Position> moves = board.pieceAt(at("c1")).possibleMoves(board, at("c1"));
+
+        // Assert
+        assertTrue("testBishopSlidesAndStopsAtOwnPiece",
+            moves.contains(at("d2")) && moves.contains(at("b2")) && moves.contains(at("a3"))
+                && !moves.contains(at("e3")) && !moves.contains(at("f4")),
+            "el alfil desliza en diagonal y frena antes de su propio peón en e3");
+    }
+
+    private static void testQueenMovesLikeRookAndBishop() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.QUEEN, Color.WHITE), at("d4"));
+
+        // Act
+        List<Position> moves = board.pieceAt(at("d4")).possibleMoves(board, at("d4"));
+
+        // Assert
+        assertTrue("testQueenMovesLikeRookAndBishop",
+            moves.contains(at("d8")) && moves.contains(at("a4")) && moves.contains(at("h8"))
+                && moves.contains(at("a1")) && !moves.contains(at("b5")),
+            "la reina llega en línea recta y en diagonal, pero no en L");
+    }
+
+    private static void testKingMovesOneSquareInAnyDirection() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e4"));
+
+        // Act
+        List<Position> moves = board.pieceAt(at("e4")).possibleMoves(board, at("e4"));
+
+        // Assert
+        assertTrue("testKingMovesOneSquareInAnyDirection",
+            moves.size() == 8 && moves.contains(at("d3")) && moves.contains(at("f5")) && !moves.contains(at("e6")),
+            "el rey tiene 8 destinos a una casilla y ninguno a dos");
+    }
+
+    private static void testPawnDoubleStepOnlyFromStartAndWithFreePath() {
+        // Arrange: tres tableros, el peón blanco en e2 siempre.
+        Board free = new Board();
+        free.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
+        Board blockedOnE3 = new Board();
+        blockedOnE3.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
+        blockedOnE3.placePiece(piece(PieceType.PAWN, Color.BLACK), at("e3"));
+        Board blockedOnE4 = new Board();
+        blockedOnE4.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
+        blockedOnE4.placePiece(piece(PieceType.PAWN, Color.BLACK), at("e4"));
+
+        // Act
+        List<Position> onFree = free.pieceAt(at("e2")).possibleMoves(free, at("e2"));
+        List<Position> onE3 = blockedOnE3.pieceAt(at("e2")).possibleMoves(blockedOnE3, at("e2"));
+        List<Position> onE4 = blockedOnE4.pieceAt(at("e2")).possibleMoves(blockedOnE4, at("e2"));
+
+        // Assert
+        assertTrue("testPawnDoubleStepOnlyFromStartAndWithFreePath",
+            onFree.contains(at("e3")) && onFree.contains(at("e4"))
+                && !onE3.contains(at("e3")) && !onE3.contains(at("e4"))
+                && onE4.contains(at("e3")) && !onE4.contains(at("e4")),
+            "el doble paso necesita las dos casillas libres");
+    }
+
+    private static void testPawnCapturesOnlyDiagonally() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e4"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("d5"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("f5"));
+        Board empty = new Board();
+        empty.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e4"));
+
+        // Act
+        List<Position> withEnemies = board.pieceAt(at("e4")).possibleMoves(board, at("e4"));
+        List<Position> withoutEnemies = empty.pieceAt(at("e4")).possibleMoves(empty, at("e4"));
+
+        // Assert
+        assertTrue("testPawnCapturesOnlyDiagonally",
+            withEnemies.contains(at("d5")) && withEnemies.contains(at("f5")) && withEnemies.contains(at("e5"))
+                && !withoutEnemies.contains(at("d5")) && !withoutEnemies.contains(at("f5")),
+            "el peón captura en diagonal solo si hay una pieza rival, y avanza recto");
     }
 }
