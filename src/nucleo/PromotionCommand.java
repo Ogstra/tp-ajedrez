@@ -51,4 +51,8 @@ public class PromotionCommand implements IMoveCommand {
         observer.onMoveMade(from, to, originalPawn, capturedPiece);
         observer.onPromotion(promotedPiece.getColor(), to, promotedPiece.getType());
     }
+    @Override
+    public Move getMove() {
+        return new Move(from, to);
+    }
 }

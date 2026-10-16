@@ -14,4 +14,6 @@ import java.util.List;
 public interface IMoveCommand extends ICommand {
     List<Position> touchedSquares();
     void announce(IGameObserver observer);
+    // La jugada que representa (en el enroque, el movimiento del rey).
+    Move getMove();
 }

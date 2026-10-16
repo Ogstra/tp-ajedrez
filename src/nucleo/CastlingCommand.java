@@ -48,4 +48,8 @@ public class CastlingCommand implements IMoveCommand {
         boolean kingSide = kingTo.getColumn() > kingFrom.getColumn();
         observer.onCastling(color, kingSide);
     }
+    @Override
+    public Move getMove() {
+        return new Move(kingFrom, kingTo);
+    }
 }

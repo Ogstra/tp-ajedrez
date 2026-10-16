@@ -49,4 +49,8 @@ public class MoveCommand implements IMoveCommand {
     public void announce(IGameObserver observer) {
         observer.onMoveMade(from, to, movedPiece, capturedPiece);
     }
+    @Override
+    public Move getMove() {
+        return new Move(from, to);
+    }
 }

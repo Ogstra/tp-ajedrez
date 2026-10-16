@@ -1,3 +1,5 @@
+import nucleo.CastlingCommand;
+import nucleo.Move;
 import nucleo.Board;
 import nucleo.BoardSetup;
 import nucleo.ChessGame;
@@ -72,6 +74,9 @@ public class ChessCoreTests {
         testPromotionUndoRestoresThePawn();
         testCannotCastleWhileInCheck();
         testCannotCastleWithPieceBetween();
+
+        testMoveValueEquality();
+        testCommandsExposeTheirMove();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -767,5 +772,31 @@ public class ChessCoreTests {
         // Assert
         assertTrue("testCannotCastleWithPieceBetween", outcome == MoveOutcome.INVALID,
             "con una pieza entre el rey y la torre no se puede enrocar");
+    }
+    // TDD: Move tiene que ser un value object (igualdad por contenido).
+    private static void testMoveValueEquality() {
+        // Arrange
+        Move a = new Move(at("e2"), at("e4"));
+        Move b = new Move(at("e2"), at("e4"));
+        Move c = new Move(at("e2"), at("e3"));
+
+        // Act / Assert
+        assertTrue("testMoveValueEquality", a.equals(b) && a.hashCode() == b.hashCode() && !a.equals(c),
+            "dos Move con las mismas casillas son iguales");
+    }
+
+    // TDD: cada comando sabe decir qué jugada representa.
+    private static void testCommandsExposeTheirMove() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
+        MoveCommand simple = new MoveCommand(board, at("e2"), at("e4"));
+        CastlingCommand castling = new CastlingCommand(board, at("e1"), at("g1"), at("h1"), at("f1"));
+
+        // Act / Assert
+        assertTrue("testCommandsExposeTheirMove",
+            simple.getMove().equals(new Move(at("e2"), at("e4")))
+                && castling.getMove().equals(new Move(at("e1"), at("g1"))),
+            "el enroque se representa con el movimiento del rey");
     }
 }
