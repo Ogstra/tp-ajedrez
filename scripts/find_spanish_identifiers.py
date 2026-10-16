@@ -27,7 +27,7 @@ SPANISH = {
     "jugador", "pasar", "saltar", "estaba", "fueron", "cada",
 }
 # Mate es un termino ingles de ajedrez en estos nombres de test.
-ALLOWED = {"tablas", "testCheckIsDetectedAndIsNotMate", "testFoolsMate", "nucleo", "puertos", "adaptadores", "especiales", "estrategias"}
+ALLOWED = {"MATE", "testMinimaxOpponentFindsMateInOne", "tablas", "testCheckIsDetectedAndIsNotMate", "testFoolsMate", "nucleo", "puertos", "adaptadores", "especiales", "estrategias"}
 
 STRING = re.compile(r'"(?:\\.|[^"\\])*"')
 CHAR = re.compile(r"'(?:\\.|[^'\\])'")
