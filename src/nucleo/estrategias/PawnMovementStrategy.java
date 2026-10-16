@@ -16,17 +16,17 @@ public class PawnMovementStrategy implements IMovementStrategy {
         int direction = (color == Color.WHITE) ? 1 : -1;
         // Las blancas arrancan en la fila 1; las negras en la anteúltima,
         // sea cual sea el tamaño del tablero.
-        int filaInicial = (color == Color.WHITE) ? 1 : board.getRows() - 2;
+        int startRow = (color == Color.WHITE) ? 1 : board.getRows() - 2;
 
         // Un paso adelante, si está vacío.
-        Position unPaso = new Position(from.getRow() + direction, from.getColumn());
-        if (board.isInside(unPaso) && board.isEmpty(unPaso)) {
-            moves.add(unPaso);
+        Position oneStep = new Position(from.getRow() + direction, from.getColumn());
+        if (board.isInside(oneStep) && board.isEmpty(oneStep)) {
+            moves.add(oneStep);
 
             // Dos pasos adelante, solo desde la fila inicial y con el camino libre.
-            Position dosPasos = new Position(from.getRow() + 2 * direction, from.getColumn());
-            if (from.getRow() == filaInicial && board.isInside(dosPasos) && board.isEmpty(dosPasos)) {
-                moves.add(dosPasos);
+            Position twoSteps = new Position(from.getRow() + 2 * direction, from.getColumn());
+            if (from.getRow() == startRow && board.isInside(twoSteps) && board.isEmpty(twoSteps)) {
+                moves.add(twoSteps);
             }
         }
 

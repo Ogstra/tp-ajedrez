@@ -20,13 +20,13 @@ public final class Position {
     // "e2" -> columna 'e'-'a'=4, fila 2-1=1. Acepta filas de más de un dígito
     // ("e10"). Devuelve null si el texto no tiene ese formato; si la casilla
     // existe en el tablero lo decide quien llama con Board.isInside().
-    public static Position fromAlgebraic(String texto) {
-        if (texto == null || texto.length() < 2) return null;
-        char letraColumna = Character.toLowerCase(texto.charAt(0));
-        if (letraColumna < 'a' || letraColumna > 'z') return null;
+    public static Position fromAlgebraic(String text) {
+        if (text == null || text.length() < 2) return null;
+        char columnLetter = Character.toLowerCase(text.charAt(0));
+        if (columnLetter < 'a' || columnLetter > 'z') return null;
         try {
-            int fila = Integer.parseInt(texto.substring(1)) - 1;
-            return new Position(fila, letraColumna - 'a');
+            int row = Integer.parseInt(text.substring(1)) - 1;
+            return new Position(row, columnLetter - 'a');
         } catch (NumberFormatException e) {
             return null;
         }

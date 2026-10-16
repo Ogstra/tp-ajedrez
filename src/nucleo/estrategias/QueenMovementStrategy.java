@@ -12,13 +12,13 @@ import java.util.List;
 // composición sobre herencia (Clase 3), aplicada dos veces en la misma clase.
 public class QueenMovementStrategy implements IMovementStrategy {
 
-    private final RookMovementStrategy comoTorre = new RookMovementStrategy();
-    private final BishopMovementStrategy comoAlfil = new BishopMovementStrategy();
+    private final RookMovementStrategy asRook = new RookMovementStrategy();
+    private final BishopMovementStrategy asBishop = new BishopMovementStrategy();
 
     @Override
     public List<Position> possibleMoves(Board board, Position from, Color color) {
-        List<Position> moves = new java.util.ArrayList<>(comoTorre.possibleMoves(board, from, color));
-        moves.addAll(comoAlfil.possibleMoves(board, from, color));
+        List<Position> moves = new java.util.ArrayList<>(asRook.possibleMoves(board, from, color));
+        moves.addAll(asBishop.possibleMoves(board, from, color));
         return moves;
     }
 }

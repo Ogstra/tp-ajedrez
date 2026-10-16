@@ -20,8 +20,8 @@ public class ConsolePromotionChooser implements IPromotionChooser {
     public PieceType choose(Color color) {
         while (true) {
             System.out.print("Coronación: elegí pieza (Q=Reina, R=Torre, B=Alfil, N=Caballo, Enter=Reina) > ");
-            String eleccion = scanner.hasNextLine() ? scanner.nextLine().trim().toUpperCase() : "Q";
-            switch (eleccion) {
+            String choice = scanner.hasNextLine() ? scanner.nextLine().trim().toUpperCase() : "Q";
+            switch (choice) {
                 case "Q": case "": return PieceType.QUEEN;
                 case "R": return PieceType.ROOK;
                 case "B": return PieceType.BISHOP;

@@ -57,27 +57,27 @@ public class ChessGame implements IGameContext {
         command.execute();
         history.push(command);
 
-        Color turnoActual = state.currentColor();
-        Color oponente = turnoActual.opposite();
+        Color currentTurn = state.currentColor();
+        Color opponent = currentTurn.opposite();
         state = state.handleMove();
 
         for (IGameObserver o : observers) command.announce(o);
 
-        boolean jaque = isInCheck(oponente, board);
-        boolean tieneMovimientos = hasAnyLegalMove(oponente);
+        boolean check = isInCheck(opponent, board);
+        boolean hasMoves = hasAnyLegalMove(opponent);
 
-        if (jaque && !tieneMovimientos) {
+        if (check && !hasMoves) {
             gameOver = true;
-            for (IGameObserver o : observers) o.onCheckmate(turnoActual);
+            for (IGameObserver o : observers) o.onCheckmate(currentTurn);
             return MoveOutcome.CHECKMATE;
         }
-        if (!jaque && !tieneMovimientos) {
+        if (!check && !hasMoves) {
             gameOver = true;
             for (IGameObserver o : observers) o.onStalemate();
             return MoveOutcome.STALEMATE;
         }
-        if (jaque) {
-            for (IGameObserver o : observers) o.onCheck(oponente);
+        if (check) {
+            for (IGameObserver o : observers) o.onCheck(opponent);
             return MoveOutcome.CHECK;
         }
         return MoveOutcome.OK;
@@ -125,20 +125,20 @@ public class ChessGame implements IGameContext {
     // dejarían al propio rey en jaque.
     private List<Position> legalMovesFrom(Position from) {
         Piece piece = board.pieceAt(from);
-        List<Position> candidatos = new ArrayList<>(piece.possibleMoves(board, from));
+        List<Position> candidates = new ArrayList<>(piece.possibleMoves(board, from));
         for (ISpecialMove rule : specialMoves) {
-            candidatos.addAll(rule.extraDestinations(this, from));
+            candidates.addAll(rule.extraDestinations(this, from));
         }
 
-        List<Position> legales = new ArrayList<>();
-        for (Position destino : candidatos) {
-            Board simulado = board.cloneBoard();
-            simulado.movePiece(from, destino);
-            if (!isInCheck(piece.getColor(), simulado)) {
-                legales.add(destino);
+        List<Position> legal = new ArrayList<>();
+        for (Position destination : candidates) {
+            Board simulated = board.cloneBoard();
+            simulated.movePiece(from, destination);
+            if (!isInCheck(piece.getColor(), simulated)) {
+                legal.add(destination);
             }
         }
-        return legales;
+        return legal;
     }
 
     // ¿El rey de "color" está atacado por alguna pieza rival, en "b"?

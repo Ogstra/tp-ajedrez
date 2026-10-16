@@ -27,32 +27,32 @@ import java.util.List;
 // fue dado en la materia, esto corre con "java ChessCoreTests" directo).
 public class ChessCoreTests {
 
-    private static int pasados = 0;
-    private static int fallados = 0;
+    private static int passed = 0;
+    private static int failed = 0;
 
     private static final PieceFactory PIECES = PieceFactory.standard();
 
     public static void main(String[] args) {
-        testPeonAvanzaUnPaso();
-        testPeonNoPuedeCapturarDeFrente();
-        testCaballoSaltaEnL();
-        testTorreNoAtraviesaPiezas();
-        testReyNoPuedeMoverseACasillaAtacada();
-        testNegrasNoPuedenMoverPrimero();
-        testJaqueSeDetectaYNoEsMate();
-        testMoveCommandUndoRestauraElTablero();
-        testJaqueMateDelLoco();
-        testEnroqueCortoMueveReyYTorre();
-        testEnroqueLargoMueveReyYTorre();
-        testNoSePuedeEnrocarSiElReyYaSeMovio();
-        testNoSePuedeEnrocarPorCasillaAtacadaPorPeon();
-        testDeshacerRecuperaElDerechoDeEnroque();
-        testPeonCoronaAReina();
-        testPiezaNuevaSinTocarClasesExistentes();
-        testTableroDeOtroTamano();
-        testCoronacionEnTableroChico();
-        testObserverRecibeSoloEnroque();
-        testObserverRecibeMovimientoYCoronacion();
+        testPawnAdvancesOneSquare();
+        testPawnCannotCaptureStraightAhead();
+        testKnightJumpsInL();
+        testRookCannotJumpOverPieces();
+        testKingCannotMoveToAttackedSquare();
+        testBlackCannotMoveFirst();
+        testCheckIsDetectedAndIsNotMate();
+        testMoveCommandUndoRestoresBoard();
+        testFoolsMate();
+        testShortCastlingMovesKingAndRook();
+        testLongCastlingMovesKingAndRook();
+        testCannotCastleIfKingAlreadyMoved();
+        testCannotCastleThroughSquareAttackedByPawn();
+        testUndoRestoresCastlingRight();
+        testPawnPromotesToQueen();
+        testNewPieceWithoutTouchingExistingClasses();
+        testBoardOfAnotherSize();
+        testPromotionOnSmallBoard();
+        testObserverReceivesOnlyCastling();
+        testObserverReceivesMoveAndPromotion();
 
         testBishopSlidesAndStopsAtOwnPiece();
         testQueenMovesLikeRookAndBishop();
@@ -73,24 +73,24 @@ public class ChessCoreTests {
         testCannotCastleWhileInCheck();
         testCannotCastleWithPieceBetween();
 
-        System.out.println("\n" + pasados + " pasados, " + fallados + " fallados.");
-        System.exit(fallados > 0 ? 1 : 0);
+        System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
+        System.exit(failed > 0 ? 1 : 0);
     }
 
     // ---------- ayudas de los tests ----------
 
-    private static void assertTrue(String nombreTest, boolean condicion, String detalle) {
-        if (condicion) {
-            pasados++;
-            System.out.println("[OK]   " + nombreTest);
+    private static void assertTrue(String testName, boolean condition, String detail) {
+        if (condition) {
+            passed++;
+            System.out.println("[OK]   " + testName);
         } else {
-            fallados++;
-            System.out.println("[FAIL] " + nombreTest + " -> " + detalle);
+            failed++;
+            System.out.println("[FAIL] " + testName + " -> " + detail);
         }
     }
 
-    private static Position at(String algebraico) {
-        return Position.fromAlgebraic(algebraico);
+    private static Position at(String algebraic) {
+        return Position.fromAlgebraic(algebraic);
     }
 
     private static Piece piece(PieceType type, Color color) {
@@ -115,8 +115,8 @@ public class ChessCoreTests {
         @Override public void onCheckmate(Color winnerColor) { events.add("checkmate"); }
         @Override public void onStalemate() { events.add("stalemate"); }
         @Override public void onUndo() { events.add("undo"); }
-        @Override public void onCastling(Color color, boolean cortoEnEnroque) { events.add("castling"); }
-        @Override public void onPromotion(Color color, Position pos, PieceType nuevaPieza) { events.add("promotion"); }
+        @Override public void onCastling(Color color, boolean kingSide) { events.add("castling"); }
+        @Override public void onPromotion(Color color, Position pos, PieceType newPiece) { events.add("promotion"); }
     }
 
     // El armado que hace Main, sin consola: enroque + coronación (siempre a reina).
@@ -129,7 +129,7 @@ public class ChessCoreTests {
 
     // ---------- movimiento de cada pieza ----------
 
-    private static void testPeonAvanzaUnPaso() {
+    private static void testPawnAdvancesOneSquare() {
         // Arrange
         Board board = new Board();
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
@@ -141,7 +141,7 @@ public class ChessCoreTests {
         assertTrue("Peon_AvanzaUnPaso", puedeAvanzar, "e2->e3 debería ser un movimiento posible");
     }
 
-    private static void testPeonNoPuedeCapturarDeFrente() {
+    private static void testPawnCannotCaptureStraightAhead() {
         // Arrange
         Board board = new Board();
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
@@ -155,7 +155,7 @@ public class ChessCoreTests {
             "un peón no debería poder capturar la pieza que tiene justo enfrente");
     }
 
-    private static void testCaballoSaltaEnL() {
+    private static void testKnightJumpsInL() {
         // Arrange
         Board board = new Board();
         board.placePiece(piece(PieceType.KNIGHT, Color.WHITE), at("b1"));
@@ -168,7 +168,7 @@ public class ChessCoreTests {
             "desde b1 el caballo debería poder llegar a c3 y a a3");
     }
 
-    private static void testTorreNoAtraviesaPiezas() {
+    private static void testRookCannotJumpOverPieces() {
         // Arrange
         Board board = new Board();
         board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
@@ -184,7 +184,7 @@ public class ChessCoreTests {
 
     // ---------- reglas de la partida ----------
 
-    private static void testReyNoPuedeMoverseACasillaAtacada() {
+    private static void testKingCannotMoveToAttackedSquare() {
         // Arrange: la torre negra en h2 controla toda la fila 2.
         Board board = new Board();
         board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
@@ -193,28 +193,28 @@ public class ChessCoreTests {
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome haciaCasillaAtacada = game.tryMove(at("e1"), at("e2"));
-        MoveOutcome haciaCasillaSegura = game.tryMove(at("e1"), at("d1"));
+        MoveOutcome toAttackedSquare = game.tryMove(at("e1"), at("e2"));
+        MoveOutcome toSafeSquare = game.tryMove(at("e1"), at("d1"));
 
         // Assert
         assertTrue("Rey_NoPuedeMoverseACasillaAtacada",
-            haciaCasillaAtacada == MoveOutcome.INVALID && haciaCasillaSegura == MoveOutcome.OK,
+            toAttackedSquare == MoveOutcome.INVALID && toSafeSquare == MoveOutcome.OK,
             "e1->e2 queda en jaque por la torre (inválido), e1->d1 no (válido)");
     }
 
-    private static void testNegrasNoPuedenMoverPrimero() {
+    private static void testBlackCannotMoveFirst() {
         // Arrange
         ChessGame game = newGame(BoardSetup.standard(PIECES));
 
         // Act
-        MoveOutcome intentoDeNegras = game.tryMove(at("e7"), at("e5"));
+        MoveOutcome blackAttempt = game.tryMove(at("e7"), at("e5"));
 
         // Assert
-        assertTrue("Turnos_NegrasNoMuevenPrimero", intentoDeNegras == MoveOutcome.INVALID,
+        assertTrue("Turnos_NegrasNoMuevenPrimero", blackAttempt == MoveOutcome.INVALID,
             "en el primer turno solo pueden mover las blancas");
     }
 
-    private static void testJaqueSeDetectaYNoEsMate() {
+    private static void testCheckIsDetectedAndIsNotMate() {
         // Arrange: la torre blanca puede subir a a8 y dar jaque al rey negro por la fila 8.
         Board board = new Board();
         board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
@@ -223,30 +223,30 @@ public class ChessCoreTests {
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome resultado = game.tryMove(at("a1"), at("a8"));
+        MoveOutcome outcome = game.tryMove(at("a1"), at("a8"));
 
         // Assert: el rey negro puede escapar (g7, h7), así que es jaque y no jaque mate.
-        assertTrue("Jaque_SeDetectaYNoEsMate", resultado == MoveOutcome.CHECK && !game.isGameOver(),
+        assertTrue("Jaque_SeDetectaYNoEsMate", outcome == MoveOutcome.CHECK && !game.isGameOver(),
             "Ta8 debería dar jaque sin ser mate");
     }
 
-    private static void testMoveCommandUndoRestauraElTablero() {
+    private static void testMoveCommandUndoRestoresBoard() {
         // Arrange (mismo test que la Tarea 03, adaptado a este tablero de ajedrez completo)
         Board board = new Board();
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
-        Board tableroAntes = board.cloneBoard();
-        MoveCommand comando = new MoveCommand(board, at("e2"), at("e4"));
+        Board boardBefore = board.cloneBoard();
+        MoveCommand command = new MoveCommand(board, at("e2"), at("e4"));
 
         // Act
-        comando.execute();
-        comando.undo();
+        command.execute();
+        command.undo();
 
         // Assert
-        assertTrue("MoveCommand_ExecuteUndo_RestauraTablero", tableroAntes.equals(board),
+        assertTrue("MoveCommand_ExecuteUndo_RestauraTablero", boardBefore.equals(board),
             "el tablero después de undo() debería ser idéntico al de antes de execute()");
     }
 
-    private static void testJaqueMateDelLoco() {
+    private static void testFoolsMate() {
         // Arrange: el jaque mate más rápido posible, en 2 jugadas por bando.
         ChessGame game = newGame(BoardSetup.standard(PIECES));
 
@@ -254,16 +254,16 @@ public class ChessCoreTests {
         game.tryMove(at("f2"), at("f3"));
         game.tryMove(at("e7"), at("e5"));
         game.tryMove(at("g2"), at("g4"));
-        MoveOutcome ultimaJugada = game.tryMove(at("d8"), at("h4"));
+        MoveOutcome lastMove = game.tryMove(at("d8"), at("h4"));
 
         // Assert
-        assertTrue("JaqueMate_MateDelLoco", ultimaJugada == MoveOutcome.CHECKMATE && game.isGameOver(),
+        assertTrue("JaqueMate_MateDelLoco", lastMove == MoveOutcome.CHECKMATE && game.isGameOver(),
             "Dxh4 debería ser jaque mate y terminar la partida");
     }
 
     // ---------- enroque ----------
 
-    private static Board tableroParaEnrocar() {
+    private static Board castlingBoard() {
         Board board = new Board();
         board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
         board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("h1"));
@@ -272,42 +272,42 @@ public class ChessCoreTests {
         return board;
     }
 
-    private static boolean hay(Board board, String casilla, PieceType tipo) {
-        Piece p = board.pieceAt(at(casilla));
+    private static boolean hasPiece(Board board, String square, PieceType tipo) {
+        Piece p = board.pieceAt(at(square));
         return p != null && p.getType().equals(tipo);
     }
 
-    private static void testEnroqueCortoMueveReyYTorre() {
+    private static void testShortCastlingMovesKingAndRook() {
         // Arrange
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome resultado = game.tryMove(at("e1"), at("g1"));
+        MoveOutcome outcome = game.tryMove(at("e1"), at("g1"));
 
         // Assert
         assertTrue("Enroque_Corto_MueveReyYTorreJuntos",
-            resultado == MoveOutcome.OK && hay(board, "g1", PieceType.KING) && hay(board, "f1", PieceType.ROOK),
+            outcome == MoveOutcome.OK && hasPiece(board, "g1", PieceType.KING) && hasPiece(board, "f1", PieceType.ROOK),
             "tras enrocar corto, el rey debería estar en g1 y la torre en f1");
     }
 
-    private static void testEnroqueLargoMueveReyYTorre() {
+    private static void testLongCastlingMovesKingAndRook() {
         // Arrange
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome resultado = game.tryMove(at("e1"), at("c1"));
+        MoveOutcome outcome = game.tryMove(at("e1"), at("c1"));
 
         // Assert
         assertTrue("Enroque_Largo_MueveReyYTorreJuntos",
-            resultado == MoveOutcome.OK && hay(board, "c1", PieceType.KING) && hay(board, "d1", PieceType.ROOK),
+            outcome == MoveOutcome.OK && hasPiece(board, "c1", PieceType.KING) && hasPiece(board, "d1", PieceType.ROOK),
             "tras enrocar largo, el rey debería estar en c1 y la torre en d1");
     }
 
-    private static void testNoSePuedeEnrocarSiElReyYaSeMovio() {
+    private static void testCannotCastleIfKingAlreadyMoved() {
         // Arrange
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("a7"));
         ChessGame game = newGame(board);
 
@@ -316,30 +316,30 @@ public class ChessCoreTests {
         game.tryMove(at("a7"), at("a6"));
         game.tryMove(at("e2"), at("e1"));
         game.tryMove(at("a6"), at("a5"));
-        MoveOutcome intentoDeEnroque = game.tryMove(at("e1"), at("g1"));
+        MoveOutcome castlingAttempt = game.tryMove(at("e1"), at("g1"));
 
         // Assert
-        assertTrue("Enroque_NoPermitidoSiElReyYaSeMovio", intentoDeEnroque == MoveOutcome.INVALID,
+        assertTrue("Enroque_NoPermitidoSiElReyYaSeMovio", castlingAttempt == MoveOutcome.INVALID,
             "el rey ya se movió antes (aunque volvió a e1), no debería poder enrocar");
     }
 
-    private static void testNoSePuedeEnrocarPorCasillaAtacadaPorPeon() {
+    private static void testCannotCastleThroughSquareAttackedByPawn() {
         // Arrange: el peón negro en h2 ataca g1 en diagonal, aunque g1 esté vacía.
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("h2"));
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome intentoDeEnroque = game.tryMove(at("e1"), at("g1"));
+        MoveOutcome castlingAttempt = game.tryMove(at("e1"), at("g1"));
 
         // Assert
-        assertTrue("Enroque_NoPermitidoSiElReyPisaCasillaAtacadaPorPeon", intentoDeEnroque == MoveOutcome.INVALID,
+        assertTrue("Enroque_NoPermitidoSiElReyPisaCasillaAtacadaPorPeon", castlingAttempt == MoveOutcome.INVALID,
             "el rey terminaría en g1, atacada por el peón de h2");
     }
 
-    private static void testDeshacerRecuperaElDerechoDeEnroque() {
+    private static void testUndoRestoresCastlingRight() {
         // Arrange
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("a7"));
         ChessGame game = newGame(board);
 
@@ -348,16 +348,16 @@ public class ChessCoreTests {
         game.tryMove(at("a7"), at("a6"));
         game.undo();
         game.undo();
-        MoveOutcome resultado = game.tryMove(at("e1"), at("g1"));
+        MoveOutcome outcome = game.tryMove(at("e1"), at("g1"));
 
         // Assert
-        assertTrue("Enroque_DeshacerRecuperaElDerecho", resultado == MoveOutcome.OK,
+        assertTrue("Enroque_DeshacerRecuperaElDerecho", outcome == MoveOutcome.OK,
             "si se deshizo el único movimiento del rey, el enroque tiene que volver a estar permitido");
     }
 
     // ---------- coronación ----------
 
-    private static void testPeonCoronaAReina() {
+    private static void testPawnPromotesToQueen() {
         // Arrange: el rey negro lejos de la fila 8 y de las diagonales de a8, para que no haya jaque.
         Board board = new Board();
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("a7"));
@@ -366,12 +366,12 @@ public class ChessCoreTests {
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome resultado = game.tryMove(at("a7"), at("a8"));
+        MoveOutcome outcome = game.tryMove(at("a7"), at("a8"));
 
         // Assert
-        Piece piezaFinal = board.pieceAt(at("a8"));
-        assertTrue("Peon_Corona_A_Reina", resultado == MoveOutcome.OK
-            && piezaFinal.getType().equals(PieceType.QUEEN) && piezaFinal.getColor() == Color.WHITE,
+        Piece finalPiece = board.pieceAt(at("a8"));
+        assertTrue("Peon_Corona_A_Reina", outcome == MoveOutcome.OK
+            && finalPiece.getType().equals(PieceType.QUEEN) && finalPiece.getColor() == Color.WHITE,
             "en a8 debería haber una reina blanca, no un peón");
     }
 
@@ -380,18 +380,18 @@ public class ChessCoreTests {
     // Una pieza que no existe en la materia: se mueve como torre y como caballo.
     // Se define ACÁ, en el test, sin tocar ninguna clase de nucleo/.
     private static class ChancellorMovementStrategy implements IMovementStrategy {
-        private final RookMovementStrategy comoTorre = new RookMovementStrategy();
-        private final KnightMovementStrategy comoCaballo = new KnightMovementStrategy();
+        private final RookMovementStrategy asRook = new RookMovementStrategy();
+        private final KnightMovementStrategy asKnight = new KnightMovementStrategy();
 
         @Override
         public List<Position> possibleMoves(Board board, Position from, Color color) {
-            List<Position> moves = new ArrayList<>(comoTorre.possibleMoves(board, from, color));
-            moves.addAll(comoCaballo.possibleMoves(board, from, color));
+            List<Position> moves = new ArrayList<>(asRook.possibleMoves(board, from, color));
+            moves.addAll(asKnight.possibleMoves(board, from, color));
             return moves;
         }
     }
 
-    private static void testPiezaNuevaSinTocarClasesExistentes() {
+    private static void testNewPieceWithoutTouchingExistingClasses() {
         // Arrange: se registra el tipo nuevo en una fábrica; no se modifica PieceType, PieceFactory ni nada.
         PieceType chancellor = new PieceType("CHANCELLOR");
         PieceFactory factory = PieceFactory.standard();
@@ -408,7 +408,7 @@ public class ChessCoreTests {
             "el chancellor debería moverse como torre + caballo");
     }
 
-    private static void testTableroDeOtroTamano() {
+    private static void testBoardOfAnotherSize() {
         // Arrange: un tablero de 10x10 en vez de 8x8.
         Board board = new Board(10, 10);
         board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
@@ -422,7 +422,7 @@ public class ChessCoreTests {
             "la torre debería llegar a a10 y a j1, y k1 no existe en un tablero de 10 columnas");
     }
 
-    private static void testCoronacionEnTableroChico() {
+    private static void testPromotionOnSmallBoard() {
         // Arrange: tablero de 5x5; la última fila es la 5, no la 8.
         Board board = new Board(5, 5);
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("a4"));
@@ -431,21 +431,21 @@ public class ChessCoreTests {
         ChessGame game = newGame(board);
 
         // Act
-        MoveOutcome resultado = game.tryMove(at("a4"), at("a5"));
+        MoveOutcome outcome = game.tryMove(at("a4"), at("a5"));
 
         // Assert
-        Piece piezaFinal = board.pieceAt(at("a5"));
+        Piece finalPiece = board.pieceAt(at("a5"));
         assertTrue("Tablero_5x5_CoronaEnLaUltimaFilaDeEseTablero",
-            resultado == MoveOutcome.OK && piezaFinal.getType().equals(PieceType.QUEEN),
+            outcome == MoveOutcome.OK && finalPiece.getType().equals(PieceType.QUEEN),
             "el peón debería coronar al llegar a la fila 5, que es la última de este tablero");
     }
 
     // ---------- el observer recibe lo que corresponde (con un mock) ----------
 
-    private static void testObserverRecibeSoloEnroque() {
+    private static void testObserverReceivesOnlyCastling() {
         // Arrange
         RecordingObserver observer = new RecordingObserver();
-        ChessGame game = newGame(tableroParaEnrocar(), observer);
+        ChessGame game = newGame(castlingBoard(), observer);
 
         // Act
         game.tryMove(at("e1"), at("g1"));
@@ -455,7 +455,7 @@ public class ChessCoreTests {
             "esperaba [castling] y llegó " + observer.events);
     }
 
-    private static void testObserverRecibeMovimientoYCoronacion() {
+    private static void testObserverReceivesMoveAndPromotion() {
         // Arrange
         Board board = new Board();
         board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("a7"));
@@ -578,7 +578,7 @@ public class ChessCoreTests {
 
         // Assert
         assertTrue("testRookCapturesThroughTryMove",
-            outcome == MoveOutcome.OK && hay(board, "a5", PieceType.ROOK)
+            outcome == MoveOutcome.OK && hasPiece(board, "a5", PieceType.ROOK)
                 && board.pieceAt(at("a5")).getColor() == Color.WHITE,
             "la torre blanca debería quedar en a5 después de capturar el peón");
     }
@@ -718,7 +718,7 @@ public class ChessCoreTests {
 
         // Assert
         assertTrue("testPromotionToKnight",
-            outcome == MoveOutcome.OK && hay(board, "a8", PieceType.KNIGHT)
+            outcome == MoveOutcome.OK && hasPiece(board, "a8", PieceType.KNIGHT)
                 && board.pieceAt(at("a8")).getColor() == Color.WHITE,
             "en a8 debería haber un caballo blanco");
     }
@@ -757,7 +757,7 @@ public class ChessCoreTests {
 
     private static void testCannotCastleWithPieceBetween() {
         // Arrange: el caballo blanco en g1 estorba el enroque corto.
-        Board board = tableroParaEnrocar();
+        Board board = castlingBoard();
         board.placePiece(piece(PieceType.KNIGHT, Color.WHITE), at("g1"));
         ChessGame game = newGame(board);
 

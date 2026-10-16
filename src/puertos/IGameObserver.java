@@ -16,6 +16,6 @@ public interface IGameObserver {
     void onCheckmate(Color winnerColor);
     void onStalemate();
     void onUndo();
-    void onCastling(Color color, boolean cortoEnEnroque);
-    void onPromotion(Color color, Position pos, PieceType nuevaPieza);
+    void onCastling(Color color, boolean kingSide);
+    void onPromotion(Color color, Position pos, PieceType newPiece);
 }

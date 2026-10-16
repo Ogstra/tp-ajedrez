@@ -11,10 +11,10 @@ import java.util.List;
 public class RookMovementStrategy implements IMovementStrategy {
 
     // Las 4 direcciones en las que desliza una torre: arriba, abajo, izquierda, derecha.
-    private static final int[][] DIRECCIONES = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    private static final int[][] DIRECTIONS = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
     @Override
     public List<Position> possibleMoves(Board board, Position from, Color color) {
-        return MovimientoDeslizante.enDirecciones(board, from, color, DIRECCIONES);
+        return SlidingMovement.inDirections(board, from, color, DIRECTIONS);
     }
 }

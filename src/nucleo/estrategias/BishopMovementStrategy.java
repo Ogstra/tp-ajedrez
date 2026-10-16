@@ -10,10 +10,10 @@ import java.util.List;
 public class BishopMovementStrategy implements IMovementStrategy {
 
     // Las 4 diagonales.
-    private static final int[][] DIRECCIONES = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+    private static final int[][] DIRECTIONS = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
     @Override
     public List<Position> possibleMoves(Board board, Position from, Color color) {
-        return MovimientoDeslizante.enDirecciones(board, from, color, DIRECCIONES);
+        return SlidingMovement.inDirections(board, from, color, DIRECTIONS);
     }
 }

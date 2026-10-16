@@ -44,25 +44,25 @@ public class Main {
         while (!game.isGameOver()) {
             System.out.print("\nTurno de " + (game.getTurn() == Color.WHITE ? "Blancas" : "Negras") + " > ");
             if (!scanner.hasNextLine()) break;
-            String entrada = scanner.nextLine().trim();
+            String input = scanner.nextLine().trim();
 
-            if (entrada.equalsIgnoreCase("salir")) {
+            if (input.equalsIgnoreCase("salir")) {
                 System.out.println("Partida abandonada.");
                 break;
             }
-            if (entrada.equalsIgnoreCase("undo")) {
+            if (input.equalsIgnoreCase("undo")) {
                 game.undo();
                 renderer.render(board);
                 continue;
             }
 
-            Position[] movimiento = parsearMovimiento(entrada);
-            if (movimiento == null) {
+            Position[] move = parseMove(input);
+            if (move == null) {
                 System.out.println("No entendí ese movimiento. Formato: 'e2 e4'.");
                 continue;
             }
 
-            if (game.tryMove(movimiento[0], movimiento[1]) != MoveOutcome.INVALID) {
+            if (game.tryMove(move[0], move[1]) != MoveOutcome.INVALID) {
                 renderer.render(board);
             }
         }
@@ -71,19 +71,19 @@ public class Main {
 
     // Acepta "e2 e4", "e2-e4" o "e2e4". Parte el texto donde empieza la
     // segunda letra, así sirve también para filas de dos dígitos ("e10").
-    private static Position[] parsearMovimiento(String entrada) {
-        String limpio = entrada.replace(" ", "").replace("-", "");
-        int corte = -1;
-        for (int i = 1; i < limpio.length(); i++) {
-            if (Character.isLetter(limpio.charAt(i))) {
-                corte = i;
+    private static Position[] parseMove(String input) {
+        String clean = input.replace(" ", "").replace("-", "");
+        int cut = -1;
+        for (int i = 1; i < clean.length(); i++) {
+            if (Character.isLetter(clean.charAt(i))) {
+                cut = i;
                 break;
             }
         }
-        if (corte < 0) return null;
+        if (cut < 0) return null;
 
-        Position from = Position.fromAlgebraic(limpio.substring(0, corte));
-        Position to = Position.fromAlgebraic(limpio.substring(corte));
+        Position from = Position.fromAlgebraic(clean.substring(0, cut));
+        Position to = Position.fromAlgebraic(clean.substring(cut));
         if (from == null || to == null) return null;
 
         return new Position[]{from, to};
