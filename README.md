@@ -8,60 +8,74 @@ Ajedrez para jugar en consola o en una ventana, hecho para el TPO de Ingeniería
 
 ## Cómo correrlo
 
-Se abre la carpeta en IntelliJ y se corre `Main` (consola), `MainSwing` (ventana) o `ChessCoreTests` (tests). También por terminal:
+Se abre la carpeta en IntelliJ y se corre `Main` (consola), `MainSwing` (ventana) o `ChessCoreTests` (tests). Se necesita JDK 21 o superior. También por terminal con Bash (Git Bash en Windows), desde la raíz del repo:
 
 ```bash
-find src -name "*.java" | xargs javac -d out -encoding UTF-8
+./scripts/build.sh
 java -cp out Main
 java -cp out MainSwing
-java -cp out ChessCoreTests
+./scripts/test.sh
 ```
 
-En la consola se juega escribiendo `e2 e4`. Con `undo` se deshace la última jugada y con `salir` se termina. En la ventana se hace click en la pieza y después en el destino.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza y después en el destino; arriba se elige el oponente y abajo están Deshacer y Rehacer.
+
+## Verificación
+
+`./scripts/test.sh` corre 63 pruebas del juego y la IA, más la regresión de consola que deshace y repite un mate. Para comprobar la ventana real con los niveles medio y difícil, deshacer y rehacer:
+
+```bash
+java --class-path out scripts/SwingIntegrationTests.java
+```
+
+## Qué reglas tiene
+
+Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahogado, enroque, coronación (se elige la pieza), captura al paso, tablas por material insuficiente, por la regla de los 50 movimientos y por repetición, y deshacer y rehacer. El peón corona sin preguntar cuando juega la IA.
 
 ## Cómo está armado
 
 ```
 src/
   nucleo/        las reglas del ajedrez, sin nada de consola ni de Swing
-    especiales/    enroque y coronación
+    especiales/    enroque, captura al paso y coronación
     estrategias/   cómo se mueve cada pieza
+    tablas/        las condiciones de tablas
   puertos/       interfaces con las que el núcleo pide cosas al exterior
   adaptadores/   consola y Swing, que implementan esos puertos
+  ai/            el oponente, afuera del núcleo
   Main.java      arma todo para jugar por consola
   MainSwing.java arma todo para jugar con ventana
   ChessCoreTests.java
 ```
 
-El núcleo no conoce a los adaptadores: son los adaptadores los que dependen de él. Por eso la ventana Swing se pudo agregar después sin tocar `ChessGame`.
+El núcleo no conoce a los adaptadores ni a la IA: son ellos los que dependen de él. Por eso la ventana y la IA se pudieron agregar sin tocar `ChessGame`.
 
 Lo que se ve en la materia está así:
 
-- **Núcleo y adaptadores**: `ChessGame` es lo que se llama desde afuera. Para avisar lo que pasa usa `IGameObserver`, y para preguntar a qué pieza se corona usa `IPromotionChooser`.
-- **Inyección por constructor**: `ChessGame` recibe el tablero, los observers y las reglas especiales ya armadas. El único lugar donde se crean es `Main`/`MainSwing`.
-- **Composición sobre herencia**: hay una sola clase `Piece`, que tiene una `IMovementStrategy`. No hay una subclase por pieza, y la reina combina las estrategias de la torre y el alfil.
-- **Strategy**: el movimiento de cada pieza, y las reglas especiales (`ISpecialMove`).
-- **Factory**: `PieceFactory` crea las piezas y `BoardSetup` arma el tablero inicial.
-- **Observer**: `IGameObserver`.
-- **State**: `WhiteTurnState` y `BlackTurnState` para el turno.
-- **Command**: `MoveCommand`, `CastlingCommand` y `PromotionCommand`, que son los que permiten deshacer.
-- **Tests sin interfaz**: `ChessCoreTests`, con un stub y un mock como dobles de prueba.
+- **Núcleo y adaptadores**: lo que se llama desde afuera es `IChessGame`. Para avisar lo que pasa el núcleo usa `IMoveListener` e `IGameStatusListener`, y para preguntar a qué pieza se corona usa `IPromotionChooser`.
+- **Inyección por constructor**: `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas. `Main`/`MainSwing` arman las partidas de juego y `SearchGames` crea la copia de búsqueda.
+- **Composición sobre herencia**: hay una sola clase `Piece`, que tiene una `IMovementStrategy`. La reina combina las estrategias de la torre y el alfil.
+- **Strategy**: el movimiento de cada pieza, las reglas especiales (`ISpecialMove`), las tablas (`IDrawRule`) y los niveles de la IA (`IOpponent`).
+- **Factory**: `PieceFactory` es un registro de piezas, `BoardSetup` arma el tablero inicial y `Opponents` crea el oponente según el nivel.
+- **Observer**: los dos listeners.
+- **State**: el turno y los estados terminales (mate, ahogado, tablas).
+- **Command**: cada jugada es un comando que se puede deshacer y rehacer.
+- **Tests sin interfaz**: `ChessCoreTests`, con un stub y un mock como dobles de prueba, y los marcados `// TDD:` escritos antes del código.
 
 ## Agregar cosas sin tocar lo que ya está
 
 - **Una pieza nueva**: se escribe su `IMovementStrategy`, se crea un `PieceType` y se registra con `factory.register(...)`. Hay un test que lo hace con una pieza inventada que se mueve como torre y caballo.
-- **Otro tamaño de tablero**: `new Board(10, 10)` y listo. Todo pregunta a `board.isInside()` en vez de asumir 8x8, y el peón corona en la última fila de ese tablero.
-- **Una regla nueva** (por ejemplo la captura al paso): una clase que implemente `ISpecialMove` y una línea en `Main`.
+- **Otro tamaño de tablero**: `new Board(10, 10)`. Todo pregunta a `board.isInside()` en vez de asumir 8x8, y el peón corona en la última fila de ese tablero.
+- **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `Main`.
 
-## Enroque y coronación
+## Cosas a tener en cuenta
 
-Son reglas especiales que `ChessGame` recibe por constructor, sin saber cuáles son. Para el enroque, "el rey y la torre no se movieron" se saca del historial de jugadas, así que al deshacer el derecho a enrocar vuelve solo. La coronación le pregunta la pieza al puerto `IPromotionChooser`.
+La repetición de posición ignora los derechos de enroque y de captura al paso. La simulación de captura al paso no retira el peón capturado: puede permitir un jaque descubierto horizontal o rechazar una captura que eliminaría al peón que da jaque. La búsqueda de la IA usa una copia sin historial y puede evaluar de forma imprecisa el enroque, la captura al paso y las tablas. La jugada final se filtra contra las legales de la partida real.
 
-El peón ataca en diagonal aunque la casilla esté vacía, y eso importa para el enroque: el rey no puede pasar por una casilla que un peón ataca.
+## Documentos
 
-## Lo que no está
+En `docs/` están la justificación de las decisiones (`justificacion.md` y `.docx`), la presentación, la lista de clases para el UML y la spec y los planes con los que se terminó el trabajo.
 
-Captura al paso, tablas por repetición o por la regla de los 50 movimientos, y un oponente con IA. No se pidieron como obligatorios, y la IA usa algoritmos que no vimos en la cursada.
+La presentación conserva campos editables para los integrantes y la fecha. Franco dibuja el UML con `docs/uml-checklist.md`. Cuando esté `docs/uml.png`, ejecutar `python3 scripts/build_pptx.py` para incorporarlo en la diapositiva 4. Los generadores de documentos usan `python-docx` y `python-pptx`.
 
 ## Piezas
 
