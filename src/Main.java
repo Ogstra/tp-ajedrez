@@ -44,7 +44,7 @@ public class Main {
         renderer.render(board);
 
         System.out.println("Ajedrez: TP Ingeniería de Software (UADE)");
-        System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace. 'salir' termina.");
+        System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'salir' termina.");
 
         while (true) {
             System.out.print("\nTurno de " + (game.getTurn() == Color.WHITE ? "Blancas" : "Negras") + " > ");
@@ -57,6 +57,11 @@ public class Main {
             }
             if (input.equalsIgnoreCase("undo")) {
                 game.undo();
+                renderer.render(board);
+                continue;
+            }
+            if (input.equalsIgnoreCase("redo")) {
+                game.redo();
                 renderer.render(board);
                 continue;
             }

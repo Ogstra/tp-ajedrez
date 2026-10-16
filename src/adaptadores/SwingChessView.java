@@ -267,6 +267,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     @Override
+    public void onRedo() {
+        status.setText("Se rehizo la jugada.");
+    }
+
+    @Override
     public void onCastling(Color color, boolean kingSide) {
         status.setText(name(color) + ": enroque " + (kingSide ? "corto" : "largo") + ".");
     }

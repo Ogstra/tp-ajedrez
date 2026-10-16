@@ -8,6 +8,7 @@ import java.util.List;
 public interface IChessGame {
     MoveOutcome tryMove(Position from, Position to);
     boolean undo();
+    boolean redo();
     Color getTurn();
     boolean isGameOver();
     Board getBoard();

@@ -20,6 +20,7 @@ public class ChessGame implements IChessGame, IGameContext {
     private final List<IGameStatusListener> statusListeners;
     private final List<ISpecialMove> specialMoves;
     private final Deque<HistoryEntry> history = new ArrayDeque<>();
+    private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
     private IGameState state;
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
@@ -68,6 +69,7 @@ public class ChessGame implements IChessGame, IGameContext {
             return MoveOutcome.INVALID;
         }
 
+        redoStack.clear(); // una jugada nueva borra lo que se podía rehacer
         IMoveCommand command = createCommand(from, to);
         command.execute();
         HistoryEntry entry = new HistoryEntry(command, state);
@@ -107,7 +109,22 @@ public class ChessGame implements IChessGame, IGameContext {
         HistoryEntry entry = history.pop();
         entry.command.undo();
         state = entry.stateBefore;
+        redoStack.push(entry);
         for (IMoveListener listener : moveListeners) listener.onUndo();
+        return true;
+    }
+
+    @Override
+    public boolean redo() {
+        if (redoStack.isEmpty()) return false;
+        HistoryEntry entry = redoStack.pop();
+        entry.command.execute();
+        history.push(entry);
+        state = entry.stateAfter;
+        for (IMoveListener listener : moveListeners) {
+            entry.command.announce(listener);
+            listener.onRedo();
+        }
         return true;
     }
 

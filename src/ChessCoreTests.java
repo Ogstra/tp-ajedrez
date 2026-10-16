@@ -85,8 +85,86 @@ public class ChessCoreTests {
 
         testLegalMovesAtStartIsTwenty();
 
+        testRedoRestoresTheMove();
+        testRedoWithNothingToRedoReturnsFalse();
+        testNewMoveClearsRedo();
+        testRedoOfPromotionDoesNotAskAgain();
+
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
+    }
+
+    // Stub que cuenta cuántas veces se le preguntó.
+    private static class CountingChooser implements IPromotionChooser {
+        int calls = 0;
+
+        @Override
+        public PieceType choose(Color color) {
+            calls++;
+            return PieceType.QUEEN;
+        }
+    }
+
+    // TDD: rehacer vuelve a aplicar la jugada deshecha.
+    private static void testRedoRestoresTheMove() {
+        // Arrange
+        Board board = BoardSetup.standard(PIECES);
+        IChessGame game = newGame(board);
+        game.tryMove(at("e2"), at("e4"));
+        Board afterMove = board.cloneBoard();
+        game.undo();
+
+        // Act
+        boolean redone = game.redo();
+
+        // Assert
+        assertTrue("testRedoRestoresTheMove",
+            redone && afterMove.equals(board) && game.getTurn() == Color.BLACK,
+            "después de rehacer, el peón vuelve a e4 y le toca a las negras");
+    }
+
+    // TDD: no se puede rehacer sin jugadas deshechas.
+    private static void testRedoWithNothingToRedoReturnsFalse() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+
+        // Act / Assert
+        assertTrue("testRedoWithNothingToRedoReturnsFalse", !game.redo(),
+            "sin nada deshecho no hay qué rehacer");
+    }
+
+    // TDD: una jugada nueva borra lo que se podía rehacer.
+    private static void testNewMoveClearsRedo() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.undo();
+        game.tryMove(at("d2"), at("d4"));
+
+        // Act
+        boolean redone = game.redo();
+
+        // Assert
+        assertTrue("testNewMoveClearsRedo", !redone,
+            "después de jugar algo distinto ya no se puede rehacer la jugada vieja");
+    }
+
+    // TDD: rehacer una coronación no vuelve a preguntar la pieza.
+    private static void testRedoOfPromotionDoesNotAskAgain() {
+        // Arrange
+        Board board = boardWithPawnOnSeventh();
+        CountingChooser chooser = new CountingChooser();
+        IChessGame game = buildGame(board, new ArrayList<IMoveListener>(), new ArrayList<IGameStatusListener>(), chooser);
+        game.tryMove(at("a7"), at("a8"));
+        game.undo();
+
+        // Act
+        game.redo();
+
+        // Assert
+        assertTrue("testRedoOfPromotionDoesNotAskAgain",
+            chooser.calls == 1 && hasPiece(board, "a8", PieceType.QUEEN),
+            "el comando ya guarda la pieza elegida: se pregunta una sola vez");
     }
 
     // ---------- ayudas de los tests ----------
@@ -811,6 +889,7 @@ public class ChessCoreTests {
         @Override public void onCastling(Color color, boolean kingside) { events.add("castling"); }
         @Override public void onPromotion(Color color, Position position, PieceType newPiece) { events.add("promotion"); }
         @Override public void onUndo() { events.add("undo"); }
+        @Override public void onRedo() { events.add("redo"); }
         @Override public void onInvalidMove(String reason) { events.add("invalid"); }
         @Override public void onCheck(Color colorInCheck) { events.add("check"); }
         @Override public void onCheckmate(Color winner) { events.add("checkmate"); }

@@ -104,6 +104,11 @@ public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
     }
 
     @Override
+    public void onRedo() {
+        System.out.println("Se rehizo la jugada.");
+    }
+
+    @Override
     public void onCastling(Color color, boolean kingSide) {
         System.out.println(name(color) + ": enroque " + (kingSide ? "corto" : "largo") + ".");
     }

@@ -13,4 +13,5 @@ public interface IMoveListener {
     void onCastling(Color color, boolean kingside);
     void onPromotion(Color color, Position position, PieceType newPiece);
     void onUndo();
+    void onRedo();
 }
