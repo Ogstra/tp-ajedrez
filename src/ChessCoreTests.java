@@ -68,6 +68,11 @@ public class ChessCoreTests {
         testUndoRestoresTheTurn();
         testInvalidMoveNotifiesObserver();
 
+        testPromotionToKnight();
+        testPromotionUndoRestoresThePawn();
+        testCannotCastleWhileInCheck();
+        testCannotCastleWithPieceBetween();
+
         System.out.println("\n" + pasados + " pasados, " + fallados + " fallados.");
         System.exit(fallados > 0 ? 1 : 0);
     }
@@ -671,5 +676,96 @@ public class ChessCoreTests {
         // Assert
         assertTrue("testInvalidMoveNotifiesObserver", observer.events.equals(Arrays.asList("invalid")),
             "esperaba [invalid] y llegó " + observer.events);
+    }
+    // ---------- coronación y enroque, casos que faltaban ----------
+
+    // Stub que devuelve siempre la misma pieza, para probar coronaciones distintas de la reina.
+    private static class FixedChooser implements IPromotionChooser {
+        private final PieceType choice;
+
+        FixedChooser(PieceType choice) {
+            this.choice = choice;
+        }
+
+        @Override
+        public PieceType choose(Color color) {
+            return choice;
+        }
+    }
+
+    private static ChessGame newGameChoosing(Board board, PieceType choice) {
+        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
+            new CastlingMove(),
+            new PromotionMove(PIECES, new FixedChooser(choice)));
+        return new ChessGame(board, Arrays.<IGameObserver>asList(), specialMoves);
+    }
+
+    private static Board boardWithPawnOnSeventh() {
+        Board board = new Board();
+        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("a7"));
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("h4"));
+        return board;
+    }
+
+    private static void testPromotionToKnight() {
+        // Arrange
+        Board board = boardWithPawnOnSeventh();
+        ChessGame game = newGameChoosing(board, PieceType.KNIGHT);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("a7"), at("a8"));
+
+        // Assert
+        assertTrue("testPromotionToKnight",
+            outcome == MoveOutcome.OK && hay(board, "a8", PieceType.KNIGHT)
+                && board.pieceAt(at("a8")).getColor() == Color.WHITE,
+            "en a8 debería haber un caballo blanco");
+    }
+
+    private static void testPromotionUndoRestoresThePawn() {
+        // Arrange
+        Board board = boardWithPawnOnSeventh();
+        Board before = board.cloneBoard();
+        ChessGame game = newGameChoosing(board, PieceType.ROOK);
+        game.tryMove(at("a7"), at("a8"));
+
+        // Act
+        game.undo();
+
+        // Assert
+        assertTrue("testPromotionUndoRestoresThePawn", before.equals(board),
+            "al deshacer la coronación vuelve el peón a a7 y a8 queda vacía");
+    }
+
+    private static void testCannotCastleWhileInCheck() {
+        // Arrange: la torre negra de e8 da jaque al rey blanco por la columna e.
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("h1"));
+        board.placePiece(piece(PieceType.ROOK, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("a8"));
+        ChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e1"), at("g1"));
+
+        // Assert
+        assertTrue("testCannotCastleWhileInCheck", outcome == MoveOutcome.INVALID,
+            "no se puede enrocar estando en jaque");
+    }
+
+    private static void testCannotCastleWithPieceBetween() {
+        // Arrange: el caballo blanco en g1 estorba el enroque corto.
+        Board board = tableroParaEnrocar();
+        board.placePiece(piece(PieceType.KNIGHT, Color.WHITE), at("g1"));
+        ChessGame game = newGame(board);
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e1"), at("g1"));
+
+        // Assert
+        assertTrue("testCannotCastleWithPieceBetween", outcome == MoveOutcome.INVALID,
+            "con una pieza entre el rey y la torre no se puede enrocar");
     }
 }
