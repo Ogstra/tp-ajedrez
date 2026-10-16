@@ -1,3 +1,4 @@
+import nucleo.especiales.EnPassantMove;
 import nucleo.IDrawRule;
 import nucleo.tablas.FiftyMoveRule;
 import nucleo.tablas.InsufficientMaterialRule;
@@ -100,6 +101,9 @@ public class ChessCoreTests {
         testThreefoldRepetitionDeclaresDraw();
         testUndoAfterDrawReopensTheGame();
         testStatusListenerReceivesDraw();
+        testEnPassantIsAllowedRightAfterTheDoubleStep();
+        testEnPassantExpiresAfterOneMove();
+        testEnPassantUndoRestoresTheCapturedPawn();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -915,6 +919,7 @@ public class ChessCoreTests {
                                        IPromotionChooser chooser, List<IDrawRule> drawRules) {
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
+            new EnPassantMove(),
             new PromotionMove(PIECES, chooser));
         return new ChessGame(board, moveListeners, statusListeners, specialMoves, drawRules);
     }
@@ -1102,5 +1107,68 @@ public class ChessCoreTests {
         // Assert
         assertTrue("testStatusListenerReceivesDraw", observer.events.equals(Arrays.asList("move", "draw")),
             "esperaba [move, draw] y llegó " + observer.events);
+    }
+    // El tablero de los tests de captura al paso: el peón blanco de e5 espera al peón negro de d7.
+    private static Board enPassantBoard() {
+        Board board = new Board();
+        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e5"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("d7"));
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        return board;
+    }
+
+    // TDD: justo después del doble paso del peón rival se puede capturar al paso.
+    private static void testEnPassantIsAllowedRightAfterTheDoubleStep() {
+        // Arrange
+        Board board = enPassantBoard();
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("f1"));   // las blancas esperan
+        game.tryMove(at("d7"), at("d5"));   // doble paso negro, al lado del peón blanco
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e5"), at("d6"));
+
+        // Assert
+        assertTrue("testEnPassantIsAllowedRightAfterTheDoubleStep",
+            outcome == MoveOutcome.OK && hasPiece(board, "d6", PieceType.PAWN)
+                && board.pieceAt(at("d6")).getColor() == Color.WHITE && board.pieceAt(at("d5")) == null,
+            "el peón blanco queda en d6 y el negro de d5 desaparece");
+    }
+
+    // TDD: la oportunidad dura una sola jugada.
+    private static void testEnPassantExpiresAfterOneMove() {
+        // Arrange
+        Board board = enPassantBoard();
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("f1"));
+        game.tryMove(at("d7"), at("d5"));
+        game.tryMove(at("f1"), at("g1"));   // las blancas no capturan
+        game.tryMove(at("e8"), at("f8"));   // las negras mueven el rey
+
+        // Act
+        MoveOutcome outcome = game.tryMove(at("e5"), at("d6"));
+
+        // Assert
+        assertTrue("testEnPassantExpiresAfterOneMove", outcome == MoveOutcome.INVALID,
+            "ya no se puede capturar al paso una jugada después");
+    }
+
+    // TDD: deshacer la captura al paso devuelve el peón capturado.
+    private static void testEnPassantUndoRestoresTheCapturedPawn() {
+        // Arrange
+        Board board = enPassantBoard();
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("f1"));
+        game.tryMove(at("d7"), at("d5"));
+        Board afterDoubleStep = board.cloneBoard();
+        game.tryMove(at("e5"), at("d6"));
+
+        // Act
+        game.undo();
+
+        // Assert
+        assertTrue("testEnPassantUndoRestoresTheCapturedPawn", afterDoubleStep.equals(board),
+            "al deshacer vuelven el peón blanco a e5 y el negro a d5");
     }
 }

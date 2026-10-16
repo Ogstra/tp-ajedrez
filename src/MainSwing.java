@@ -1,3 +1,4 @@
+import nucleo.especiales.EnPassantMove;
 import nucleo.IDrawRule;
 import nucleo.tablas.FiftyMoveRule;
 import nucleo.tablas.InsufficientMaterialRule;
@@ -32,6 +33,7 @@ public class MainSwing {
             SwingChessView view = new SwingChessView(board.getRows(), board.getColumns());
             List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                 new CastlingMove(),
+            new EnPassantMove(),
                 new PromotionMove(pieces, view));
             List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
             new InsufficientMaterialRule(),

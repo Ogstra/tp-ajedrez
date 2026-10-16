@@ -1,3 +1,4 @@
+import nucleo.especiales.EnPassantMove;
 import nucleo.IDrawRule;
 import nucleo.tablas.FiftyMoveRule;
 import nucleo.tablas.InsufficientMaterialRule;
@@ -39,6 +40,7 @@ public class Main {
         IPromotionChooser chooser = new ConsolePromotionChooser(scanner);
         List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
             new CastlingMove(),
+            new EnPassantMove(),
             new PromotionMove(pieces, chooser));
         List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
             new InsufficientMaterialRule(),
