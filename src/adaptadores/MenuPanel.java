@@ -50,8 +50,8 @@ public class MenuPanel extends JPanel {
     private final ChoiceControl levelControl = ChoiceControl.segments("Fácil", "Medio", "Difícil");
     private final ChoiceControl colorControl = ChoiceControl.cards(new String[]{"Blancas", "Negras"},
         new Image[]{SwingChessView.pieceImage("wK"), SwingChessView.pieceImage("bK")});
-    private final JComboBox<String> whiteBox = new JComboBox<>();
-    private final JComboBox<String> blackBox = new JComboBox<>();
+    private final JComboBox<String> whiteBox = new FlatComboBox();
+    private final JComboBox<String> blackBox = new FlatComboBox();
     private final JPanel whiteSlot = new JPanel(new CardLayout());   // el desplegable o la etiqueta "IA"
     private final JPanel blackSlot = new JPanel(new CardLayout());
     private final JPanel aiSection = column();
@@ -101,7 +101,10 @@ public class MenuPanel extends JPanel {
         JButton registerButton = new FlatButton("Registrar", FlatButton.Style.SECONDARY);
         registerButton.addActionListener(e -> register());
         nameField.addActionListener(e -> register()); // Enter en el campo también registra
-        nameField.setPreferredSize(new Dimension(200, 34));
+        nameField.setPreferredSize(new Dimension(200, FlatComboBox.HEIGHT));
+        nameField.setBorder(new RoundedBorder());
+        nameField.setFont(nameField.getFont().deriveFont(14f));
+        nameField.setForeground(Palette.INK);
         newUserRow.setOpaque(false);
         newUserRow.add(nameField, BorderLayout.CENTER);
         newUserRow.add(registerButton, BorderLayout.EAST);
@@ -123,13 +126,12 @@ public class MenuPanel extends JPanel {
         put(content, playButton, 4);
         put(content, rankingButton, 8);
 
-        // La columna queda centrada y pegada arriba, así no se mueve cuando aparecen o se van filas.
+        // La columna queda centrada en la ventana, a lo ancho y a lo alto.
         setBackground(Palette.BACKGROUND);
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.anchor = GridBagConstraints.NORTH;
-        c.weighty = 1;
-        c.insets = new Insets(56, 0, 0, 0);
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(24, 0, 24, 0);
         add(content, c);
         refresh();
     }
@@ -247,7 +249,7 @@ public class MenuPanel extends JPanel {
         Image image = SwingChessView.pieceImage(piece);
         if (image != null) name.setIcon(new ImageIcon(image.getScaledInstance(28, 28, Image.SCALE_SMOOTH)));
 
-        JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
         badge.setOpaque(false);
         badge.setName(badgeName);
         badge.add(new Badge("IA"));

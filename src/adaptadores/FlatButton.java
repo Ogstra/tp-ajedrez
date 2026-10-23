@@ -38,7 +38,7 @@ public class FlatButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
         int width = getFontMetrics(getFont()).stringWidth(getText()) + 32;
-        int height = style == Style.PRIMARY ? 52 : style == Style.SECONDARY ? 34 : 26;
+        int height = style == Style.PRIMARY ? 52 : style == Style.SECONDARY ? FlatComboBox.HEIGHT : 26;
         return new Dimension(width, height);
     }
 

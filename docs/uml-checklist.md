@@ -39,7 +39,11 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### FlatButton (class)
 - Extiende: JButton
-- Usa: Color, Palette
+- Usa: Color, FlatComboBox, Palette
+
+### FlatComboBox (class)
+- Extiende: JComboBox
+- Usa: Palette, RoundedBorder
 
 ### GameBuilder (interface)
 - Usa: IChessGame, ScoreRecorder, SwingChessView
@@ -47,7 +51,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### MenuPanel (class)
 - Extiende: JPanel
 - Tiene: AccountService, ChoiceControl, FlatButton, User
-- Usa: Color, OpponentLevel, Palette, Score, SwingChessView
+- Usa: Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, Score, SwingChessView
 
 ### Palette (class)
 - Tiene: Color
@@ -55,6 +59,10 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### RankingPanel (class)
 - Extiende: JPanel
 - Usa: FlatButton, Palette, Score
+
+### RoundedBorder (class)
+- Extiende: AbstractBorder
+- Usa: Palette
 
 ### SwingChessView (class)
 - Extiende: JFrame
