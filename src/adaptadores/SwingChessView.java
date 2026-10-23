@@ -113,7 +113,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // Una sola ventana con tres pantallas (menú, partida y ranking) que se cambian con un CardLayout.
     // Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
     public SwingChessView(AccountService accounts, GameBuilder builder) {
-        super("TP Ajedrez: Ingeniería de Software (UADE)");
+        super("Ajedrez");
         this.accounts = accounts;
         this.builder = builder;
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);

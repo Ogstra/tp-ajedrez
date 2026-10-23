@@ -84,7 +84,7 @@ public class Main {
             : new OpponentController(game, Opponents.create(level, new Random()), Color.BLACK);
 
         renderer.render(board);
-        System.out.println("Ajedrez: TP Ingeniería de Software (UADE)");
+        System.out.println("Ajedrez");
         System.out.println("Blancas: " + (white == null ? "sin usuario" : white)
             + " | Negras: " + (level != OpponentLevel.NONE ? "la IA" : black == null ? "sin usuario" : black));
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");

@@ -65,8 +65,6 @@ public class MenuPanel extends JPanel {
         JLabel title = new JLabel("Ajedrez");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 38f));
         title.setForeground(ACCENT);
-        JLabel subtitle = new JLabel("TP de Ingeniería de Software (UADE)");
-        subtitle.setForeground(java.awt.Color.GRAY);
 
         JButton registerButton = new JButton("Registrar");
         registerButton.addActionListener(e -> register());
@@ -107,10 +105,7 @@ public class MenuPanel extends JPanel {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(50, 0, 2, 0);
         add(title, c);
-        c.insets = new Insets(0, 0, 2, 0);
-        add(subtitle, c);
         title.setHorizontalAlignment(SwingConstants.CENTER);
-        subtitle.setHorizontalAlignment(SwingConstants.CENTER);
         c.insets = new Insets(22, 0, 0, 0);
         add(game, c);
         c.insets = new Insets(12, 0, 0, 0);

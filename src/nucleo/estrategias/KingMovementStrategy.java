@@ -8,7 +8,7 @@ import nucleo.Position;
 import java.util.ArrayList;
 import java.util.List;
 
-// No implementa enroque: fuera del alcance mínimo de este TP.
+// Solo los pasos del rey. El enroque no va acá: es una jugada especial (CastlingMove).
 public class KingMovementStrategy implements IMovementStrategy {
 
     private static final int[][] DIRECTIONS = {
