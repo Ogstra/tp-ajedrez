@@ -38,7 +38,7 @@ public class MainSwing {
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
             User white = LoginDialog.show(null, accounts, "blancas");
-            User black = LoginDialog.show(null, accounts, "negras (si vas a jugar contra la IA, elegí 'Jugar sin usuario')");
+            User black = LoginDialog.show(null, accounts, "negras (contra la IA, Jugar sin usuario)");
 
             PieceFactory pieces = PieceFactory.standard();
             Board board = BoardSetup.standard(pieces);
