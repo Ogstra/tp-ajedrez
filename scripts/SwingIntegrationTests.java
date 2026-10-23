@@ -42,12 +42,17 @@ public class SwingIntegrationTests {
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
-                // Menu: registrar un usuario lo deja elegido para las blancas.
+                // Menu: el campo de usuario nuevo solo aparece al elegir "Nuevo usuario..." en un lado.
+                JComboBox<?> white = (JComboBox<?>) named(root, "white");
+                JComboBox<?> black = (JComboBox<?>) named(root, "black");
+                require(!named(root, "newUser").isShowing(), "el campo de usuario nuevo empieza oculto");
+                white.setSelectedIndex(white.getItemCount() - 1);
+                require(named(root, "newUser").isShowing(), "al elegir Nuevo usuario debe aparecer el campo");
                 ((JTextField) named(root, "newUser")).setText("Ana");
                 button(root, "Registrar").doClick();
-                JComboBox<?> white = (JComboBox<?>) named(root, "white");
-                require(white.getItemCount() == 2 && "Ana".equals(white.getSelectedItem()),
+                require(white.getItemCount() == 3 && "Ana".equals(white.getSelectedItem()),
                     "al registrar a Ana debe quedar elegida para las blancas");
+                require(!named(root, "newUser").isShowing(), "al registrar, el campo vuelve a ocultarse");
                 require(accounts.ranking().size() == 1, "el registro debe guardarse");
 
                 // 1 contra 1: la dificultad y el color quedan bloqueados.
@@ -90,6 +95,8 @@ public class SwingIntegrationTests {
                 require(named(root, "level").isEnabled() && named(root, "color").isEnabled(),
                     "contra la IA se eligen dificultad y color");
                 ((JComboBox<?>) named(root, "level")).setSelectedIndex(1);
+                require("IA".equals(black.getSelectedItem()) && !black.isEnabled(),
+                    "contra la IA con blancas, el lado de las negras dice IA");
                 button(root, "Jugar").doClick();
                 square("e2", false).doClick();
                 square("e4", false).doClick();

@@ -17,7 +17,7 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios y, si hace falta, se registra uno nuevo. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba está el botón Menú y abajo Ranking, Deshacer y Rehacer. El ranking también se abre en la misma ventana.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios (el lado de la IA dice IA; si se elige "Nuevo usuario..." en un lado aparece el campo para registrarlo). En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba está el botón Menú y abajo Ranking, Deshacer y Rehacer. El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 

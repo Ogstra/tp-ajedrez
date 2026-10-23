@@ -28,6 +28,7 @@ import java.util.List;
 public class MenuPanel extends JPanel {
 
     private static final String NO_USER = "Sin usuario";
+    private static final String NEW_USER = "Nuevo usuario...";
 
     private final AccountService accounts;
     private final Runnable onPlay;
@@ -38,7 +39,12 @@ public class MenuPanel extends JPanel {
     private final JComboBox<String> blackBox = new JComboBox<>();
     private final JTextField nameField = new JTextField(12);
     private final JLabel message = new JLabel(" ");
+    private final JLabel newUserLabel = new JLabel("Usuario nuevo");
+    private final JPanel newUserRow = new JPanel(new BorderLayout(6, 0));
     private List<User> users = new ArrayList<>();
+    private User whiteChoice;      // lo elegido en cada lado, para no perderlo cuando un lado pasa a ser la IA
+    private User blackChoice;
+    private boolean filling = false; // true mientras se rearman los desplegables (no son elecciones de la persona)
 
     public MenuPanel(AccountService accounts, Runnable onPlay, Runnable onRanking) {
         this.accounts = accounts;
@@ -63,10 +69,11 @@ public class MenuPanel extends JPanel {
         modeBox.addActionListener(e -> updateEnabled());
         colorBox.addActionListener(e -> updateEnabled());
 
-        // Usuario nuevo: el campo y su botón van juntos en una sola fila del formulario.
-        JPanel newUser = new JPanel(new BorderLayout(6, 0));
-        newUser.add(nameField, BorderLayout.CENTER);
-        newUser.add(registerButton, BorderLayout.EAST);
+        // Usuario nuevo: el campo y su botón van juntos; la fila aparece solo al elegir "Nuevo usuario...".
+        newUserRow.add(nameField, BorderLayout.CENTER);
+        newUserRow.add(registerButton, BorderLayout.EAST);
+        whiteBox.addActionListener(e -> showNewUserRow());
+        blackBox.addActionListener(e -> showNewUserRow());
 
         JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
         buttons.add(playButton);
@@ -79,7 +86,7 @@ public class MenuPanel extends JPanel {
         addRow(form, 2, "Juego con", colorBox);
         addRow(form, 3, "Blancas", whiteBox);
         addRow(form, 4, "Negras", blackBox);
-        addRow(form, 5, "Usuario nuevo", newUser);
+        addRow(form, 5, newUserLabel, newUserRow);
         message.setHorizontalAlignment(SwingConstants.CENTER);
         addWide(form, 6, message, 14);
         addWide(form, 7, buttons, 6);
@@ -97,12 +104,9 @@ public class MenuPanel extends JPanel {
 
     // Vuelve a leer los usuarios (cambian los puntos y los registros) conservando lo elegido.
     public void refresh() {
-        User white = userAt(whiteBox);
-        User black = userAt(blackBox);
+        saveChoices();
         users = new ArrayList<>();
         for (Score score : accounts.ranking()) users.add(score.getUser());
-        fill(whiteBox, white);
-        fill(blackBox, black);
         updateEnabled();
     }
 
@@ -123,6 +127,10 @@ public class MenuPanel extends JPanel {
     public User blackUser() { return blackBox.isEnabled() ? userAt(blackBox) : null; }
 
     private void play() {
+        if (isNew(whiteBox) || isNew(blackBox)) {
+            message.setText("Registrá el usuario nuevo o elegí otra opción.");
+            return;
+        }
         User white = whiteUser();
         if (white != null && white.equals(blackUser())) {
             message.setText("Elegí usuarios distintos para blancas y negras.");
@@ -132,28 +140,48 @@ public class MenuPanel extends JPanel {
         onPlay.run();
     }
 
+    // El usuario nuevo queda elegido en el lado que pidió "Nuevo usuario...".
     private void register() {
+        JComboBox<String> target = isNew(whiteBox) ? whiteBox : blackBox;
         try {
             User user = accounts.register(nameField.getText());
             nameField.setText("");
             refresh();
-            // El usuario nuevo queda elegido en el primer lado libre.
-            int index = users.indexOf(user) + 1;
-            if (whiteBox.isEnabled() && userAt(whiteBox) == null) whiteBox.setSelectedIndex(index);
-            else if (blackBox.isEnabled() && userAt(blackBox) == null) blackBox.setSelectedIndex(index);
+            target.setSelectedIndex(users.indexOf(user) + 1);
             message.setText("Registrado: " + user.getName() + ".");
         } catch (IllegalArgumentException e) {
             message.setText(e.getMessage());
         }
     }
 
-    // Contra la IA solo se elige el usuario del lado propio.
+    // Contra la IA solo se elige el usuario del lado propio; el otro lado dice "IA".
     private void updateEnabled() {
+        saveChoices();
         boolean ai = versusAi();
         levelBox.setEnabled(ai);
         colorBox.setEnabled(ai);
-        whiteBox.setEnabled(!ai || humanColor() == Color.WHITE);
-        blackBox.setEnabled(!ai || humanColor() == Color.BLACK);
+        fill(whiteBox, whiteChoice, !ai || humanColor() == Color.WHITE);
+        fill(blackBox, blackChoice, !ai || humanColor() == Color.BLACK);
+        showNewUserRow();
+    }
+
+    // Guarda lo que muestran los desplegables habilitados (los de la IA no tienen elección).
+    private void saveChoices() {
+        if (whiteBox.isEnabled()) whiteChoice = userAt(whiteBox);
+        if (blackBox.isEnabled()) blackChoice = userAt(blackBox);
+    }
+
+    private void showNewUserRow() {
+        if (filling) return;
+        boolean visible = isNew(whiteBox) || isNew(blackBox);
+        newUserLabel.setVisible(visible);
+        newUserRow.setVisible(visible);
+        revalidate();
+        repaint();
+    }
+
+    private boolean isNew(JComboBox<String> box) {
+        return box.isEnabled() && box.getSelectedIndex() == users.size() + 1;
     }
 
     private User userAt(JComboBox<String> box) {
@@ -161,19 +189,31 @@ public class MenuPanel extends JPanel {
         return index <= 0 || index > users.size() ? null : users.get(index - 1);
     }
 
-    private void fill(JComboBox<String> box, User selected) {
+    private void fill(JComboBox<String> box, User selected, boolean enabled) {
+        filling = true;
         box.removeAllItems();
-        box.addItem(NO_USER);
-        for (User user : users) box.addItem(user.getName());
-        box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + 1);
+        if (enabled) {
+            box.addItem(NO_USER);
+            for (User user : users) box.addItem(user.getName());
+            box.addItem(NEW_USER);
+            box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + 1);
+        } else {
+            box.addItem("IA");
+        }
+        box.setEnabled(enabled);
+        filling = false;
     }
 
     private static void addRow(JPanel form, int y, String label, Component control) {
+        addRow(form, y, new JLabel(label), control);
+    }
+
+    private static void addRow(JPanel form, int y, JLabel label, Component control) {
         GridBagConstraints c = new GridBagConstraints();
         c.gridy = y;
         c.insets = new Insets(6, 8, 6, 8);
         c.anchor = GridBagConstraints.EAST;
-        form.add(new JLabel(label), c);
+        form.add(label, c);
         c.gridx = 1;
         c.anchor = GridBagConstraints.CENTER;
         c.fill = GridBagConstraints.HORIZONTAL;
