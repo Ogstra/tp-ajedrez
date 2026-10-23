@@ -46,7 +46,8 @@ public class SwingIntegrationTests {
                 JComboBox<?> white = (JComboBox<?>) named(root, "white");
                 JComboBox<?> black = (JComboBox<?>) named(root, "black");
                 require(!named(root, "newUser").isShowing(), "el campo de usuario nuevo empieza oculto");
-                white.setSelectedIndex(white.getItemCount() - 1);
+                white.setSelectedIndex(1);
+                require("Nuevo usuario...".equals(white.getSelectedItem()), "Nuevo usuario va justo abajo de Sin usuario");
                 require(named(root, "newUser").isShowing(), "al elegir Nuevo usuario debe aparecer el campo");
                 ((JTextField) named(root, "newUser")).setText("Ana");
                 button(root, "Registrar").doClick();

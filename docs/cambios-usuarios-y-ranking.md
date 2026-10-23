@@ -79,7 +79,7 @@ Se había subido una implementación paralela de login y ranking en dos commits 
 
 `SwingChessView` pasó a tener tres pantallas dentro del mismo `JFrame`, que se cambian con un `CardLayout`:
 
-- `MenuPanel`: modo (1 contra 1 o contra la IA), dificultad, color propio, usuario de cada lado y los botones Jugar y Ranking. Cada lado ofrece "Sin usuario", los registrados y "Nuevo usuario..."; solo al elegir esta última opción aparece el campo para registrar. El lado que juega la IA muestra "IA" y queda bloqueado.
+- `MenuPanel`: modo (1 contra 1 o contra la IA), dificultad, color propio, usuario de cada lado y los botones Jugar y Ranking. Cada lado ofrece "Sin usuario", "Nuevo usuario..." (justo debajo) y los registrados; solo al elegir esta última opción aparece el campo para registrar. El lado que juega la IA muestra "IA" y queda bloqueado.
 - La partida: el tablero, el botón Menú, la etiqueta de jugadores y de estado, y los botones Ranking, Deshacer y Rehacer. Si la persona juega con negras el tablero se gira.
 - `RankingPanel`: la tabla y un botón Volver.
 

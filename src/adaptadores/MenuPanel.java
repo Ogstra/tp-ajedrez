@@ -28,6 +28,8 @@ import java.util.List;
 public class MenuPanel extends JPanel {
 
     private static final String NO_USER = "Sin usuario";
+    // Orden de cada desplegable: Sin usuario, Nuevo usuario... y después los registrados.
+    private static final int NEW_USER_INDEX = 1;
     private static final String NEW_USER = "Nuevo usuario...";
 
     private final AccountService accounts;
@@ -147,7 +149,7 @@ public class MenuPanel extends JPanel {
             User user = accounts.register(nameField.getText());
             nameField.setText("");
             refresh();
-            target.setSelectedIndex(users.indexOf(user) + 1);
+            target.setSelectedIndex(users.indexOf(user) + NEW_USER_INDEX + 1);
             message.setText("Registrado: " + user.getName() + ".");
         } catch (IllegalArgumentException e) {
             message.setText(e.getMessage());
@@ -181,12 +183,12 @@ public class MenuPanel extends JPanel {
     }
 
     private boolean isNew(JComboBox<String> box) {
-        return box.isEnabled() && box.getSelectedIndex() == users.size() + 1;
+        return box.isEnabled() && box.getSelectedIndex() == NEW_USER_INDEX;
     }
 
     private User userAt(JComboBox<String> box) {
         int index = box.getSelectedIndex();
-        return index <= 0 || index > users.size() ? null : users.get(index - 1);
+        return index <= NEW_USER_INDEX ? null : users.get(index - NEW_USER_INDEX - 1);
     }
 
     private void fill(JComboBox<String> box, User selected, boolean enabled) {
@@ -194,9 +196,9 @@ public class MenuPanel extends JPanel {
         box.removeAllItems();
         if (enabled) {
             box.addItem(NO_USER);
-            for (User user : users) box.addItem(user.getName());
             box.addItem(NEW_USER);
-            box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + 1);
+            for (User user : users) box.addItem(user.getName());
+            box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + NEW_USER_INDEX + 1);
         } else {
             box.addItem("IA");
         }
