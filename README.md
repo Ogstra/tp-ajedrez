@@ -21,7 +21,7 @@ En la consola se elige al arrancar contra quién se juega (dos personas o la IA 
 
 ## Usuarios y ranking
 
-Al arrancar (en consola y en ventana) cada persona puede iniciar sesión con su usuario y su id, registrarse o jugar sin usuario. No hay contraseña. Al registrarse el sistema asigna el id y lo muestra: hay que anotarlo, junto con el nombre alcanza para volver a entrar. Contra la IA solo se pide el usuario de las blancas (en la ventana el oponente se elige después, así que ahí las negras se piden igual y se responde Jugar sin usuario).
+Al arrancar (en consola y en ventana) cada persona puede iniciar sesión, registrarse o jugar sin usuario. No hay contraseña: se entra solo con el nombre (en la ventana se elige de una lista) y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. Contra la IA solo se pide el usuario de las blancas (en la ventana el oponente se elige después, así que ahí las negras se piden igual y se responde Jugar sin usuario).
 
 Cuando una partida termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar la partida) y en la ventana con el botón Ranking.
 

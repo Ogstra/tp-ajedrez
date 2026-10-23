@@ -1,11 +1,11 @@
 # Cambios técnicos: usuarios y ranking
 
-Este documento explica qué se agregó para tener un login básico (usuario e id) y un ranking, cómo está armado y por qué.
+Este documento explica qué se agregó para tener un login básico (por nombre de usuario) y un ranking, cómo está armado y por qué.
 
 ## 1. Qué hace
 
 - Al arrancar, cada jugador humano puede iniciar sesión, registrarse o jugar sin usuario.
-- No hay contraseña. El id lo asigna el sistema al registrarse y junto con el nombre alcanza para volver a entrar.
+- No hay contraseña. Se entra solo con el nombre (en la ventana se elige de una lista). El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
 - Cuando una partida termina se acredita el resultado a los usuarios que participaron: 3 puntos por victoria, 1 por empate, 0 por derrota.
 - El ranking se ve con el comando `ranking` en la consola y con el botón Ranking en la ventana.
 - Los datos persisten en `data/usuarios.csv`.
@@ -30,7 +30,7 @@ El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se
 
 ## 3. Registro y login
 
-`AccountService.register(name)` valida el nombre (no vacío, hasta 20 caracteres, sin `;` ni caracteres de control), rechaza duplicados sin distinguir mayúsculas y asigna como id el mayor existente más uno. `login(name, id)` devuelve el usuario si el nombre coincide (sin distinguir mayúsculas) y el id es exacto, o `null` si no. Los datos erróneos no dicen cuál de los dos falló.
+`AccountService.register(name)` valida el nombre (no vacío, hasta 20 caracteres, sin `;` ni caracteres de control), rechaza duplicados sin distinguir mayúsculas y asigna como id el mayor existente más uno. `login(name)` devuelve el usuario con ese nombre (sin distinguir mayúsculas), o `null` si no existe. El id sirve para identificar al usuario por dentro (igualdad, archivo) y no interviene en el login.
 
 ## 4. Cómo se acredita un resultado
 
@@ -57,7 +57,7 @@ La carpeta es `data/` y se cambia con `-Dajedrez.data=carpeta`. `data/` está en
 
 ## 6. Ranking
 
-Orden: puntos de mayor a menor, después más victorias, después nombre alfabético. Incluye a todos los registrados, también los que no jugaron. En la consola se ve como tabla de columnas fijas (`#`, `Usuario`, `Id`, `PJ`, `G`, `E`, `P`, `Pts`) y en la ventana en una `JTable`.
+Orden: puntos de mayor a menor, después más victorias, después nombre alfabético. Incluye a todos los registrados, también los que no jugaron. En la consola se ve como tabla de columnas fijas (`#`, `Usuario`, `PJ`, `G`, `E`, `P`, `Pts`) y en la ventana en una `JTable`.
 
 ## 7. Pruebas
 
@@ -67,7 +67,7 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 
 ## 8. Decisiones y límites
 
-- Sin contraseña, como se pidió: cualquiera que sepa el nombre y el id puede entrar. Alcanza para un trabajo práctico, no para datos reales.
+- Sin contraseña, como se pidió: cualquiera puede entrar como cualquier usuario registrado. Alcanza para un trabajo práctico, no para datos reales.
 - El archivo CSV no está pensado para dos procesos escribiendo a la vez. Si hiciera falta, se escribe otro adaptador de `IAccountStore` y no cambia nada más.
 - No se usó Singleton ni estado global: el servicio se inyecta.
 

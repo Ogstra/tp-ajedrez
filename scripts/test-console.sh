@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pruebas de la consola con entrada simulada: deshacer y repetir un mate, y las cuentas
-# (registro, login y ranking guardado entre ejecuciones, en una carpeta temporal).
+# (registro, login por nombre y ranking guardado entre ejecuciones, en una carpeta temporal).
 set -e
 cd "$(dirname "$0")/.."
 
@@ -17,24 +17,24 @@ echo '[OK]   Consola: deshacer y repetir mate'
 
 # 2. Dos usuarios nuevos juegan el mate del loco: ganan las negras (Beto).
 output=$(printf '0\n2\nAna\n2\nBeto\nf2 f3\ne7 e5\ng2 g4\nd8 h4\nsalir\n' | java -Dajedrez.data="$data/cuentas" -cp out Main)
-if ! printf '%s' "$output" | grep -q 'Tu id es 1' || ! printf '%s' "$output" | grep -q 'Tu id es 2'; then
-    echo '[FAIL] El sistema debe asignar los ids 1 y 2 al registrarse.'
+if [ "$(printf '%s' "$output" | grep -c 'Ya estás registrado')" -ne 2 ]; then
+    echo '[FAIL] Los dos jugadores deben poder registrarse solo con el nombre.'
     exit 1
 fi
-if ! printf '%s' "$output" | grep -Eq '^ *1  Beto +2 +1 +1 +0 +0 +3$'; then
+if ! printf '%s' "$output" | grep -Eq '^ *1  Beto +1 +1 +0 +0 +3$'; then
     echo '[FAIL] Después del mate, Beto debe liderar el ranking con 3 puntos.'
     exit 1
 fi
-echo '[OK]   Consola: registro con id y ranking al terminar la partida'
+echo '[OK]   Consola: registro y ranking al terminar la partida'
 
-# 3. Otra ejecución: el login usa usuario e id, un id equivocado se rechaza y el ranking persiste.
-output=$(printf '0\n1\nAna\n9\n1\nAna\n1\n1\nbeto\n2\nranking\nsalir\n' | java -Dajedrez.data="$data/cuentas" -cp out Main)
-if ! printf '%s' "$output" | grep -q 'Usuario o id incorrectos' || ! printf '%s' "$output" | grep -q 'Hola, Ana' || ! printf '%s' "$output" | grep -q 'Hola, Beto'; then
-    echo '[FAIL] El login debe rechazar un id equivocado y aceptar usuario e id correctos.'
+# 3. Otra ejecución: el login es solo por nombre, un usuario inexistente se rechaza y el ranking persiste.
+output=$(printf '0\n1\nNadie\n1\nAna\n1\nbeto\nranking\nsalir\n' | java -Dajedrez.data="$data/cuentas" -cp out Main)
+if ! printf '%s' "$output" | grep -q 'No existe ese usuario' || ! printf '%s' "$output" | grep -q 'Hola, Ana' || ! printf '%s' "$output" | grep -q 'Hola, Beto'; then
+    echo '[FAIL] El login debe rechazar un usuario inexistente y aceptar los registrados.'
     exit 1
 fi
-if ! printf '%s' "$output" | grep -Eq '^ *1  Beto +2 +1 +1 +0 +0 +3$' || ! printf '%s' "$output" | grep -Eq '^ *2  Ana +1 +1 +0 +0 +1 +0$'; then
+if ! printf '%s' "$output" | grep -Eq '^ *1  Beto +1 +1 +0 +0 +3$' || ! printf '%s' "$output" | grep -Eq '^ *2  Ana +1 +0 +0 +1 +0$'; then
     echo '[FAIL] El ranking guardado debe seguir ahí en la siguiente ejecución.'
     exit 1
 fi
-echo '[OK]   Consola: login con usuario e id y ranking persistente'
+echo '[OK]   Consola: login por nombre y ranking persistente'

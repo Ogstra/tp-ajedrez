@@ -9,7 +9,7 @@ import java.util.List;
 
 // Registro, login y ranking de jugadores. No sabe dónde se guardan los datos:
 // los pide y los entrega por el puerto IAccountStore, que entra por constructor.
-// El login es usuario más id: no hay contraseña.
+// El login es solo por nombre de usuario: no hay contraseña. El id lo asigna el sistema y es interno.
 public class AccountService {
 
     public static final int MAX_NAME_LENGTH = 20;
@@ -41,12 +41,11 @@ public class AccountService {
         return user;
     }
 
-    // Devuelve el usuario si el nombre (sin distinguir mayúsculas) y el id coinciden; si no, null.
-    public User login(String rawName, int id) {
+    // Devuelve el usuario con ese nombre (sin distinguir mayúsculas), o null si no existe.
+    public User login(String rawName) {
         String name = rawName == null ? "" : rawName.trim();
         for (Score score : store.loadAll()) {
-            User user = score.getUser();
-            if (user.getId() == id && user.getName().equalsIgnoreCase(name)) return user;
+            if (score.getUser().getName().equalsIgnoreCase(name)) return score.getUser();
         }
         return null;
     }

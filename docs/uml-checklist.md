@@ -34,7 +34,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: Score, User
 
 ### LoginDialog (class)
-- Usa: AccountService, User
+- Usa: AccountService, Score, User
 
 ### ScoreboardDialog (class)
 - Usa: Score

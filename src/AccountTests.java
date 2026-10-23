@@ -48,7 +48,7 @@ public class AccountTests {
         testRegisterAssignsConsecutiveIds();
         testRegisterRejectsDuplicateNameIgnoringCase();
         testRegisterRejectsInvalidNames();
-        testLoginNeedsNameAndMatchingId();
+        testLoginByNameIgnoringCase();
         testScorePoints();
         testRankingOrdersByPointsThenWinsThenName();
         testRecordAndRevertAdjustScores();
@@ -66,7 +66,7 @@ public class AccountTests {
         testRedoOfAnEarlierMoveDoesNotReapply();
         testBlackUserCanChangeDuringTheGame();
         testLoginFormRegistersAndEnters();
-        testLoginFormRejectsBadInput();
+        testLoginFormRejectsUnknownUser();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -209,22 +209,21 @@ public class AccountTests {
             "se rechazaron " + rejected + " de " + invalid.length);
     }
 
-    // TDD: se entra con usuario y id; sin contraseña.
-    private static void testLoginNeedsNameAndMatchingId() {
+    // TDD: se entra solo con el nombre de usuario; sin contraseña ni id.
+    private static void testLoginByNameIgnoringCase() {
         // Arrange
         AccountService service = newService();
         User ana = service.register("Ana");
         service.register("Beto");
 
         // Act
-        User ok = service.login("ana", 1);
-        User wrongId = service.login("Ana", 2);
-        User unknown = service.login("Carla", 1);
+        User ok = service.login(" ana ");
+        User unknown = service.login("Carla");
 
         // Assert
-        assertTrue("testLoginNeedsNameAndMatchingId",
-            ok != null && ok.equals(ana) && wrongId == null && unknown == null,
-            "login correcto: " + ok + ", id equivocado: " + wrongId + ", usuario inexistente: " + unknown);
+        assertTrue("testLoginByNameIgnoringCase",
+            ok != null && ok.equals(ana) && unknown == null,
+            "login correcto: " + ok + ", usuario inexistente: " + unknown);
     }
 
     // ---------- puntaje y ranking ----------
@@ -296,7 +295,7 @@ public class AccountTests {
         // Assert
         Score score = scoreOf(second, ana);
         assertTrue("testAnotherServiceReadsWhatWasSaved",
-            score != null && score.getWins() == 1 && second.login("Ana", 1) != null,
+            score != null && score.getWins() == 1 && second.login("Ana") != null,
             "el segundo servicio debería ver a Ana con una victoria");
     }
 
@@ -532,32 +531,28 @@ public class AccountTests {
         AccountService service = newService();
 
         // Act
-        User created = LoginDialog.enter(service, true, "Ana", "");
-        User entered = LoginDialog.enter(service, false, "ana", " " + created.getId() + " ");
+        User created = LoginDialog.enter(service, true, "Ana");
+        User entered = LoginDialog.enter(service, false, "ana");
 
         // Assert
         assertTrue("testLoginFormRegistersAndEnters", created.equals(entered),
             "debería entrar con el mismo usuario que se registró");
     }
 
-    private static void testLoginFormRejectsBadInput() {
+    private static void testLoginFormRejectsUnknownUser() {
         // Arrange
         AccountService service = newService();
         service.register("Ana");
-        int rejected = 0;
+        boolean rejected = false;
 
         // Act
-        String[][] cases = {{"Ana", "abc"}, {"Ana", "9"}, {"Nadie", "1"}};
-        for (String[] c : cases) {
-            try {
-                LoginDialog.enter(service, false, c[0], c[1]);
-            } catch (IllegalArgumentException e) {
-                rejected++;
-            }
+        try {
+            LoginDialog.enter(service, false, "Nadie");
+        } catch (IllegalArgumentException e) {
+            rejected = true;
         }
 
         // Assert
-        assertTrue("testLoginFormRejectsBadInput", rejected == 3,
-            "id no numérico, id incorrecto y usuario inexistente deben rechazarse");
+        assertTrue("testLoginFormRejectsUnknownUser", rejected, "un usuario inexistente debe rechazarse");
     }
 }

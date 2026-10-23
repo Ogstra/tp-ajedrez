@@ -36,18 +36,9 @@ public final class ConsoleAccounts {
     private static User login(Scanner scanner, AccountService accounts) {
         System.out.print("Usuario > ");
         if (!scanner.hasNextLine()) return null;
-        String name = scanner.nextLine();
-        System.out.print("Id > ");
-        if (!scanner.hasNextLine()) return null;
-        String rawId = scanner.nextLine().trim();
-        User user = null;
-        try {
-            user = accounts.login(name, Integer.parseInt(rawId));
-        } catch (NumberFormatException e) {
-            // el id no es un número: se trata igual que un id equivocado
-        }
+        User user = accounts.login(scanner.nextLine());
         if (user == null) {
-            System.out.println("Usuario o id incorrectos.");
+            System.out.println("No existe ese usuario. Si es nuevo, elegí registrarse.");
             return null;
         }
         System.out.println("Hola, " + user.getName() + ".");
@@ -59,8 +50,7 @@ public final class ConsoleAccounts {
         if (!scanner.hasNextLine()) return null;
         try {
             User user = accounts.register(scanner.nextLine());
-            System.out.println("Listo, " + user.getName() + ". Tu id es " + user.getId()
-                + ": anotalo, lo necesitás para volver a entrar.");
+            System.out.println("Listo, " + user.getName() + ". Ya estás registrado.");
             return user;
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
@@ -76,11 +66,11 @@ public final class ConsoleAccounts {
     public static String formatRanking(List<Score> ranking) {
         if (ranking.isEmpty()) return "Ranking: todavía no hay usuarios.";
         StringBuilder text = new StringBuilder("Ranking\n");
-        text.append(String.format("%3s  %-20s %4s  %3s  %3s  %3s  %3s  %4s%n", "#", "Usuario", "Id", "PJ", "G", "E", "P", "Pts"));
+        text.append(String.format("%3s  %-20s %3s  %3s  %3s  %3s  %4s%n", "#", "Usuario", "PJ", "G", "E", "P", "Pts"));
         int position = 1;
         for (Score score : ranking) {
-            text.append(String.format("%3d  %-20s %4d  %3d  %3d  %3d  %3d  %4d%n",
-                position++, score.getUser().getName(), score.getUser().getId(),
+            text.append(String.format("%3d  %-20s %3d  %3d  %3d  %3d  %4d%n",
+                position++, score.getUser().getName(),
                 score.getGames(), score.getWins(), score.getDraws(), score.getLosses(), score.getPoints()));
         }
         return text.toString().trim();

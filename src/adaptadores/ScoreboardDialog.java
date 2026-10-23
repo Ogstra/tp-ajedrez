@@ -13,7 +13,7 @@ import java.util.List;
 // Adaptador de salida (Clase 2): muestra el ranking en una tabla.
 public final class ScoreboardDialog {
 
-    private static final String[] COLUMNS = {"#", "Usuario", "Id", "PJ", "G", "E", "P", "Pts"};
+    private static final String[] COLUMNS = {"#", "Usuario", "PJ", "G", "E", "P", "Pts"};
 
     private ScoreboardDialog() { }
 
@@ -24,7 +24,7 @@ public final class ScoreboardDialog {
         }
         JTable table = new JTable(model(ranking));
         table.setEnabled(false);
-        table.getColumnModel().getColumn(1).setPreferredWidth(180);
+        table.getColumnModel().getColumn(1).setPreferredWidth(220);
         JScrollPane scroll = new JScrollPane(table);
         scroll.setPreferredSize(new Dimension(520, Math.min(360, 60 + ranking.size() * 24)));
         JOptionPane.showMessageDialog(parent, scroll, "Ranking (PJ partidas, G ganadas, E empatadas, P perdidas)", JOptionPane.PLAIN_MESSAGE);
@@ -35,7 +35,7 @@ public final class ScoreboardDialog {
         DefaultTableModel model = new DefaultTableModel(COLUMNS, 0);
         int position = 1;
         for (Score score : ranking) {
-            model.addRow(new Object[]{position++, score.getUser().getName(), score.getUser().getId(),
+            model.addRow(new Object[]{position++, score.getUser().getName(),
                 score.getGames(), score.getWins(), score.getDraws(), score.getLosses(), score.getPoints()});
         }
         return model;

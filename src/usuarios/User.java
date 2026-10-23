@@ -3,7 +3,7 @@ package usuarios;
 import java.util.Objects;
 
 // Value object inmutable: quién es un jugador. El id lo asigna el sistema al
-// registrarse; junto con el nombre alcanza para volver a entrar (no hay contraseña).
+// registrarse y es interno: la persona entra solo con su nombre (no hay contraseña).
 public final class User {
     private final int id;
     private final String name;
@@ -30,6 +30,6 @@ public final class User {
 
     @Override
     public String toString() {
-        return name + " (id " + id + ")";
+        return name;
     }
 }

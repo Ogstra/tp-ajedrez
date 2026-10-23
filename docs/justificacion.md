@@ -102,7 +102,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 11 bis. Usuarios y ranking también viven afuera del núcleo
 
-**Qué.** El paquete `usuarios` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Entrar es por usuario e id, sin contraseña.
+**Qué.** El paquete `usuarios` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
 
 **Por qué.** Quién juega y cuántas partidas ganó no es una regla del ajedrez. Como `ScoreRecorder` implementa los mismos `IMoveListener` e `IGameStatusListener` que ya usaban la consola y la ventana, no se tocó ninguna clase del núcleo. Cambiar el CSV por otra forma de guardar es escribir otro adaptador de `IAccountStore`. Deshacer la jugada final revierte el resultado y rehacerla lo vuelve a sumar, para que una misma partida no cuente dos veces.
 
