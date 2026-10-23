@@ -1,12 +1,17 @@
 import adaptadores.ChoiceControl;
 import adaptadores.FileAccountStore;
 import adaptadores.GameBuilder;
+import adaptadores.Match;
 import adaptadores.SwingChessView;
 import nucleo.*;
 import nucleo.especiales.*;
 import nucleo.tablas.*;
 import puertos.*;
+import ai.OpponentController;
+import ai.OpponentLevel;
+import ai.Opponents;
 import usuarios.AccountService;
+import usuarios.ScoreRecorder;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Files;
@@ -28,17 +33,7 @@ public class SwingIntegrationTests {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 AccountService accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
-                GameBuilder builder = (v, recorder) -> {
-                    PieceFactory pieces = PieceFactory.standard();
-                    Board board = BoardSetup.standard(pieces);
-                    before = board.cloneBoard();
-                    game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
-                        Arrays.<IGameStatusListener>asList(v, recorder),
-                        Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, v)),
-                        Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-                    return game;
-                };
-                view = new SwingChessView(accounts, builder);
+                view = new SwingChessView(accounts, builder(accounts, 8));
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
@@ -167,6 +162,25 @@ public class SwingIntegrationTests {
                 button(root, "Volver").doClick();
             });
             System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
+
+            // Otro tamaño de tablero (lo que puede pedirse en la defensa): la ventana se adapta sola.
+            SwingUtilities.invokeAndWait(() -> {
+                view.dispose();
+                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
+                view = new SwingChessView(accounts, builder(accounts, 10));
+                view.setVisible(true);
+                Container root = view.getContentPane();
+                button(root, "Jugar").doClick();
+                inspect(root);
+                require(boardPanel.getComponentCount() == 100, "un tablero de 10x10 debe tener 100 casillas");
+                JButton corner = (JButton) boardPanel.getComponent(0);
+                require(corner.getWidth() == corner.getHeight() && corner.getWidth() > 0,
+                    "las casillas deben ser cuadradas: " + corner.getWidth() + "x" + corner.getHeight());
+                require(label(root, "j") != null && label(root, "10") != null, "las coordenadas llegan hasta j y 10");
+                require(view.getContentPane().getHeight() <= Toolkit.getDefaultToolkit().getScreenSize().height,
+                    "la ventana debe entrar en la pantalla");
+            });
+            System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
@@ -213,10 +227,36 @@ public class SwingIntegrationTests {
         return button(view.getContentPane(), "Menú");
     }
 
+    // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.
+    private static GameBuilder builder(AccountService accounts, int size) {
+        return (v, white, black, level, aiColor) -> {
+            PieceFactory pieces = PieceFactory.standard();
+            Board board = size == 8 ? BoardSetup.standard(pieces) : BoardSetup.custom(size, size, backRow(size), pieces);
+            before = board.cloneBoard();
+            ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+            game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
+                Arrays.<IGameStatusListener>asList(v, recorder),
+                Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, v)),
+                Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+            recorder.attachGame(game);
+            OpponentController opponent = level == OpponentLevel.NONE
+                ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
+            return new Match(game, opponent);
+        };
+    }
+
+    // Fila trasera de cualquier ancho: la estándar y, si sobran columnas, torres.
+    private static PieceType[] backRow(int size) {
+        PieceType[] standard = {PieceType.ROOK, PieceType.KNIGHT, PieceType.BISHOP, PieceType.QUEEN,
+            PieceType.KING, PieceType.BISHOP, PieceType.KNIGHT, PieceType.ROOK};
+        PieceType[] row = new PieceType[size];
+        for (int i = 0; i < size; i++) row[i] = i < standard.length ? standard[i] : PieceType.ROOK;
+        return row;
+    }
+
     private static void inspect(Container container) {
         for (Component component : container.getComponents()) {
-            if (component instanceof JPanel && ((JPanel) component).getLayout() instanceof GridLayout
-                    && ((JPanel) component).getComponentCount() == 64) boardPanel = (JPanel) component;
+            if ("board".equals(component.getName())) boardPanel = (JPanel) component;
             if (component instanceof Container) inspect((Container) component);
         }
     }

@@ -1,8 +1,13 @@
 import adaptadores.FileAccountStore;
 import adaptadores.GameBuilder;
+import adaptadores.Match;
 import adaptadores.SwingChessView;
+import ai.OpponentController;
+import ai.OpponentLevel;
+import ai.Opponents;
 import nucleo.BoardSetup;
 import nucleo.ChessGame;
+import nucleo.IChessGame;
 import nucleo.IDrawRule;
 import nucleo.ISpecialMove;
 import nucleo.PieceFactory;
@@ -15,11 +20,13 @@ import nucleo.tablas.ThreefoldRepetitionRule;
 import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import usuarios.AccountService;
+import usuarios.ScoreRecorder;
 
 import javax.swing.SwingUtilities;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 // Composition root de la variante gráfica. Mismo esquema que Main.java: se crea el
 // adaptador (SwingChessView en vez de ConsoleRenderer, y a la vez es quien elige la pieza
@@ -33,8 +40,10 @@ public class MainSwing {
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
 
-            // La ventana arma una partida nueva cada vez que se aprieta Jugar, con estas reglas.
-            GameBuilder builder = (view, recorder) -> {
+            // La ventana pide una partida nueva cada vez que se aprieta Jugar: acá se arma con sus
+            // reglas, el que acredita los puntos y, si corresponde, la IA.
+            Random random = new Random();
+            GameBuilder builder = (view, white, black, level, aiColor) -> {
                 PieceFactory pieces = PieceFactory.standard();
                 List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                     new CastlingMove(),
@@ -44,11 +53,17 @@ public class MainSwing {
                     new InsufficientMaterialRule(),
                     new FiftyMoveRule(),
                     new ThreefoldRepetitionRule());
-                return new ChessGame(BoardSetup.standard(pieces),
+                ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+                IChessGame game = new ChessGame(BoardSetup.standard(pieces),
                     Arrays.<IMoveListener>asList(view, recorder),
                     Arrays.<IGameStatusListener>asList(view, recorder),
                     specialMoves,
                     drawRules);
+                recorder.attachGame(game);
+                OpponentController opponent = level == OpponentLevel.NONE
+                    ? null
+                    : new OpponentController(game, Opponents.create(level, random), aiColor);
+                return new Match(game, opponent);
             };
 
             new SwingChessView(accounts, builder).setVisible(true);

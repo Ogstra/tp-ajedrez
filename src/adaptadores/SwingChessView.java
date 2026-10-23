@@ -1,7 +1,7 @@
 package adaptadores;
 
 import ai.OpponentController;
-import ai.Opponents;
+import ai.OpponentLevel;
 import nucleo.Board;
 import nucleo.Color;
 import nucleo.IChessGame;
@@ -13,7 +13,6 @@ import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 import usuarios.AccountService;
-import usuarios.ScoreRecorder;
 import usuarios.User;
 
 import javax.imageio.ImageIO;
@@ -32,6 +31,9 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagLayout;
+import java.awt.Rectangle;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -39,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 // Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
 // igual que ConsoleRenderer (mismos puertos de salida, otra tecnología),
@@ -55,10 +56,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B); // destino con captura
     private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);         // marco de las casillas marcadas
     private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E);  // marco de las capturas
-    private static final int SQUARE_SIZE = 80;
+    private static final int MAX_SQUARE = 80;    // casillas de 80 px salvo que el tablero no entre en la pantalla
+    private static final int MIN_SQUARE = 32;
+    private static final Dimension MIN_CONTENT = new Dimension(460, 690); // lo que necesita el menú
     private static final int TOP_BAR_HEIGHT = 52;  // botón de 36 más el margen
     private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
-    private static final int PIECE_SIZE = 68; // deja un margen chico dentro de cada casilla
 
     // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0.
     // Se cargan una sola vez desde src/assets/piezas/ y se escalan al tamaño
@@ -92,7 +94,6 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private final AccountService accounts;
     private final GameBuilder builder;
-    private final Random random = new Random();
     private final JPanel boardPanel = new JPanel();
     private final JPanel rankLabels = new JPanel();
     private final JPanel fileLabels = new JPanel();
@@ -107,6 +108,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private OpponentController opponent; // null mientras juegan dos personas
     private Position selection = null;
     private boolean thinking = false;
+    private int squareSize = MAX_SQUARE;
     private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
@@ -125,17 +127,19 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
     private void startGame() {
-        ScoreRecorder recorder = new ScoreRecorder(accounts, menu.whiteUser(), menu.blackUser());
-        game = builder.build(this, recorder);
-        recorder.attachGame(game);
-        opponent = menu.versusAi() ? new OpponentController(game, Opponents.create(menu.level(), random), menu.aiColor()) : null;
+        OpponentLevel level = menu.versusAi() ? menu.level() : OpponentLevel.NONE;
+        Match match = builder.build(this, menu.whiteUser(), menu.blackUser(), level, menu.aiColor());
+        game = match.getGame();
+        opponent = match.getOpponent();
         selection = null;
         thinking = false;
         startBoard = game.getBoard().cloneBoard();
         menuButton.setEnabled(true);
         players.setText("Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
         showStatus("Turno de Blancas");
+        squareSize = squareSizeFor(game.getBoard());
         buildBoard(game.getBoard(), menu.humanColor() == Color.BLACK);
+        fitWindow(game.getBoard().getRows(), game.getBoard().getColumns());
         render(game.getBoard());
         showCard(GAME);
         playOpponentIfNeeded();
@@ -267,11 +271,16 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         boardArea.add(boardPanel, BorderLayout.CENTER);
         boardArea.add(rankLabels, BorderLayout.WEST);
         boardArea.add(fileRow, BorderLayout.SOUTH);
-        gamePanel.add(boardArea, BorderLayout.CENTER);
+        // El tablero va centrado a su tamaño, así las casillas siempre son cuadradas aunque la
+        // ventana sea más grande (por ejemplo, un tablero chico con el alto mínimo del menú).
+        boardPanel.setName("board");
+        JPanel boardHolder = new JPanel(new GridBagLayout());
+        boardHolder.add(boardArea);
+        gamePanel.add(boardHolder, BorderLayout.CENTER);
 
         // Fondo crema en toda la ventana (los paneles de adentro son transparentes).
         getContentPane().setBackground(Palette.BACKGROUND);
-        for (JPanel panel : new JPanel[]{top, text, buttons, gamePanel, boardArea, fileRow, rankLabels, fileLabels}) {
+        for (JPanel panel : new JPanel[]{top, text, buttons, gamePanel, boardHolder, boardArea, fileRow, rankLabels, fileLabels}) {
             panel.setOpaque(false);
         }
         gamePanel.setOpaque(true);
@@ -279,10 +288,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         add(menu, MENU);
         add(gamePanel, GAME);
         add(ranking, RANKING);
-        // Casillas cuadradas: el ancho suma la columna de números y el alto la barra y las letras.
-        getContentPane().setPreferredSize(new Dimension(8 * SQUARE_SIZE + COORDINATE_SIZE,
-            8 * SQUARE_SIZE + TOP_BAR_HEIGHT + COORDINATE_SIZE));
-        pack();
+        fitWindow(8, 8); // tamaño inicial; cada partida lo ajusta a su tablero
+
         setLocationRelativeTo(null);
     }
 
@@ -304,6 +311,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                 boardPanel.add(button);
             }
         }
+        boardPanel.setPreferredSize(new Dimension(columns * squareSize, rows * squareSize));
         boardPanel.revalidate();
         buildCoordinates(rows, columns, flipped);
     }
@@ -324,6 +332,26 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }
         rankLabels.revalidate();
         fileLabels.revalidate();
+    }
+
+    // Casillas de 80 px; si el tablero tiene muchas filas o columnas y no entra en la pantalla,
+    // se achican. Así un tablero de otro tamaño se juega sin cambiar nada más.
+    private int squareSizeFor(Board board) {
+        Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int byHeight = (screen.height - 60 - TOP_BAR_HEIGHT - COORDINATE_SIZE) / board.getRows(); // 60: barra de título
+        int byWidth = (screen.width - COORDINATE_SIZE) / board.getColumns();
+        return Math.max(MIN_SQUARE, Math.min(MAX_SQUARE, Math.min(byHeight, byWidth)));
+    }
+
+    // La ventana mide el tablero más la columna de números, la barra de arriba y la fila de
+    // letras, y nunca menos de lo que necesita el menú.
+    private void fitWindow(int rows, int columns) {
+        Dimension size = new Dimension(
+            Math.max(MIN_CONTENT.width, columns * squareSize + COORDINATE_SIZE),
+            Math.max(MIN_CONTENT.height, rows * squareSize + TOP_BAR_HEIGHT + COORDINATE_SIZE));
+        if (size.equals(getContentPane().getPreferredSize()) && isDisplayable()) return;
+        getContentPane().setPreferredSize(size);
+        pack();
     }
 
     private static JLabel coordinate(String text) {
@@ -448,7 +476,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             return;
         }
         button.setText("");
-        button.setIcon(new ImageIcon(image.getScaledInstance(PIECE_SIZE, PIECE_SIZE, Image.SCALE_SMOOTH)));
+        button.setIcon(new ImageIcon(image.getScaledInstance(squareSize * 85 / 100, squareSize * 85 / 100, Image.SCALE_SMOOTH)));
     }
 
     private String imageKey(Piece piece) {

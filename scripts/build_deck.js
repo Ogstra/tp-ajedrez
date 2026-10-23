@@ -1,4 +1,4 @@
-// Genera docs/presentacion.pptx (18 slides).
+// Genera docs/presentacion.pptx (19 slides).
 //
 // Uso, desde la raíz del repo:
 //   npm install pptxgenjs     (una sola vez; node_modules/ está ignorado por git)
@@ -18,7 +18,7 @@ const UML = path.join(ROOT, "docs", "uml.png");
 
 const AUTHORS = "Franco Beron";
 const DATE = "20 de noviembre de 2026";
-const TEST_COUNT = "63";
+const TEST_COUNT = "65";
 
 // Paleta: verde del tablero como único acento, el resto neutros.
 const INK = "1F2933";
@@ -171,7 +171,7 @@ function callout(slide, head, text, x, y, w) {
   label(s, AUTHORS, 0.8, 5.5, 6.5, { size: 22, bold: true, color: WHITE });
   label(s, DATE, 0.8, 5.95, 6.5, { size: 16, color: "AAB3A2" });
   const h = 6.1;
-  const w = h * (624 / 711);
+  const w = h * (658 / 710);
   s.addShape(pres.shapes.RECTANGLE, { x: 7.5, y: 0.64, w: w + 0.12, h: h + 0.12, fill: { color: WHITE }, line: { color: WHITE, width: 0 } });
   s.addImage({ path: CAPTURE, x: 7.56, y: 0.7, w, h });
 }
@@ -207,8 +207,8 @@ function callout(slide, head, text, x, y, w) {
   const s = content("Arquitectura", "Tres zonas y una regla: todo apunta hacia adentro",
     "El núcleo tiene las reglas. Los puertos son las interfaces con las que habla con el exterior. Los adaptadores son la consola, la ventana y la IA. Las flechas muestran quién depende de quién: nunca el núcleo de un adaptador.");
   const cols = [
-    { x: 0.7, title: "ADAPTADORES", fill: "4B5563", items: ["ConsoleRenderer", "SwingChessView", "Main y MainSwing (arman todo)", "ai/: el oponente"] },
-    { x: 4.95, title: "PUERTOS", fill: ACCENT_SOFT, text: ACCENT, items: ["IChessGame (entrada)", "IMoveListener", "IGameStatusListener", "IPromotionChooser"] },
+    { x: 0.7, title: "ADAPTADORES", fill: "4B5563", items: ["Consola y ventana Swing", "FileAccountStore (CSV)", "Main y MainSwing (arman todo)", "ai/: el oponente"] },
+    { x: 4.95, title: "PUERTOS", fill: ACCENT_SOFT, text: ACCENT, items: ["IChessGame (entrada)", "Dos listeners (Observer)", "IPromotionChooser", "IAccountStore"] },
     { x: 9.2, title: "NÚCLEO", fill: ACCENT, items: ["ChessGame", "Board, Piece, estrategias", "Comandos y estados", "Reglas especiales y de tablas"] },
   ];
   cols.forEach((c) => {
@@ -278,8 +278,8 @@ function callout(slide, head, text, x, y, w) {
 
 // ---------- 6. puertos ----------
 {
-  const s = content("Puertos", "Una entrada y tres salidas",
-    "El mundo exterior le habla al núcleo por una sola interfaz, IChessGame, aunque haya teclado, mouse y IA. El núcleo le habla al exterior por tres puertos chicos: lo que pasa con las piezas, el estado de la partida y a qué pieza se corona.");
+  const s = content("Puertos", "Una entrada y cuatro salidas",
+    "El mundo exterior le habla al núcleo por una sola interfaz, IChessGame, aunque haya teclado, mouse y IA. Hacia afuera hay un puerto chico por cada cosa que se pide: lo que pasa con las piezas, el estado de la partida, a qué pieza se corona y dónde se guardan los usuarios.");
   const widths = [2.0, 1.9, 1.9, 2.5, 2.0];
   const gap = 0.4;
   const xs = [];
@@ -292,11 +292,11 @@ function callout(slide, head, text, x, y, w) {
   box(s, "Main\nMainSwing\nLa IA", xs[0], top, widths[0], height, { size: 15 });
   box(s, "IChessGame", xs[1], top, widths[1], height, { mono: true, bold: true, size: 14, line: ACCENT, lineWidth: 2, fill: ACCENT_SOFT });
   box(s, "ChessGame\n\n(núcleo)", xs[2], top, widths[2], height, { size: 16, bold: true });
-  const outputs = ["IMoveListener", "IGameStatusListener", "IPromotionChooser"];
+  const outputs = ["IMoveListener", "IGameStatusListener", "IPromotionChooser", "IAccountStore"];
   outputs.forEach((name, i) => {
-    box(s, name, xs[3], top + i * 0.92, widths[3], 0.76, { mono: true, size: 12, line: ACCENT, lineWidth: 1.5, fill: ACCENT_SOFT });
+    box(s, name, xs[3], top + i * 0.68, widths[3], 0.56, { mono: true, size: 12, line: ACCENT, lineWidth: 1.5, fill: ACCENT_SOFT });
   });
-  box(s, "ConsoleRenderer\n\nSwingChessView", xs[4], top, widths[4], height, { size: 14 });
+  box(s, "ConsoleRenderer\nSwingChessView\n\nFileAccountStore", xs[4], top, widths[4], height, { size: 14 });
   const mid = top + height / 2;
   arrow(s, xs[0] + widths[0], mid, xs[1], mid);
   arrow(s, xs[2], mid, xs[1] + widths[1], mid);
@@ -499,14 +499,14 @@ function callout(slide, head, text, x, y, w) {
   const s = content("Tests", "Núcleo probado sin ninguna infraestructura",
     "Los tests corren solo con javac, sin librerías: ./scripts/test.sh compila y corre todo. Usan Arrange, Act, Assert, un stub y un mock. Los marcados TDD se escribieron antes que el código. Además hay pruebas de integración de la ventana Swing.");
   s.addText(TEST_COUNT, { x: 0.7, y: 1.7, w: 5.2, h: 2.2, margin: 0, valign: "middle", fontFace: HEAD, fontSize: 130, bold: true, color: ACCENT });
-  label(s, "tests del núcleo, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
+  label(s, "tests del núcleo y 20 de usuarios, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
   code(s, "./scripts/test.sh", 0.7, 4.7, 4.2, 0.75, 17);
   rows(s, [
     "Arrange, Act, Assert en cada uno",
-    "Un stub y un mock como dobles de prueba",
+    "Un stub, un mock y un fake como dobles de prueba",
     "Los marcados TDD se escribieron antes que el código",
     "Pieza nueva, tablero de otro tamaño y regla nueva, probados",
-    "Pruebas de integración de la ventana Swing",
+    "Pruebas de integración de la consola y de la ventana Swing",
   ], 6.6, 2.1, 6.0, 0.8, 17);
 }
 
@@ -531,7 +531,30 @@ function callout(slide, head, text, x, y, w) {
   ], 0.7, 5.3, 11.9, 0.65, 17);
 }
 
-// ---------- 17. decisiones ----------
+// ---------- 17. usuarios y ranking ----------
+{
+  const s = content("Usuarios y ranking", "Un puerto de salida más, sin tocar el núcleo",
+    "Las cuentas no son reglas del ajedrez: viven en el paquete usuarios. ScoreRecorder escucha la partida con los mismos listeners que la consola y la ventana, y acredita el resultado. Guardar es un puerto, IAccountStore; hoy lo implementa un CSV y mañana podría ser una base de datos sin cambiar nada más.");
+  box(s, "ChessGame", 0.7, 2.0, 2.6, 0.8, { mono: true, bold: true, size: 14 });
+  box(s, "ScoreRecorder\n(Observer)", 4.0, 2.0, 2.9, 0.8, { mono: true, size: 13, line: ACCENT, lineWidth: 1.5, fill: ACCENT_SOFT });
+  box(s, "AccountService", 7.6, 2.0, 2.6, 0.8, { mono: true, bold: true, size: 14 });
+  box(s, "IAccountStore", 7.6, 3.35, 2.6, 0.7, { mono: true, size: 13, line: ACCENT, lineWidth: 1.5, fill: ACCENT_SOFT });
+  box(s, "FileAccountStore\n(usuarios.csv)", 10.6, 3.25, 2.0, 0.9, { mono: true, size: 12 });
+  box(s, "Menú de la ventana\ny consola", 10.6, 2.0, 2.0, 0.8, { size: 13 });
+  arrow(s, 3.3, 2.4, 4.0, 2.4, ACCENT);
+  arrow(s, 6.9, 2.4, 7.6, 2.4, ACCENT);
+  arrow(s, 10.6, 2.4, 10.2, 2.4, ACCENT);
+  arrow(s, 8.9, 2.8, 8.9, 3.35, ACCENT);
+  arrow(s, 10.6, 3.7, 10.2, 3.7, ACCENT);
+  rows(s, [
+    "Se entra con el nombre; el id lo asigna el sistema y no hay contraseña",
+    "3 puntos por victoria y 1 por empate; ranking por puntos, victorias y nombre",
+    "Deshacer el mate devuelve los puntos y rehacerlo los vuelve a sumar",
+    "Contra la IA solo suma la persona, juegue con blancas o con negras",
+  ], 0.7, 4.45, 11.9, 0.55, 17);
+}
+
+// ---------- 18. decisiones ----------
 {
   const s = content("Decisiones", "Qué se decidió y cuándo se rompería",
     "Resumen del documento de justificación: cada decisión se explica en tres partes, qué, por qué y cuándo se rompería. Acá va solo la primera y la última. El detalle está en docs/justificacion.");
@@ -545,24 +568,25 @@ function callout(slide, head, text, x, y, w) {
     [cell("Command con historial"), cell("Si no hiciera falta deshacer ni rehacer")],
     [cell("State con estados terminales"), cell("Con solo dos estados alcanzaría un enum")],
     [cell("Reglas especiales y de tablas enchufables"), cell("Con una única excepción alcanzaría un if")],
+    [cell("Usuarios detrás de su propio puerto"), cell("Con usuarios reales: contraseña y base de datos")],
   ];
   s.addTable(data, {
-    x: 0.7, y: 1.95, w: 11.9, colW: [5.9, 6.0], rowH: 0.62,
+    x: 0.7, y: 1.95, w: 11.9, colW: [5.9, 6.0], rowH: 0.55,
     border: { type: "solid", pt: 0.75, color: LINE }, valign: "middle", margin: [0.05, 0.15, 0.05, 0.15],
   });
   label(s, "Detalle completo, con el por qué de cada una, en docs/justificacion.", 0.7, 6.5, 11.9, { size: 14, italic: true, color: MUTED });
 }
 
-// ---------- 18. demostración ----------
+// ---------- 19. demostración ----------
 {
-  const s = dark("Demostración en vivo: abrir MainSwing. Mostrar dos jugadores con enroque, coronación y captura al paso; después deshacer y rehacer; después jugar contra la IA en nivel difícil. Cerrar mostrando en el código cómo se suma una pieza nueva.");
+  const s = dark("Demostración en vivo: abrir MainSwing. En el menú, registrar dos usuarios y jugar 1 contra 1 con enroque, coronación y captura al paso; deshacer y rehacer; ver el ranking. Después, contra la IA en nivel difícil jugando con negras (el tablero se gira). Cerrar mostrando en el código cómo se suma una pieza nueva.");
   label(s, "DEMOSTRACIÓN", 0.8, 0.9, 6.5, { size: 13, bold: true, color: "A9C79B", spacing: 3 });
   label(s, "Probémoslo", 0.8, 1.3, 6.5, { head: true, size: 44, bold: true, color: WHITE, h: 0.9 });
   const steps = [
-    "Dos jugadores: enroque y coronación",
-    "Captura al paso",
-    "Deshacer y rehacer",
-    "Contra la IA en nivel difícil",
+    "Menú: usuarios, 1 contra 1 o contra la IA",
+    "Enroque, coronación y captura al paso",
+    "Deshacer, rehacer y ranking",
+    "Contra la IA con negras: el tablero se gira",
     "Una pieza nueva, sin tocar el núcleo",
   ];
   steps.forEach((t, i) => {

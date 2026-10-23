@@ -22,7 +22,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 3. Inyección de dependencias por constructor
 
-**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores.
+**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores. En la ventana, cada vez que se aprieta Jugar la partida la arma un `GameBuilder` que implementa `MainSwing`: devuelve el juego, el que acredita los puntos y, si corresponde, la IA. La vista no crea ninguno de esos colaboradores con `new`.
 
 **Por qué.** Es el nivel 4 de inyección. Permite probar el núcleo con dobles de prueba (un stub que siempre corona a reina, un mock que registra los avisos) y cambiar el comportamiento sin editar `ChessGame`. El tablero y las cuatro listas son colaboradores distintos; el constructor deja esas dependencias explícitas.
 

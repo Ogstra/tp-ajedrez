@@ -43,3 +43,15 @@ Estas observaciones no bloquean la entrega. Las simplificaciones funcionales ace
 La portada de la presentacion lleva a Franco Beron y la fecha de entrega. Para sumar integrantes o cambiar la fecha se editan AUTHORS y DATE al principio de scripts/build_deck.js y se regenera.
 
 Franco dibuja el UML usando docs/uml-checklist.md. No se genero ningun diagrama. Cuando lo exporte como docs/uml.png, ejecutar node scripts/build_deck.js para insertarlo en la diapositiva 4.
+
+## Despues del cierre (23/10)
+
+| Cambio | Pruebas |
+|---|---|
+| Usuarios y ranking: login por nombre, puntos 3/1/0, deshacer revierte el resultado, CSV detras de IAccountStore | 65 del nucleo y 20 de usuarios |
+| Ventana unica con menu (modo, dificultad, color, usuarios), partida y ranking; paleta con contraste medido | integracion Swing |
+| La vista ya no crea colaboradores: GameBuilder (en MainSwing) devuelve el juego, el recorder y la IA en un Match | integracion Swing |
+| La ventana se adapta al tamano del tablero (probado con 10x10) | integracion Swing |
+| README, justificacion, lista del UML, captura y presentacion (19 diapositivas) al dia | |
+
+Verificacion actual: ./scripts/test.sh da 65 y 20 pasados mas tres escenarios de consola; java --class-path out scripts/SwingIntegrationTests.java pasa el recorrido completo y el tablero de 10x10. El UML sigue pendiente.

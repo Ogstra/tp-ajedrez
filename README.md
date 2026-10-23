@@ -17,7 +17,7 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios (el lado de la IA dice IA; si se elige "Nuevo usuario..." en un lado aparece el campo para registrarlo). En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba está el botón Menú y abajo Ranking, Deshacer y Rehacer. El ranking también se abre en la misma ventana.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios (el lado de la IA dice IA; si se elige "Nuevo usuario..." en un lado aparece el campo para registrarlo). En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 
@@ -29,7 +29,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer y ranking):
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking y un tablero de 10x10):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -74,7 +74,7 @@ Lo que se ve en la materia está así:
 ## Agregar cosas sin tocar lo que ya está
 
 - **Una pieza nueva**: se escribe su `IMovementStrategy`, se crea un `PieceType` y se registra con `factory.register(...)`. Hay un test que lo hace con una pieza inventada que se mueve como torre y caballo.
-- **Otro tamaño de tablero**: `new Board(10, 10)`. Todo pregunta a `board.isInside()` en vez de asumir 8x8, y el peón corona en la última fila de ese tablero.
+- **Otro tamaño de tablero**: `BoardSetup.custom(10, 10, filaTrasera, piezas)` en el `GameBuilder` de `MainSwing` (o `new Board(10, 10)`). Todo pregunta a `board.isInside()` en vez de asumir 8x8, el peón corona en la última fila de ese tablero y la ventana se adapta sola: casillas cuadradas, coordenadas hasta donde haga falta y casillas más chicas si no entra en la pantalla.
 - **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `Main`.
 
 ## Cosas a tener en cuenta
