@@ -21,10 +21,12 @@ public final class LoginDialog {
 
     // Devuelve el usuario que entró, o null si se elige jugar sin usuario. Primero se elige qué
     // hacer con tres botones; si en el formulario se cancela, se vuelve a esta pantalla.
-    public static User show(Component parent, AccountService accounts, String role) {
+    // "hint" es una aclaración opcional que se agrega debajo de la pregunta (puede ir vacía).
+    public static User show(Component parent, AccountService accounts, String role, String hint) {
         String[] options = {"Iniciar sesión", "Registrarse", "Jugar sin usuario"};
+        String message = "Jugador de las " + role + ": ¿cómo querés entrar?" + (hint.isEmpty() ? "" : "\n" + hint);
         while (true) {
-            int choice = JOptionPane.showOptionDialog(parent, "Jugador " + role, "Jugador " + role,
+            int choice = JOptionPane.showOptionDialog(parent, message, "Jugador de las " + role,
                 JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
             if (choice == 0) {
                 User user = askLogin(parent, accounts);

@@ -21,6 +21,7 @@ import usuarios.User;
 import puertos.IMoveListener;
 
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,8 +38,12 @@ public class MainSwing {
             // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
-            User white = LoginDialog.show(null, accounts, "blancas");
-            User black = LoginDialog.show(null, accounts, "negras (contra la IA, Jugar sin usuario)");
+            // Los botones de los diálogos salen en español aunque el sistema esté en otro idioma.
+            UIManager.put("OptionPane.okButtonText", "Aceptar");
+            UIManager.put("OptionPane.cancelButtonText", "Cancelar");
+            User white = LoginDialog.show(null, accounts, "blancas", "");
+            User black = LoginDialog.show(null, accounts, "negras",
+                "Si vas a jugar contra la IA, elegí Jugar sin usuario.");
 
             PieceFactory pieces = PieceFactory.standard();
             Board board = BoardSetup.standard(pieces);
