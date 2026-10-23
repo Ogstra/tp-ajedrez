@@ -1,7 +1,6 @@
 package adaptadores;
 
 import ai.OpponentController;
-import ai.OpponentLevel;
 import ai.Opponents;
 import nucleo.Board;
 import nucleo.Color;
@@ -21,7 +20,6 @@ import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -29,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -82,56 +81,76 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         NAMES.put(type, name);
     }
 
-    private final int rows;
-    private final int columns;
-    private final JButton[][] squares;
+    private static final String MENU = "menu";
+    private static final String GAME = "game";
+    private static final String RANKING = "ranking";
+
+    private final AccountService accounts;
+    private final GameBuilder builder;
+    private final Random random = new Random();
+    private final JPanel boardPanel = new JPanel();
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
     private final JLabel players = new JLabel(" ", SwingConstants.CENTER);
-    private final Random random = new Random();
-    private final JComboBox<String> levelBox = new JComboBox<>(new String[]{"Dos jugadores", "Fácil", "Medio", "Difícil"});
+    private final JButton menuButton = new JButton("Menú");
+    private final MenuPanel menu;
+    private final RankingPanel ranking;
 
+    private JButton[][] squares;
     private IChessGame game;
-    private AccountService accounts;     // null si no se configuraron cuentas
-    private ScoreRecorder recorder;
-    private User whiteUser;
-    private User blackUser;
     private OpponentController opponent; // null mientras juegan dos personas
     private Position selection = null;
     private boolean thinking = false;
+    private String currentCard = MENU;
+    private String cardBeforeRanking = MENU;
 
-    public SwingChessView(int rows, int columns) {
+    // Una sola ventana con tres pantallas (menú, partida y ranking) que se cambian con un CardLayout.
+    // Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
+    public SwingChessView(AccountService accounts, GameBuilder builder) {
         super("TP Ajedrez: Ingeniería de Software (UADE)");
-        this.rows = rows;
-        this.columns = columns;
-        this.squares = new JButton[rows][columns];
+        this.accounts = accounts;
+        this.builder = builder;
+        this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
+        this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
     }
 
-    // Los listeners se registran en el constructor de ChessGame, pero la vista
-    // necesita la referencia al juego para poder mandarle movimientos: por
-    // eso se inyecta después, desde el composition root (MainSwing).
-    public void attachGame(IChessGame game) {
-        this.game = game;
+    // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
+    private void startGame() {
+        ScoreRecorder recorder = new ScoreRecorder(accounts, menu.whiteUser(), menu.blackUser());
+        game = builder.build(this, recorder);
+        recorder.attachGame(game);
+        opponent = menu.versusAi() ? new OpponentController(game, Opponents.create(menu.level(), random), menu.aiColor()) : null;
+        selection = null;
+        thinking = false;
+        menuButton.setEnabled(true);
+        players.setText("Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
+        status.setText("Turno de Blancas");
+        buildBoard(game.getBoard(), menu.humanColor() == Color.BLACK);
+        render(game.getBoard());
+        showCard(GAME);
+        playOpponentIfNeeded();
     }
 
-    // Las cuentas también se inyectan después, desde el composition root. blackUser es el que
-    // juega con negras cuando son dos personas; si se elige la IA, el recorder deja de acreditarlo.
-    public void attachAccounts(AccountService accounts, ScoreRecorder recorder, User whiteUser, User blackUser) {
-        this.accounts = accounts;
-        this.recorder = recorder;
-        this.whiteUser = whiteUser;
-        this.blackUser = blackUser;
-        updatePlayers();
+    private String playerName(Color color) {
+        if (opponent != null && opponent.getColor() == color) return "la IA";
+        User user = color == Color.WHITE ? menu.whiteUser() : menu.blackUser();
+        return user == null ? "sin usuario" : user.getName();
     }
 
-    private void updatePlayers() {
-        String black = opponent != null ? "la IA" : blackUser == null ? "sin usuario" : blackUser.toString();
-        players.setText("Blancas: " + (whiteUser == null ? "sin usuario" : whiteUser) + "   |   Negras: " + black);
+    private void showCard(String card) {
+        currentCard = card;
+        ((CardLayout) getContentPane().getLayout()).show(getContentPane(), card);
+    }
+
+    private void showMenu() {
+        menu.refresh();
+        showCard(MENU);
     }
 
     private void showRanking() {
-        if (accounts == null) return;
-        ScoreboardDialog.show(this, accounts.ranking());
+        cardBeforeRanking = currentCard;
+        ranking.show(accounts.ranking());
+        showCard(RANKING);
     }
 
     private static Map<String, Image> loadImages() {
@@ -150,45 +169,29 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private void buildInterface() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new CardLayout());
 
+        menuButton.addActionListener(e -> showMenu());
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        top.add(menuButton);
 
-        levelBox.addActionListener(e -> changeOpponent(levelBox.getSelectedIndex()));
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        top.add(new JLabel("Oponente (juega con negras):"));
-        top.add(levelBox);
-
-        JPanel boardPanel = new JPanel(new GridLayout(rows, columns));
-        for (int row = rows - 1; row >= 0; row--) {
-            for (int col = 0; col < columns; col++) {
-                final Position pos = new Position(row, col);
-                JButton button = new JButton();
-                button.setBackground(squareColor(row, col));
-                button.setOpaque(true);
-                button.setBorderPainted(false);
-                button.addActionListener(e -> onSquareClicked(pos));
-                squares[row][col] = button;
-                boardPanel.add(button);
-            }
-        }
-
+        JButton rankingButton = new JButton("Ranking");
+        rankingButton.addActionListener(e -> showRanking());
         JButton undoButton = new JButton("Deshacer");
         undoButton.addActionListener(e -> {
-            if (game == null || thinking) return;
+            if (thinking) return;
             // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
             if (game.undo() && opponent != null && opponent.isItsTurn()) game.undo();
             render(game.getBoard());
+            playOpponentIfNeeded(); // si la IA abre la partida y se deshizo su primera jugada, vuelve a jugarla
         });
         JButton redoButton = new JButton("Rehacer");
         redoButton.addActionListener(e -> {
-            if (game == null || thinking) return;
+            if (thinking) return;
             if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
             render(game.getBoard());
             playOpponentIfNeeded();
         });
-
-        JButton rankingButton = new JButton("Ranking");
-        rankingButton.addActionListener(e -> showRanking());
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(rankingButton);
@@ -199,33 +202,45 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         bottom.add(status, BorderLayout.CENTER);
         bottom.add(buttons, BorderLayout.EAST);
 
-        add(top, BorderLayout.NORTH);
-        add(boardPanel, BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
-        setSize(columns * SQUARE_SIZE, rows * SQUARE_SIZE + 140);
+        JPanel gamePanel = new JPanel(new BorderLayout());
+        gamePanel.add(top, BorderLayout.NORTH);
+        gamePanel.add(boardPanel, BorderLayout.CENTER);
+        gamePanel.add(bottom, BorderLayout.SOUTH);
+
+        add(menu, MENU);
+        add(gamePanel, GAME);
+        add(ranking, RANKING);
+        setSize(8 * SQUARE_SIZE, 8 * SQUARE_SIZE + 160);
         setLocationRelativeTo(null);
+    }
+
+    // Arma las casillas del tablero. Si la persona juega con negras se gira, para verlas abajo.
+    private void buildBoard(Board board, boolean flipped) {
+        int rows = board.getRows();
+        int columns = board.getColumns();
+        squares = new JButton[rows][columns];
+        boardPanel.removeAll();
+        boardPanel.setLayout(new GridLayout(rows, columns));
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                final Position pos = new Position(flipped ? i : rows - 1 - i, flipped ? columns - 1 - j : j);
+                JButton button = new JButton();
+                button.setOpaque(true);
+                button.setBorderPainted(false);
+                button.addActionListener(e -> onSquareClicked(pos));
+                squares[pos.getRow()][pos.getColumn()] = button;
+                boardPanel.add(button);
+            }
+        }
+        boardPanel.revalidate();
     }
 
     private java.awt.Color squareColor(int row, int col) {
         return (row + col) % 2 == 0 ? DARK : LIGHT;
     }
 
-    // El orden de las opciones del desplegable coincide con OpponentLevel.values().
-    private void changeOpponent(int index) {
-        OpponentLevel level = OpponentLevel.values()[index];
-        if (level == OpponentLevel.NONE || game == null) {
-            opponent = null;
-        } else {
-            opponent = new OpponentController(game, Opponents.create(level, random), Color.BLACK);
-        }
-        // Contra la IA el usuario de las negras no suma ni resta; con dos personas, vuelve a acreditarse.
-        if (recorder != null) recorder.setBlackUser(opponent == null ? blackUser : null);
-        updatePlayers();
-        playOpponentIfNeeded();
-    }
-
     private void onSquareClicked(Position pos) {
-        if (game == null || game.isGameOver() || thinking) return;
+        if (game.isGameOver() || thinking) return;
 
         Piece clicked = game.getBoard().pieceAt(pos);
         boolean ownPiece = clicked != null && clicked.getColor() == game.getTurn();
@@ -279,7 +294,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private void playOpponentIfNeeded() {
         if (opponent == null || thinking || !opponent.isItsTurn()) return;
         thinking = true;
-        levelBox.setEnabled(false);
+        menuButton.setEnabled(false); // no se puede salir mientras la IA piensa
         status.setText("El oponente piensa...");
         final OpponentController controller = opponent;
         new Thread(() -> {
@@ -288,7 +303,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                 controller.play(move);
                 render(game.getBoard());
                 thinking = false;
-                levelBox.setEnabled(true);
+                menuButton.setEnabled(true);
             });
         }).start();
     }
@@ -314,8 +329,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // los listeners: si render() también lo tocara, pisaría el mensaje que
     // onInvalidMove/onMoveMade acaban de poner.
     public void render(Board board) {
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < columns; col++) {
+        for (int row = 0; row < squares.length; row++) {
+            for (int col = 0; col < squares[row].length; col++) {
                 applyIcon(squares[row][col], board.pieceAt(new Position(row, col)));
                 squares[row][col].setBackground(squareColor(row, col));
                 squares[row][col].setBorderPainted(false); // quita el marco de una selección anterior
@@ -403,18 +418,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     @Override
     public void onCheckmate(Color winner) {
         status.setText("¡Jaque mate! Ganan " + name(winner) + ".");
-        JOptionPane.showMessageDialog(this, "Jaque mate. Ganan " + name(winner) + ".");
     }
 
     @Override
     public void onStalemate() {
         status.setText("Ahogado: tablas.");
-        JOptionPane.showMessageDialog(this, "Ahogado: tablas, no hay movimientos legales.");
     }
 
     @Override
     public void onDraw(String reason) {
         status.setText("Tablas: " + reason + ".");
-        JOptionPane.showMessageDialog(this, "Tablas: " + reason + ".");
     }
 }

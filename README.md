@@ -17,11 +17,11 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba se elige el oponente y abajo están Ranking, Deshacer y Rehacer.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios y, si hace falta, se registra uno nuevo. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba está el botón Menú y abajo Ranking, Deshacer y Rehacer. El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 
-Al arrancar (en consola y en ventana) cada persona puede iniciar sesión, registrarse o jugar sin usuario. No hay contraseña: se entra solo con el nombre (en la ventana se elige de una lista) y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. Contra la IA solo se pide el usuario de las blancas (en la ventana el oponente se elige después, así que ahí las negras se piden igual y se responde Jugar sin usuario).
+Al arrancar (en consola y en ventana) cada persona puede iniciar sesión, registrarse o jugar sin usuario. No hay contraseña: se entra solo con el nombre (en la ventana se elige de una lista) y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. Contra la IA solo se pide el usuario del lado de la persona.
 
 Cuando una partida termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar la partida) y en la ventana con el botón Ranking.
 
@@ -29,7 +29,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 22 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real con los niveles medio y difícil, deshacer y rehacer:
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer y ranking):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java

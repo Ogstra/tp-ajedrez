@@ -7,13 +7,13 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ## Paquete `(raíz, sin paquete)`
 
 ### AccountTests (class)
-- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, LoginDialog, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
+- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### Main (class)
 - Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, CastlingMove, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, PromotionMove, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### MainSwing (class)
-- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, InsufficientMaterialRule, LoginDialog, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule, User
+- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, InsufficientMaterialRule, PieceFactory, PromotionMove, SwingChessView, ThreefoldRepetitionRule
 
 ## Paquete `adaptadores`
 
@@ -33,17 +33,23 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: IAccountStore
 - Usa: Score, User
 
-### LoginDialog (class)
-- Usa: AccountService, Score, User
+### GameBuilder (interface)
+- Usa: IChessGame, ScoreRecorder, SwingChessView
 
-### ScoreboardDialog (class)
+### MenuPanel (class)
+- Extiende: JPanel
+- Tiene: AccountService, User
+- Usa: Color, OpponentLevel, Score
+
+### RankingPanel (class)
+- Extiende: JPanel
 - Usa: Score
 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, IChessGame, OpponentController, PieceType, Position, ScoreRecorder, User
-- Usa: Board, Color, Move, OpponentLevel, Opponents, Piece, ScoreboardDialog
+- Tiene: AccountService, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
+- Usa: Board, Color, Move, Opponents, Piece, ScoreRecorder, User
 
 ## Paquete `ai`
 

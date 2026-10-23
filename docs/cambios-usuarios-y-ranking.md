@@ -5,9 +5,9 @@ Este documento explica qué se agregó para tener un login básico (por nombre d
 ## 1. Qué hace
 
 - Al arrancar, cada jugador humano puede iniciar sesión, registrarse o jugar sin usuario.
-- No hay contraseña. Se entra solo con el nombre (en la ventana se elige de una lista). El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
+- No hay contraseña. Se entra solo con el nombre (en la ventana se elige de una lista del menú). El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
 - Cuando una partida termina se acredita el resultado a los usuarios que participaron: 3 puntos por victoria, 1 por empate, 0 por derrota.
-- El ranking se ve con el comando `ranking` en la consola y con el botón Ranking en la ventana.
+- El ranking se ve con el comando `ranking` en la consola y con el botón Ranking en la ventana (dentro de la misma ventana, sin diálogos).
 - Los datos persisten en `data/usuarios.csv`.
 
 ## 2. Dónde encaja en la arquitectura
@@ -24,7 +24,7 @@ El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se
 | `ScoreRecorder` | `usuarios` | Observador de la partida. Implementa `IMoveListener` e `IGameStatusListener`. |
 | `FileAccountStore` | `adaptadores` | Adaptador de salida: guarda en CSV. |
 | `ConsoleAccounts` | `adaptadores` | Adaptador de entrada por consola: login, registro y tabla. |
-| `LoginDialog`, `ScoreboardDialog` | `adaptadores` | Lo mismo para la ventana Swing. |
+| `MenuPanel`, `RankingPanel` | `adaptadores` | Lo mismo para la ventana Swing: el menú elige modo, dificultad, color y usuarios, y registra; el ranking es una tabla. |
 
 `Main` y `MainSwing` (los composition roots) crean el almacén, el servicio y el recorder, y pasan el recorder en las listas de listeners de `ChessGame`. Es la misma inyección por constructor que ya se usaba.
 
@@ -45,9 +45,9 @@ Si un lado no tiene usuario (jugó anónimo o es la IA), a ese lado no se le acr
 
 Una partida terminada puede reabrirse con `undo`. Si no se hiciera nada, al volver a terminar se sumaría dos veces. Por eso el recorder guarda lo que acreditó (`Credit`) y, en `onUndo`, lo revierte. En `onRedo` vuelve a aplicarlo solo si la partida quedó otra vez terminada (`game.isGameOver()`). Rehacer una jugada anterior a la final no suma nada. Esto está cubierto por tests.
 
-### Cambio de oponente en la ventana
+### Contra la IA en la ventana
 
-En la ventana se puede pasar a jugar contra la IA en medio de la sesión. `SwingChessView` llama a `recorder.setBlackUser(null)` en ese caso, y vuelve a poner al usuario de las negras si se vuelve a dos personas.
+El menú de la ventana crea el `ScoreRecorder` de cada partida con los usuarios elegidos. Contra la IA el lado de la IA no tiene usuario, así que solo se acredita a la persona, juegue con blancas o con negras.
 
 ## 5. Persistencia
 
@@ -61,9 +61,9 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 
 ## 7. Pruebas
 
-- `AccountTests` (22): registro, validaciones, login, orden del ranking, persistencia en CSV (incluida la línea mal formada), acreditación por mate, ahogado y tablas, deshacer y rehacer, usuario anónimo, cambio del usuario de negras y la lógica del formulario de la ventana. Usa un `InMemoryAccountStore` como fake. Marcados con `// TDD:` los escritos antes del código.
+- `AccountTests` (20): registro, validaciones, login, orden del ranking, persistencia en CSV (incluida la línea mal formada), acreditación por mate, ahogado y tablas, deshacer y rehacer, usuario anónimo, cambio del usuario de negras. Usa un `InMemoryAccountStore` como fake. Marcados con `// TDD:` los escritos antes del código.
 - `scripts/test-console.sh`: tres escenarios de punta a punta por consola con una carpeta de datos temporal (partida anónima, registro con ranking, segunda ejecución con login y ranking persistente).
-- `scripts/test.sh` corre todo junto: 65 pruebas del juego, 22 de usuarios y la consola.
+- `scripts/test.sh` corre todo junto: 65 pruebas del juego, 20 de usuarios y la consola.
 
 ## 8. Decisiones y límites
 
@@ -74,3 +74,15 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 ## 9. Historial del repositorio
 
 Se había subido una implementación paralela de login y ranking en dos commits del 23/10. Se pidió borrarlos del historial y rehacerlo sin tener en cuenta esa versión. Los commits se respaldaron antes en la rama local `backup/commits-del-23-10` y en un bundle de git, y se reescribió `main` con `--force-with-lease`. Quien tenga un clon con esos commits tiene que resetearlo a `origin/main`.
+
+## 10. Una sola ventana (menú, partida y ranking)
+
+`SwingChessView` pasó a tener tres pantallas dentro del mismo `JFrame`, que se cambian con un `CardLayout`:
+
+- `MenuPanel`: modo (1 contra 1 o contra la IA), dificultad, color propio, usuario de cada lado, registro de usuarios nuevos y los botones Jugar y Ranking.
+- La partida: el tablero, el botón Menú, la etiqueta de jugadores y de estado, y los botones Ranking, Deshacer y Rehacer. Si la persona juega con negras el tablero se gira.
+- `RankingPanel`: la tabla y un botón Volver.
+
+Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilder` (una interfaz de una sola función que implementa `MainSwing`, el composition root). Así la ventana no conoce las reglas concretas y no hace falta reiniciar la aplicación para jugar otra vez. Se sacaron los diálogos de login y de fin de partida: el resultado queda en la etiqueta de estado. El único diálogo que queda es el de coronación, porque el núcleo necesita la respuesta antes de seguir.
+
+Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.

@@ -1,107 +1,198 @@
+import adaptadores.FileAccountStore;
+import adaptadores.GameBuilder;
 import adaptadores.SwingChessView;
 import nucleo.*;
 import nucleo.especiales.*;
 import nucleo.tablas.*;
 import puertos.*;
+import usuarios.AccountService;
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 
-// Prueba de integracion de la ventana real, sin reflection ni librerias de tests.
+// Prueba de integracion de la ventana real (menu, partida y ranking en una sola ventana),
+// sin reflection ni librerias de tests.
 public class SwingIntegrationTests {
     private static SwingChessView view;
     private static IChessGame game;
     private static JPanel boardPanel;
-    private static JComboBox<?> levelBox;
+    private static JTable rankingTable;
+    private static JButton menuButton;
     private static Board before;
     private static Board after;
 
     public static void main(String[] args) throws Exception {
+        Path data = Files.createTempDirectory("ajedrez-swing");
         try {
             SwingUtilities.invokeAndWait(() -> {
-                PieceFactory pieces = PieceFactory.standard();
-                Board board = BoardSetup.standard(pieces);
-                before = board.cloneBoard();
-                view = new SwingChessView(8, 8);
-                game = new ChessGame(board, Collections.<IMoveListener>singletonList(view),
-                    Collections.<IGameStatusListener>singletonList(view),
-                    Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, view)),
-                    Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-                view.attachGame(game);
-                view.render(board);
-                inspect(view.getContentPane());
+                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
+                GameBuilder builder = (v, recorder) -> {
+                    PieceFactory pieces = PieceFactory.standard();
+                    Board board = BoardSetup.standard(pieces);
+                    before = board.cloneBoard();
+                    game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
+                        Arrays.<IGameStatusListener>asList(v, recorder),
+                        Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, v)),
+                        Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+                    return game;
+                };
+                view = new SwingChessView(accounts, builder);
                 view.setVisible(true);
-                java.awt.Color normalE3 = background("e3");
-                java.awt.Color normalE5 = background("e5");
-                java.awt.Color normalF3 = background("f3");
-                java.awt.Color normalG3 = background("g3");
-                square("e2").doClick();
-                require(!background("e3").equals(normalE3), "al seleccionar el peon de e2 se debe marcar e3");
-                require(background("e3").equals(background("e4")) && background("e5").equals(normalE5),
+                Container root = view.getContentPane();
+
+                // Menu: registrar un usuario lo deja elegido para las blancas.
+                ((JTextField) named(root, "newUser")).setText("Ana");
+                button(root, "Registrar").doClick();
+                JComboBox<?> white = (JComboBox<?>) named(root, "white");
+                require(white.getItemCount() == 2 && "Ana".equals(white.getSelectedItem()),
+                    "al registrar a Ana debe quedar elegida para las blancas");
+                require(accounts.ranking().size() == 1, "el registro debe guardarse");
+
+                // 1 contra 1: la dificultad y el color quedan bloqueados.
+                require(!named(root, "level").isEnabled() && !named(root, "color").isEnabled(),
+                    "en 1 contra 1 no se elige dificultad ni color");
+                button(root, "Jugar").doClick();
+                inspect(root);
+                require(boardPanel.getComponentCount() == 64, "debe armarse el tablero de 64 casillas");
+
+                // Seleccion y marcas de jugadas legales.
+                java.awt.Color normalE3 = background("e3", false);
+                java.awt.Color normalE5 = background("e5", false);
+                java.awt.Color normalF3 = background("f3", false);
+                java.awt.Color normalG3 = background("g3", false);
+                square("e2", false).doClick();
+                require(!background("e3", false).equals(normalE3), "al seleccionar el peon de e2 se debe marcar e3");
+                require(background("e3", false).equals(background("e4", false)) && background("e5", false).equals(normalE5),
                     "al seleccionar el peon de e2 se marcan e3 y e4, y e5 queda igual");
-                require(square("e3").isBorderPainted() && square("e4").isBorderPainted() && !square("e5").isBorderPainted(),
+                require(square("e3", false).isBorderPainted() && square("e4", false).isBorderPainted()
+                        && !square("e5", false).isBorderPainted(),
                     "cada casilla marcada lleva su marco, para que las pegadas no se fundan");
-                square("g1").doClick();
-                require(background("e3").equals(normalE3) && !square("e3").isBorderPainted(),
+                square("g1", false).doClick();
+                require(background("e3", false).equals(normalE3) && !square("e3", false).isBorderPainted(),
                     "al cambiar de pieza se limpian los destinos anteriores y sus marcos");
-                require(!background("f3").equals(normalF3) && background("g3").equals(normalG3),
+                require(!background("f3", false).equals(normalF3) && background("g3", false).equals(normalG3),
                     "el caballo de g1 marca f3 y no marca g3");
-                square("g1").doClick();
-                require(background("f3").equals(normalF3), "clickear la misma pieza deselecciona y limpia");
-                square("e2").doClick();
-                square("e4").doClick();
-                button(view.getContentPane(), "Deshacer").doClick();
-                levelBox.setSelectedIndex(2);
-                button(view.getContentPane(), "Rehacer").doClick();
-                require(!levelBox.isEnabled(), "el selector debe bloquearse mientras piensa la IA");
+                square("g1", false).doClick();
+                require(background("f3", false).equals(normalF3), "clickear la misma pieza deselecciona y limpia");
+
+                // Jugada, deshacer y volver al menu.
+                square("e2", false).doClick();
+                square("e4", false).doClick();
+                require(game.getTurn() == nucleo.Color.BLACK, "despues de e2 e4 le toca a las negras");
+                button(root, "Deshacer").doClick();
+                require(before.equals(game.getBoard()), "deshacer en 1 contra 1 restaura el tablero");
+                button(root, "Menú").doClick();
+
+                // Contra la IA (medio) jugando con blancas.
+                ((JComboBox<?>) named(root, "mode")).setSelectedIndex(1);
+                require(named(root, "level").isEnabled() && named(root, "color").isEnabled(),
+                    "contra la IA se eligen dificultad y color");
+                ((JComboBox<?>) named(root, "level")).setSelectedIndex(1);
+                button(root, "Jugar").doClick();
+                square("e2", false).doClick();
+                square("e4", false).doClick();
+                require(!menuButton().isEnabled(), "el boton Menu debe bloquearse mientras piensa la IA");
             });
-            awaitReply();
+            awaitReply(nucleo.Color.WHITE);
             SwingUtilities.invokeAndWait(() -> {
-                require(levelBox.isEnabled(), "el selector debe habilitarse al terminar la busqueda");
+                Container root = view.getContentPane();
+                require(menuButton().isEnabled(), "el boton Menu debe habilitarse al terminar la busqueda");
                 after = game.getBoard().cloneBoard();
                 require(!before.equals(after), "deben quedar jugadas la blanca y la negra");
-                button(view.getContentPane(), "Deshacer").doClick();
+                button(root, "Deshacer").doClick();
                 require(before.equals(game.getBoard()), "deshacer contra IA debe restaurar el tablero inicial");
-                button(view.getContentPane(), "Rehacer").doClick();
+                button(root, "Rehacer").doClick();
                 require(after.equals(game.getBoard()), "rehacer debe restaurar ambas jugadas");
-                levelBox.setSelectedIndex(3);
-                square("d2").doClick();
-                square("d4").doClick();
-                require(!levelBox.isEnabled(), "el nivel dificil tambien debe bloquear el selector");
+
+                // Dificil, tambien con blancas.
+                button(root, "Menú").doClick();
+                ((JComboBox<?>) named(root, "level")).setSelectedIndex(2);
+                button(root, "Jugar").doClick();
+                square("d2", false).doClick();
+                square("d4", false).doClick();
+                require(!menuButton().isEnabled(), "el nivel dificil tambien debe bloquear el boton Menu");
             });
-            awaitReply();
-            System.out.println("[OK]   Swing: destinos marcados, niveles medio y dificil, respuesta, deshacer, rehacer y selector");
+            awaitReply(nucleo.Color.WHITE);
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                // Contra la IA jugando con negras: el tablero se gira y la IA abre la partida.
+                button(root, "Menú").doClick();
+                ((JComboBox<?>) named(root, "color")).setSelectedIndex(1);
+                button(root, "Jugar").doClick();
+                require(((JButton) boardPanel.getComponent(0)).getIcon() != null
+                        && boardPanel.getComponent(0) == square("h1", true),
+                    "con negras el tablero se gira: la primera casilla de la grilla es h1");
+            });
+            awaitReply(nucleo.Color.BLACK);
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                require(!before.equals(game.getBoard()), "la IA con blancas debe abrir la partida");
+                button(root, "Deshacer").doClick();
+            });
+            awaitReply(nucleo.Color.BLACK);
+
+            // Ranking dentro de la misma ventana.
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                button(root, "Ranking").doClick();
+                require(rankingTable.getRowCount() == 1, "el ranking debe mostrar al usuario registrado");
+                button(root, "Volver").doClick();
+            });
+            System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
     }
 
-    private static void awaitReply() throws Exception {
+    // Espera a que la IA termine de pensar y sea el turno de la persona (color indicado).
+    private static void awaitReply(nucleo.Color humanTurn) throws Exception {
         long deadline = System.currentTimeMillis() + 15000;
         boolean[] ready = {false};
         while (!ready[0] && System.currentTimeMillis() < deadline) {
-            SwingUtilities.invokeAndWait(() -> ready[0] = game.getTurn() == nucleo.Color.WHITE && levelBox.isEnabled());
+            SwingUtilities.invokeAndWait(() -> ready[0] = game.getTurn() == humanTurn && menuButton().isEnabled());
             if (!ready[0]) Thread.sleep(10);
         }
         require(ready[0], "la IA debe devolver el turno sin congelar la ventana");
     }
 
+    private static JButton menuButton() {
+        return button(view.getContentPane(), "Menú");
+    }
+
     private static void inspect(Container container) {
         for (Component component : container.getComponents()) {
-            if (component instanceof JComboBox<?>) levelBox = (JComboBox<?>) component;
             if (component instanceof JPanel && ((JPanel) component).getLayout() instanceof GridLayout) boardPanel = (JPanel) component;
+            if (component instanceof JTable) rankingTable = (JTable) component;
             if (component instanceof Container) inspect((Container) component);
         }
     }
 
-    private static JButton square(String text) {
-        Position position = Position.fromAlgebraic(text);
-        return (JButton) boardPanel.getComponent((7 - position.getRow()) * 8 + position.getColumn());
+    private static Component named(Container container, String name) {
+        for (Component component : container.getComponents()) {
+            if (name.equals(component.getName())) return component;
+            if (component instanceof Container) {
+                Component found = named((Container) component, name);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
-    private static java.awt.Color background(String text) {
-        return square(text).getBackground();
+    // El tablero se arma de nuevo en cada partida, asi que se vuelve a buscar. Con el tablero
+    // girado (negras abajo) el orden de la grilla es el inverso.
+    private static JButton square(String text, boolean flipped) {
+        inspect(view.getContentPane());
+        Position position = Position.fromAlgebraic(text);
+        int index = flipped
+            ? position.getRow() * 8 + (7 - position.getColumn())
+            : (7 - position.getRow()) * 8 + position.getColumn();
+        return (JButton) boardPanel.getComponent(index);
+    }
+
+    private static java.awt.Color background(String text, boolean flipped) {
+        return square(text, flipped).getBackground();
     }
 
     private static JButton button(Container container, String text) {

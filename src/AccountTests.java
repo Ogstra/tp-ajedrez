@@ -1,5 +1,4 @@
 import adaptadores.FileAccountStore;
-import adaptadores.LoginDialog;
 import nucleo.Board;
 import nucleo.BoardSetup;
 import nucleo.ChessGame;
@@ -65,8 +64,6 @@ public class AccountTests {
         testRedoReappliesTheResult();
         testRedoOfAnEarlierMoveDoesNotReapply();
         testBlackUserCanChangeDuringTheGame();
-        testLoginFormRegistersAndEnters();
-        testLoginFormRejectsUnknownUser();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -523,36 +520,5 @@ public class AccountTests {
         assertTrue("testBlackUserCanChangeDuringTheGame",
             scoreOf(service, ana).getLosses() == 1 && scoreOf(service, beto).getGames() == 0,
             "Beto no debería sumar nada si ya no es el rival");
-    }
-
-    // La lógica del formulario de la ventana (sin mostrarla): registrarse y volver a entrar.
-    private static void testLoginFormRegistersAndEnters() {
-        // Arrange
-        AccountService service = newService();
-
-        // Act
-        User created = LoginDialog.enter(service, true, "Ana");
-        User entered = LoginDialog.enter(service, false, "ana");
-
-        // Assert
-        assertTrue("testLoginFormRegistersAndEnters", created.equals(entered),
-            "debería entrar con el mismo usuario que se registró");
-    }
-
-    private static void testLoginFormRejectsUnknownUser() {
-        // Arrange
-        AccountService service = newService();
-        service.register("Ana");
-        boolean rejected = false;
-
-        // Act
-        try {
-            LoginDialog.enter(service, false, "Nadie");
-        } catch (IllegalArgumentException e) {
-            rejected = true;
-        }
-
-        // Assert
-        assertTrue("testLoginFormRejectsUnknownUser", rejected, "un usuario inexistente debe rechazarse");
     }
 }
