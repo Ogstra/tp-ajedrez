@@ -2,15 +2,18 @@ package adaptadores;
 
 import usuarios.Score;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.List;
 
 // Pantalla del ranking dentro de la misma ventana. Se llena con show() cada vez que se abre.
@@ -22,20 +25,36 @@ public class RankingPanel extends JPanel {
 
     public RankingPanel(Runnable onBack) {
         table.setEnabled(false);
-        JLabel title = new JLabel("Ranking (PJ jugadas, G ganadas, E empatadas, P perdidas)", SwingConstants.CENTER);
+        table.setRowHeight(26);
+        table.getTableHeader().setReorderingAllowed(false);
+        // Números centrados; el nombre queda a la izquierda.
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        table.setDefaultRenderer(Object.class, center);
+        ((DefaultTableCellRenderer) table.getTableHeader().getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel title = new JLabel("Ranking", SwingConstants.CENTER);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 26f));
+        JLabel legend = new JLabel("PJ jugadas, G ganadas, E empatadas, P perdidas, Pts puntos", SwingConstants.CENTER);
+        JPanel header = new JPanel(new BorderLayout(0, 4));
+        header.add(title, BorderLayout.NORTH);
+        header.add(legend, BorderLayout.CENTER);
+
         JButton back = new JButton("Volver");
         back.addActionListener(e -> onBack.run());
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottom.add(back);
 
-        setLayout(new BorderLayout(0, 8));
-        add(title, BorderLayout.NORTH);
+        setBorder(BorderFactory.createEmptyBorder(24, 40, 16, 40));
+        setLayout(new BorderLayout(0, 14));
+        add(header, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
     }
 
     public void show(List<Score> ranking) {
         table.setModel(model(ranking));
+        table.getColumnModel().getColumn(0).setMaxWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(220);
     }
 

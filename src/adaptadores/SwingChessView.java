@@ -29,6 +29,7 @@ import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -172,8 +173,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         setLayout(new CardLayout());
 
         menuButton.addActionListener(e -> showMenu());
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(menuButton);
+        // Arriba: el botón Menú y quiénes juegan.
+        JPanel top = new JPanel(new BorderLayout(10, 0));
+        top.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        top.add(menuButton, BorderLayout.WEST);
+        top.add(players, BorderLayout.CENTER);
 
         JButton rankingButton = new JButton("Ranking");
         rankingButton.addActionListener(e -> showRanking());
@@ -193,14 +197,16 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             playOpponentIfNeeded();
         });
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(rankingButton);
+        // Abajo: el estado de la partida y los botones, centrados.
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttons.add(undoButton);
         buttons.add(redoButton);
+        buttons.add(rankingButton);
+        status.setFont(status.getFont().deriveFont(Font.BOLD, 14f));
         JPanel bottom = new JPanel(new BorderLayout());
-        bottom.add(players, BorderLayout.NORTH);
-        bottom.add(status, BorderLayout.CENTER);
-        bottom.add(buttons, BorderLayout.EAST);
+        bottom.setBorder(BorderFactory.createEmptyBorder(6, 8, 2, 8));
+        bottom.add(status, BorderLayout.NORTH);
+        bottom.add(buttons, BorderLayout.CENTER);
 
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.add(top, BorderLayout.NORTH);
@@ -210,7 +216,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         add(menu, MENU);
         add(gamePanel, GAME);
         add(ranking, RANKING);
-        setSize(8 * SQUARE_SIZE, 8 * SQUARE_SIZE + 160);
+        setSize(8 * SQUARE_SIZE, 8 * SQUARE_SIZE + 150);
         setLocationRelativeTo(null);
     }
 

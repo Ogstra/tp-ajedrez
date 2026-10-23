@@ -6,15 +6,20 @@ import usuarios.AccountService;
 import usuarios.Score;
 import usuarios.User;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,30 +51,47 @@ public class MenuPanel extends JPanel {
         blackBox.setName("black");
 
         JLabel title = new JLabel("Ajedrez");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 32f));
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 34f));
 
         JButton registerButton = new JButton("Registrar");
         registerButton.addActionListener(e -> register());
         JButton playButton = new JButton("Jugar");
+        playButton.setFont(playButton.getFont().deriveFont(Font.BOLD, 16f));
         playButton.addActionListener(e -> play());
         JButton rankingButton = new JButton("Ranking");
         rankingButton.addActionListener(e -> onRanking.run());
         modeBox.addActionListener(e -> updateEnabled());
         colorBox.addActionListener(e -> updateEnabled());
 
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        add(space(30));
-        add(title);
-        add(space(20));
-        add(row("Modo", modeBox));
-        add(row("Dificultad", levelBox));
-        add(row("Juego con", colorBox));
-        add(row("Blancas", whiteBox));
-        add(row("Negras", blackBox));
-        add(row("Usuario nuevo", nameField, registerButton));
-        add(row(message));
-        add(row(playButton, rankingButton));
+        // Usuario nuevo: el campo y su botón van juntos en una sola fila del formulario.
+        JPanel newUser = new JPanel(new BorderLayout(6, 0));
+        newUser.add(nameField, BorderLayout.CENTER);
+        newUser.add(registerButton, BorderLayout.EAST);
+
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttons.add(playButton);
+        buttons.add(rankingButton);
+
+        // Formulario centrado: etiquetas a la izquierda y controles alineados a la derecha.
+        JPanel form = new JPanel(new GridBagLayout());
+        addRow(form, 0, "Modo", modeBox);
+        addRow(form, 1, "Dificultad", levelBox);
+        addRow(form, 2, "Juego con", colorBox);
+        addRow(form, 3, "Blancas", whiteBox);
+        addRow(form, 4, "Negras", blackBox);
+        addRow(form, 5, "Usuario nuevo", newUser);
+        message.setHorizontalAlignment(SwingConstants.CENTER);
+        addWide(form, 6, message, 14);
+        addWide(form, 7, buttons, 6);
+
+        setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.insets = new Insets(0, 0, 24, 0);
+        add(title, c);
+        c.gridy = 1;
+        c.insets = new Insets(0, 0, 0, 0);
+        add(form, c);
         refresh();
     }
 
@@ -146,20 +168,26 @@ public class MenuPanel extends JPanel {
         box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + 1);
     }
 
-    private static JPanel row(Component... parts) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        for (Component part : parts) row.add(part);
-        return row;
+    private static void addRow(JPanel form, int y, String label, Component control) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = y;
+        c.insets = new Insets(6, 8, 6, 8);
+        c.anchor = GridBagConstraints.EAST;
+        form.add(new JLabel(label), c);
+        c.gridx = 1;
+        c.anchor = GridBagConstraints.CENTER;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        control.setPreferredSize(new Dimension(230, 28));
+        form.add(control, c);
     }
 
-    private static JPanel row(String label, Component... parts) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        row.add(new JLabel(label));
-        for (Component part : parts) row.add(part);
-        return row;
-    }
-
-    private static Component space(int height) {
-        return javax.swing.Box.createVerticalStrut(height);
+    // Fila que ocupa las dos columnas (el mensaje y los botones).
+    private static void addWide(JPanel form, int y, Component part, int top) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = y;
+        c.gridwidth = 2;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(top, 8, 0, 8);
+        form.add(part, c);
     }
 }

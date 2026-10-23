@@ -163,7 +163,8 @@ public class SwingIntegrationTests {
 
     private static void inspect(Container container) {
         for (Component component : container.getComponents()) {
-            if (component instanceof JPanel && ((JPanel) component).getLayout() instanceof GridLayout) boardPanel = (JPanel) component;
+            if (component instanceof JPanel && ((JPanel) component).getLayout() instanceof GridLayout
+                    && ((JPanel) component).getComponentCount() == 64) boardPanel = (JPanel) component;
             if (component instanceof JTable) rankingTable = (JTable) component;
             if (component instanceof Container) inspect((Container) component);
         }
