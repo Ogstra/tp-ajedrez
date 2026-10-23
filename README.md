@@ -17,11 +17,19 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba se elige el oponente y abajo están Deshacer y Rehacer.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. En la ventana se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino; arriba se elige el oponente y abajo están Ranking, Deshacer y Rehacer.
+
+## Usuarios y ranking
+
+Al arrancar (en consola y en ventana) cada persona puede iniciar sesión con su usuario y su id, registrarse o jugar sin usuario. No hay contraseña. Al registrarse el sistema asigna el id y lo muestra: hay que anotarlo, junto con el nombre alcanza para volver a entrar. Contra la IA solo se pide el usuario de las blancas.
+
+Cuando una partida termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar la partida) y en la ventana con el botón Ranking.
+
+Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra carpeta: `java -Dajedrez.data=otra_carpeta -cp out Main`. Los cambios técnicos están explicados en `docs/cambios-usuarios-y-ranking.md`.
 
 ## Verificación
 
-`./scripts/test.sh` corre 63 pruebas del juego y la IA, más la regresión de consola que deshace y repite un mate. Para comprobar la ventana real con los niveles medio y difícil, deshacer y rehacer:
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 22 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real con los niveles medio y difícil, deshacer y rehacer:
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -40,11 +48,13 @@ src/
     estrategias/   cómo se mueve cada pieza
     tablas/        las condiciones de tablas
   puertos/       interfaces con las que el núcleo pide cosas al exterior
-  adaptadores/   consola y Swing, que implementan esos puertos
+  adaptadores/   consola, Swing y archivo CSV, que implementan esos puertos
+  usuarios/      cuentas, puntajes y ranking, afuera del núcleo
   ai/            el oponente, afuera del núcleo
   Main.java      arma todo para jugar por consola
   MainSwing.java arma todo para jugar con ventana
   ChessCoreTests.java
+  AccountTests.java
 ```
 
 El núcleo no conoce a los adaptadores ni a la IA: son ellos los que dependen de él. Por eso la ventana y la IA se pudieron agregar sin tocar `ChessGame`.
@@ -56,7 +66,7 @@ Lo que se ve en la materia está así:
 - **Composición sobre herencia**: hay una sola clase `Piece`, que tiene una `IMovementStrategy`. La reina combina las estrategias de la torre y el alfil.
 - **Strategy**: el movimiento de cada pieza, las reglas especiales (`ISpecialMove`), las tablas (`IDrawRule`) y los niveles de la IA (`IOpponent`).
 - **Factory**: `PieceFactory` es un registro de piezas, `BoardSetup` arma el tablero inicial y `Opponents` crea el oponente según el nivel.
-- **Observer**: los dos listeners.
+- **Observer**: los dos listeners. `ScoreRecorder` es un observador más: acredita el resultado sin que el núcleo sepa que existen los usuarios.
 - **State**: el turno y los estados terminales (mate, ahogado, tablas).
 - **Command**: cada jugada es un comando que se puede deshacer y rehacer.
 - **Tests sin interfaz**: `ChessCoreTests`, con un stub y un mock como dobles de prueba, y los marcados `// TDD:` escritos antes del código.

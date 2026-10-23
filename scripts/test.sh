@@ -4,4 +4,5 @@ set -e
 cd "$(dirname "$0")/.."
 ./scripts/build.sh
 java -cp out ChessCoreTests
+java -cp out AccountTests
 ./scripts/test-console.sh

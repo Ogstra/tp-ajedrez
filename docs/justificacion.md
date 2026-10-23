@@ -100,9 +100,17 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Cuándo se rompería.** Si hiciera falta una IA fuerte, el minimax simple no alcanza (haría falta poda y una mejor evaluación), y probablemente convendría un proceso externo detrás de otro puerto.
 
+## 11 bis. Usuarios y ranking también viven afuera del núcleo
+
+**Qué.** El paquete `usuarios` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Entrar es por usuario e id, sin contraseña.
+
+**Por qué.** Quién juega y cuántas partidas ganó no es una regla del ajedrez. Como `ScoreRecorder` implementa los mismos `IMoveListener` e `IGameStatusListener` que ya usaban la consola y la ventana, no se tocó ninguna clase del núcleo. Cambiar el CSV por otra forma de guardar es escribir otro adaptador de `IAccountStore`. Deshacer la jugada final revierte el resultado y rehacerla lo vuelve a sumar, para que una misma partida no cuente dos veces.
+
+**Cuándo se rompería.** Con usuarios reales haría falta contraseña, y el CSV no soporta bien dos procesos escribiendo a la vez; ahí convendría una base de datos detrás del mismo puerto.
+
 ## 12. Tests del núcleo con un runner propio
 
-**Qué.** Los tests están en `ChessCoreTests`, con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías.
+**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías.
 
 **Por qué.** Corren solo con `javac`, sin infraestructura, que es lo que pide la consigna, y no hay nada para instalar ni explicar en la defensa.
 

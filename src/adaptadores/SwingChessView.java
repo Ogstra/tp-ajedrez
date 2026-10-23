@@ -13,6 +13,9 @@ import nucleo.Position;
 import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import puertos.IPromotionChooser;
+import usuarios.AccountService;
+import usuarios.ScoreRecorder;
+import usuarios.User;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -83,10 +86,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final int columns;
     private final JButton[][] squares;
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
+    private final JLabel players = new JLabel(" ", SwingConstants.CENTER);
     private final Random random = new Random();
     private final JComboBox<String> levelBox = new JComboBox<>(new String[]{"Dos jugadores", "Fácil", "Medio", "Difícil"});
 
     private IChessGame game;
+    private AccountService accounts;     // null si no se configuraron cuentas
+    private ScoreRecorder recorder;
+    private User whiteUser;
+    private User blackUser;
     private OpponentController opponent; // null mientras juegan dos personas
     private Position selection = null;
     private boolean thinking = false;
@@ -104,6 +112,26 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // eso se inyecta después, desde el composition root (MainSwing).
     public void attachGame(IChessGame game) {
         this.game = game;
+    }
+
+    // Las cuentas también se inyectan después, desde el composition root. blackUser es el que
+    // juega con negras cuando son dos personas; si se elige la IA, el recorder deja de acreditarlo.
+    public void attachAccounts(AccountService accounts, ScoreRecorder recorder, User whiteUser, User blackUser) {
+        this.accounts = accounts;
+        this.recorder = recorder;
+        this.whiteUser = whiteUser;
+        this.blackUser = blackUser;
+        updatePlayers();
+    }
+
+    private void updatePlayers() {
+        String black = opponent != null ? "la IA" : blackUser == null ? "sin usuario" : blackUser.toString();
+        players.setText("Blancas: " + (whiteUser == null ? "sin usuario" : whiteUser) + "   |   Negras: " + black);
+    }
+
+    private void showRanking() {
+        if (accounts == null) return;
+        ScoreboardDialog.show(this, accounts.ranking());
     }
 
     private static Map<String, Image> loadImages() {
@@ -159,17 +187,22 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             playOpponentIfNeeded();
         });
 
+        JButton rankingButton = new JButton("Ranking");
+        rankingButton.addActionListener(e -> showRanking());
+
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(rankingButton);
         buttons.add(undoButton);
         buttons.add(redoButton);
         JPanel bottom = new JPanel(new BorderLayout());
+        bottom.add(players, BorderLayout.NORTH);
         bottom.add(status, BorderLayout.CENTER);
         bottom.add(buttons, BorderLayout.EAST);
 
         add(top, BorderLayout.NORTH);
         add(boardPanel, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
-        setSize(columns * SQUARE_SIZE, rows * SQUARE_SIZE + 110);
+        setSize(columns * SQUARE_SIZE, rows * SQUARE_SIZE + 140);
         setLocationRelativeTo(null);
     }
 
@@ -185,6 +218,9 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         } else {
             opponent = new OpponentController(game, Opponents.create(level, random), Color.BLACK);
         }
+        // Contra la IA el usuario de las negras no suma ni resta; con dos personas, vuelve a acreditarse.
+        if (recorder != null) recorder.setBlackUser(opponent == null ? blackUser : null);
+        updatePlayers();
         playOpponentIfNeeded();
     }
 

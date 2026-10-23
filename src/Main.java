@@ -1,4 +1,6 @@
+import adaptadores.ConsoleAccounts;
 import adaptadores.ConsolePromotionChooser;
+import adaptadores.FileAccountStore;
 import adaptadores.ConsoleRenderer;
 import ai.AutoPromotionChooser;
 import ai.OpponentController;
@@ -23,7 +25,11 @@ import nucleo.tablas.ThreefoldRepetitionRule;
 import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import puertos.IPromotionChooser;
+import usuarios.AccountService;
+import usuarios.ScoreRecorder;
+import usuarios.User;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +45,12 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         OpponentLevel level = askLevel(scanner);
+
+        // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
+        Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
+        AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
+        User white = ConsoleAccounts.askUser(scanner, accounts, "blancas");
+        User black = level == OpponentLevel.NONE ? ConsoleAccounts.askUser(scanner, accounts, "negras") : null;
 
         PieceFactory pieces = PieceFactory.standard();
         Board board = BoardSetup.standard(pieces);
@@ -58,11 +70,13 @@ public class Main {
             new FiftyMoveRule(),
             new ThreefoldRepetitionRule());
 
+        ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
         IChessGame game = new ChessGame(board,
-            Collections.<IMoveListener>singletonList(renderer),
-            Collections.<IGameStatusListener>singletonList(renderer),
+            Arrays.<IMoveListener>asList(renderer, recorder),
+            Arrays.<IGameStatusListener>asList(renderer, recorder),
             specialMoves,
             drawRules);
+        recorder.attachGame(game);
 
         // La IA juega con negras; el humano con blancas.
         OpponentController opponent = level == OpponentLevel.NONE
@@ -71,7 +85,9 @@ public class Main {
 
         renderer.render(board);
         System.out.println("Ajedrez: TP Ingeniería de Software (UADE)");
-        System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'salir' termina.");
+        System.out.println("Blancas: " + (white == null ? "sin usuario" : white)
+            + " | Negras: " + (level != OpponentLevel.NONE ? "la IA" : black == null ? "sin usuario" : black));
+        System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");
 
         while (true) {
             System.out.print("\nTurno de " + (game.getTurn() == Color.WHITE ? "Blancas" : "Negras") + " > ");
@@ -81,6 +97,10 @@ public class Main {
             if (input.equalsIgnoreCase("salir")) {
                 System.out.println("Partida abandonada.");
                 break;
+            }
+            if (input.equalsIgnoreCase("ranking")) {
+                ConsoleAccounts.printRanking(accounts);
+                continue;
             }
             if (input.equalsIgnoreCase("undo")) {
                 // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
@@ -106,6 +126,10 @@ public class Main {
                     System.out.println("El oponente piensa...");
                     opponent.playIfItsTurn();
                     renderer.render(board);
+                }
+                // Al terminar la partida, el ranking ya incluye el resultado.
+                if (game.isGameOver() && (white != null || black != null)) {
+                    ConsoleAccounts.printRanking(accounts);
                 }
             }
         }
