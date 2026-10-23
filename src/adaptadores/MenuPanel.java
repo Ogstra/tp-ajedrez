@@ -6,6 +6,7 @@ import usuarios.AccountService;
 import usuarios.Score;
 import usuarios.User;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -27,6 +28,8 @@ import java.util.List;
 // y registro. Solo junta las elecciones; arrancar la partida lo hace SwingChessView.
 public class MenuPanel extends JPanel {
 
+    private static final java.awt.Color ACCENT = new java.awt.Color(0x4E, 0x6B, 0x3A); // verde oscuro, como el tablero
+    private static final java.awt.Color ERROR = new java.awt.Color(0xA3, 0x2A, 0x2A);
     private static final String NO_USER = "Sin usuario";
     // Orden de cada desplegable: Sin usuario, Nuevo usuario... y después los registrados.
     private static final int NEW_USER_INDEX = 1;
@@ -59,14 +62,17 @@ public class MenuPanel extends JPanel {
         blackBox.setName("black");
 
         JLabel title = new JLabel("Ajedrez");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 34f));
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 38f));
+        title.setForeground(ACCENT);
+        JLabel subtitle = new JLabel("TP de Ingeniería de Software (UADE)");
+        subtitle.setForeground(java.awt.Color.GRAY);
 
         JButton registerButton = new JButton("Registrar");
         registerButton.addActionListener(e -> register());
         JButton playButton = new JButton("Jugar");
-        playButton.setFont(playButton.getFont().deriveFont(Font.BOLD, 16f));
+        playButton.setFont(playButton.getFont().deriveFont(Font.BOLD, 18f));
         playButton.addActionListener(e -> play());
-        JButton rankingButton = new JButton("Ranking");
+        JButton rankingButton = new JButton("Ver ranking");
         rankingButton.addActionListener(e -> onRanking.run());
         modeBox.addActionListener(e -> updateEnabled());
         colorBox.addActionListener(e -> updateEnabled());
@@ -77,31 +83,54 @@ public class MenuPanel extends JPanel {
         whiteBox.addActionListener(e -> showNewUserRow());
         blackBox.addActionListener(e -> showNewUserRow());
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
+        // Dos grupos con título: cómo se juega y quién juega.
+        JPanel game = section("Partida");
+        addRow(game, 0, "Modo", modeBox);
+        addRow(game, 1, "Dificultad", levelBox);
+        addRow(game, 2, "Juego con", colorBox);
+        JPanel people = section("Jugadores");
+        addRow(people, 0, "Blancas", whiteBox);
+        addRow(people, 1, "Negras", blackBox);
+        addRow(people, 2, newUserLabel, newUserRow);
+
+        message.setHorizontalAlignment(SwingConstants.CENTER);
+        message.setForeground(ERROR);
+        JPanel buttons = new JPanel(new GridLayout(2, 1, 0, 8));
         buttons.add(playButton);
         buttons.add(rankingButton);
-
-        // Formulario centrado: etiquetas a la izquierda y controles alineados a la derecha.
-        JPanel form = new JPanel(new GridBagLayout());
-        addRow(form, 0, "Modo", modeBox);
-        addRow(form, 1, "Dificultad", levelBox);
-        addRow(form, 2, "Juego con", colorBox);
-        addRow(form, 3, "Blancas", whiteBox);
-        addRow(form, 4, "Negras", blackBox);
-        addRow(form, 5, newUserLabel, newUserRow);
-        message.setHorizontalAlignment(SwingConstants.CENTER);
-        addWide(form, 6, message, 14);
-        addWide(form, 7, buttons, 6);
+        playButton.setPreferredSize(new Dimension(300, 44));
 
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.gridy = 0;
-        c.insets = new Insets(0, 0, 24, 0);
+        c.gridx = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(50, 0, 2, 0);
         add(title, c);
-        c.gridy = 1;
-        c.insets = new Insets(0, 0, 0, 0);
-        add(form, c);
+        c.insets = new Insets(0, 0, 2, 0);
+        add(subtitle, c);
+        title.setHorizontalAlignment(SwingConstants.CENTER);
+        subtitle.setHorizontalAlignment(SwingConstants.CENTER);
+        c.insets = new Insets(22, 0, 0, 0);
+        add(game, c);
+        c.insets = new Insets(12, 0, 0, 0);
+        add(people, c);
+        c.insets = new Insets(10, 0, 4, 0);
+        add(message, c);
+        c.insets = new Insets(4, 20, 0, 20);
+        add(buttons, c);
+        // Un espacio que empuja todo hacia arriba, así el menú no se mueve cuando aparece el campo de usuario nuevo.
+        c.weighty = 1;
+        add(new JLabel(), c);
         refresh();
+    }
+
+    // Grupo con título y margen interno.
+    private static JPanel section(String title) {
+        JPanel section = new JPanel(new GridBagLayout());
+        section.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(title),
+            BorderFactory.createEmptyBorder(4, 10, 8, 10)));
+        return section;
     }
 
     // Vuelve a leer los usuarios (cambian los puntos y los registros) conservando lo elegido.
@@ -215,21 +244,13 @@ public class MenuPanel extends JPanel {
         c.gridy = y;
         c.insets = new Insets(6, 8, 6, 8);
         c.anchor = GridBagConstraints.EAST;
+        label.setHorizontalAlignment(SwingConstants.RIGHT);
+        label.setPreferredSize(new Dimension(95, 28)); // mismo ancho en los dos grupos: los controles quedan alineados
         form.add(label, c);
         c.gridx = 1;
         c.anchor = GridBagConstraints.CENTER;
         c.fill = GridBagConstraints.HORIZONTAL;
-        control.setPreferredSize(new Dimension(230, 28));
+        control.setPreferredSize(new Dimension(200, 28));
         form.add(control, c);
-    }
-
-    // Fila que ocupa las dos columnas (el mensaje y los botones).
-    private static void addWide(JPanel form, int y, Component part, int top) {
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridy = y;
-        c.gridwidth = 2;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(top, 8, 0, 8);
-        form.add(part, c);
     }
 }
