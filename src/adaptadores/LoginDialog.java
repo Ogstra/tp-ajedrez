@@ -1,14 +1,17 @@
 package adaptadores;
 
 import usuarios.AccountService;
+import usuarios.Score;
 import usuarios.User;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.util.List;
 
 // Adaptador de entrada (Clase 2) de las cuentas, con ventana: botones para iniciar sesión (usuario e id),
 // registrarse (solo el nombre, el id lo da el sistema) o jugar sin usuario. No hay contraseña.
@@ -36,7 +39,15 @@ public final class LoginDialog {
     }
 
     private static User askLogin(Component parent, AccountService accounts) {
-        JTextField name = new JTextField(16);
+        // Se elige el usuario de una lista (solo el nombre: el id es lo que se verifica).
+        List<Score> ranking = accounts.ranking();
+        if (ranking.isEmpty()) {
+            JOptionPane.showMessageDialog(parent, "Todavía no hay usuarios registrados. Elegí Registrarse.",
+                "Iniciar sesión", JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        }
+        JComboBox<String> name = new JComboBox<>();
+        for (Score score : ranking) name.addItem(score.getUser().getName());
         JTextField id = new JTextField(16);
         JPanel panel = new JPanel(new GridLayout(0, 2, 8, 8));
         panel.add(new JLabel("Usuario"));
@@ -46,7 +57,7 @@ public final class LoginDialog {
         while (JOptionPane.showConfirmDialog(parent, panel, "Iniciar sesión",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             try {
-                return enter(accounts, false, name.getText(), id.getText());
+                return enter(accounts, false, (String) name.getSelectedItem(), id.getText());
             } catch (IllegalArgumentException e) {
                 JOptionPane.showMessageDialog(parent, e.getMessage(), "No se pudo entrar", JOptionPane.WARNING_MESSAGE);
             }
