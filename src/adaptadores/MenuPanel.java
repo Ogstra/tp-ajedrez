@@ -44,6 +44,7 @@ public class MenuPanel extends JPanel {
     private final JComboBox<String> blackBox = new JComboBox<>();
     private final JTextField nameField = new JTextField(12);
     private final JLabel message = new JLabel(" ");
+    private final JButton playButton = new JButton("Jugar");
     private final JLabel newUserLabel = new JLabel("Usuario nuevo");
     private final JPanel newUserRow = new JPanel(new BorderLayout(6, 0));
     private List<User> users = new ArrayList<>();
@@ -69,7 +70,7 @@ public class MenuPanel extends JPanel {
 
         JButton registerButton = new JButton("Registrar");
         registerButton.addActionListener(e -> register());
-        JButton playButton = new JButton("Jugar");
+        nameField.addActionListener(e -> register()); // Enter en el campo también registra
         playButton.setFont(playButton.getFont().deriveFont(Font.BOLD, 18f));
         playButton.addActionListener(e -> play());
         JButton rankingButton = new JButton("Ver ranking");
@@ -140,6 +141,9 @@ public class MenuPanel extends JPanel {
         for (Score score : accounts.ranking()) users.add(score.getUser());
         updateEnabled();
     }
+
+    // Para que la ventana lo use como botón por defecto (Enter) mientras se ve el menú.
+    public JButton getPlayButton() { return playButton; }
 
     public boolean versusAi() { return modeBox.getSelectedIndex() == 1; }
 

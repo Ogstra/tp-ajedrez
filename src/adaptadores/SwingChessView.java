@@ -18,6 +18,7 @@ import usuarios.User;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -28,6 +29,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -54,6 +56,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);         // marco de las casillas marcadas
     private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E);  // marco de las capturas
     private static final int SQUARE_SIZE = 80;
+    private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
     private static final int PIECE_SIZE = 68; // deja un margen chico dentro de cada casilla
 
     // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0.
@@ -90,6 +93,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final GameBuilder builder;
     private final Random random = new Random();
     private final JPanel boardPanel = new JPanel();
+    private final JPanel rankLabels = new JPanel();
+    private final JPanel fileLabels = new JPanel();
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
     private final JLabel players = new JLabel(" ", SwingConstants.CENTER);
     private final JButton menuButton = new JButton("Menú");
@@ -101,6 +106,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private OpponentController opponent; // null mientras juegan dos personas
     private Position selection = null;
     private boolean thinking = false;
+    private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
 
@@ -113,6 +119,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
+        showCard(MENU); // la primera pantalla es el menú (y Enter aprieta Jugar)
     }
 
     // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
@@ -123,6 +130,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         opponent = menu.versusAi() ? new OpponentController(game, Opponents.create(menu.level(), random), menu.aiColor()) : null;
         selection = null;
         thinking = false;
+        startBoard = game.getBoard().cloneBoard();
         menuButton.setEnabled(true);
         players.setText("Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
         status.setText("Turno de Blancas");
@@ -140,7 +148,20 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private void showCard(String card) {
         currentCard = card;
+        // Enter inicia la partida solo mientras se ve el menú.
+        getRootPane().setDefaultButton(card.equals(MENU) ? menu.getPlayButton() : null);
         ((CardLayout) getContentPane().getLayout()).show(getContentPane(), card);
+    }
+
+    // Salir con una partida empezada y sin terminar la pierde: se pide confirmación.
+    private void leaveGame() {
+        if (!game.isGameOver() && !game.getBoard().equals(startBoard)) {
+            String[] options = {"Salir al menú", "Seguir jugando"};
+            int choice = JOptionPane.showOptionDialog(this, "La partida sigue en juego. Si salís, se pierde.",
+                "Salir al menú", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+            if (choice != 0) return;
+        }
+        showMenu();
     }
 
     private void showMenu() {
@@ -172,7 +193,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new CardLayout());
 
-        menuButton.addActionListener(e -> showMenu());
+        menuButton.addActionListener(e -> leaveGame());
         // Arriba: el botón Menú y quiénes juegan.
         JPanel top = new JPanel(new BorderLayout(10, 0));
         top.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
@@ -210,7 +231,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.add(top, BorderLayout.NORTH);
-        gamePanel.add(boardPanel, BorderLayout.CENTER);
+        // El tablero con las coordenadas: números a la izquierda y letras abajo.
+        JPanel boardArea = new JPanel(new BorderLayout());
+        JPanel fileRow = new JPanel(new BorderLayout());
+        fileRow.add(Box.createHorizontalStrut(COORDINATE_SIZE), BorderLayout.WEST);
+        fileRow.add(fileLabels, BorderLayout.CENTER);
+        boardArea.add(boardPanel, BorderLayout.CENTER);
+        boardArea.add(rankLabels, BorderLayout.WEST);
+        boardArea.add(fileRow, BorderLayout.SOUTH);
+        gamePanel.add(boardArea, BorderLayout.CENTER);
         gamePanel.add(bottom, BorderLayout.SOUTH);
 
         add(menu, MENU);
@@ -239,6 +268,25 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             }
         }
         boardPanel.revalidate();
+        buildCoordinates(rows, columns, flipped);
+    }
+
+    // Números (filas) y letras (columnas) en el mismo orden en que se ven las casillas.
+    private void buildCoordinates(int rows, int columns, boolean flipped) {
+        rankLabels.removeAll();
+        rankLabels.setLayout(new GridLayout(rows, 1));
+        rankLabels.setPreferredSize(new Dimension(COORDINATE_SIZE, 0));
+        for (int i = 0; i < rows; i++) {
+            rankLabels.add(new JLabel(String.valueOf(flipped ? i + 1 : rows - i), SwingConstants.CENTER));
+        }
+        fileLabels.removeAll();
+        fileLabels.setLayout(new GridLayout(1, columns));
+        fileLabels.setPreferredSize(new Dimension(0, COORDINATE_SIZE));
+        for (int j = 0; j < columns; j++) {
+            fileLabels.add(new JLabel(String.valueOf((char) ('a' + (flipped ? columns - 1 - j : j))), SwingConstants.CENTER));
+        }
+        rankLabels.revalidate();
+        fileLabels.revalidate();
     }
 
     private java.awt.Color squareColor(int row, int col) {

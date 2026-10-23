@@ -86,3 +86,5 @@ Se había subido una implementación paralela de login y ranking en dos commits 
 Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilder` (una interfaz de una sola función que implementa `MainSwing`, el composition root). Así la ventana no conoce las reglas concretas y no hace falta reiniciar la aplicación para jugar otra vez. Se sacaron los diálogos de login y de fin de partida: el resultado queda en la etiqueta de estado. El único diálogo que queda es el de coronación, porque el núcleo necesita la respuesta antes de seguir.
 
 Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.
+
+También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Jugar en el menú (y registra en el campo de usuario nuevo), y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.

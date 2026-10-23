@@ -56,12 +56,18 @@ public class SwingIntegrationTests {
                 require(!named(root, "newUser").isShowing(), "al registrar, el campo vuelve a ocultarse");
                 require(accounts.ranking().size() == 1, "el registro debe guardarse");
 
+                require(view.getRootPane().getDefaultButton() == button(root, "Jugar"),
+                    "en el menu, Enter debe apretar Jugar");
+
                 // 1 contra 1: la dificultad y el color quedan bloqueados.
                 require(!named(root, "level").isEnabled() && !named(root, "color").isEnabled(),
                     "en 1 contra 1 no se elige dificultad ni color");
                 button(root, "Jugar").doClick();
                 inspect(root);
                 require(boardPanel.getComponentCount() == 64, "debe armarse el tablero de 64 casillas");
+                require(view.getRootPane().getDefaultButton() == null, "en la partida no hay boton por defecto");
+                require(label(root, "a") != null && label(root, "h") != null && label(root, "1") != null && label(root, "8") != null,
+                    "el tablero muestra las coordenadas a-h y 1-8");
 
                 // Seleccion y marcas de jugadas legales.
                 java.awt.Color normalE3 = background("e3", false);
@@ -114,8 +120,16 @@ public class SwingIntegrationTests {
                 button(root, "Rehacer").doClick();
                 require(after.equals(game.getBoard()), "rehacer debe restaurar ambas jugadas");
 
+                // Salir con la partida empezada pide confirmacion: se elige "Seguir jugando" y no se sale.
+                clickLater("Seguir jugando");
+                menuButton().doClick();
+                require(button(root, "Deshacer").isShowing(), "si se elige Seguir jugando debe quedar la partida");
+                // Y "Salir al menu" vuelve al menu.
+                clickLater("Salir al menú");
+                menuButton().doClick();
+                require(button(root, "Jugar").isShowing(), "si se elige Salir al menu debe verse el menu");
+
                 // Dificil, tambien con blancas.
-                button(root, "Menú").doClick();
                 ((JComboBox<?>) named(root, "level")).setSelectedIndex(2);
                 button(root, "Jugar").doClick();
                 square("d2", false).doClick();
@@ -126,7 +140,9 @@ public class SwingIntegrationTests {
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
                 // Contra la IA jugando con negras: el tablero se gira y la IA abre la partida.
+                clickLater("Salir al menú"); // la partida difícil sigue en juego: sale confirmando
                 button(root, "Menú").doClick();
+                require(button(root, "Jugar").isShowing(), "debe verse el menu despues de confirmar la salida");
                 ((JComboBox<?>) named(root, "color")).setSelectedIndex(1);
                 button(root, "Jugar").doClick();
                 require(((JButton) boardPanel.getComponent(0)).getIcon() != null
@@ -163,6 +179,32 @@ public class SwingIntegrationTests {
             if (!ready[0]) Thread.sleep(10);
         }
         require(ready[0], "la IA debe devolver el turno sin congelar la ventana");
+    }
+
+    // Dentro de un dialogo modal el hilo de la interfaz queda esperando: este temporizador
+    // aprieta el boton con ese texto cuando aparece.
+    private static void clickLater(String text) {
+        javax.swing.Timer timer = new javax.swing.Timer(200, e -> {
+            for (Window window : Window.getWindows()) {
+                if (window instanceof JDialog && window.isShowing()) {
+                    JButton found = button(((JDialog) window).getContentPane(), text);
+                    if (found != null) found.doClick();
+                }
+            }
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    private static JLabel label(Container container, String text) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof JLabel && text.equals(((JLabel) component).getText())) return (JLabel) component;
+            if (component instanceof Container) {
+                JLabel found = label((Container) component, text);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static JButton menuButton() {
