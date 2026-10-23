@@ -56,6 +56,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);         // marco de las casillas marcadas
     private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E);  // marco de las capturas
     private static final int SQUARE_SIZE = 80;
+    private static final int TOP_BAR_HEIGHT = 52;  // botón de 36 más el margen
     private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
     private static final int PIECE_SIZE = 68; // deja un margen chico dentro de cada casilla
 
@@ -95,8 +96,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final JPanel boardPanel = new JPanel();
     private final JPanel rankLabels = new JPanel();
     private final JPanel fileLabels = new JPanel();
-    private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
-    private final JLabel players = new JLabel(" ", SwingConstants.CENTER);
+    private final JLabel status = new JLabel("Turno de Blancas");
+    private final JLabel players = new JLabel(" ");
     private final JButton menuButton = new FlatButton("Menú", FlatButton.Style.SECONDARY);
     private final MenuPanel menu;
     private final RankingPanel ranking;
@@ -133,7 +134,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         startBoard = game.getBoard().cloneBoard();
         menuButton.setEnabled(true);
         players.setText("Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
-        status.setText("Turno de Blancas");
+        showStatus("Turno de Blancas");
         buildBoard(game.getBoard(), menu.humanColor() == Color.BLACK);
         render(game.getBoard());
         showCard(GAME);
@@ -162,6 +163,25 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             if (choice != 0) return;
         }
         showMenu();
+    }
+
+    // El estado va en la primera fila y los jugadores en la segunda. Si el mensaje no entra en
+    // una fila, usa las dos (los jugadores se ocultan hasta el próximo mensaje); si tampoco
+    // entra en dos, se corta con "...". La barra nunca crece: el tablero no se mueve.
+    private void showStatus(String text) {
+        int available = status.getWidth();
+        java.awt.FontMetrics fm = status.getFontMetrics(status.getFont());
+        boolean fits = available == 0 || fm.stringWidth(text) <= available;
+        int limit = 2 * available - 70; // margen por las palabras que pasan enteras a la segunda fila
+        if (!fits && fm.stringWidth(text) > limit) {
+            // Se sacan palabras enteras del final hasta que entre.
+            while (fm.stringWidth(text + "...") > limit && text.lastIndexOf(' ') > 0) {
+                text = text.substring(0, text.lastIndexOf(' '));
+            }
+            text += "...";
+        }
+        status.setText(fits ? text : "<html>" + text + "</html>");
+        players.setVisible(fits);
     }
 
     private void showMenu() {
@@ -199,12 +219,6 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         setLayout(new CardLayout());
 
         menuButton.addActionListener(e -> leaveGame());
-        // Arriba: el botón Menú y quiénes juegan.
-        JPanel top = new JPanel(new BorderLayout(10, 0));
-        top.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        top.add(menuButton, BorderLayout.WEST);
-        top.add(players, BorderLayout.CENTER);
-
         JButton rankingButton = new FlatButton("Ranking", FlatButton.Style.SECONDARY);
         rankingButton.addActionListener(e -> showRanking());
         JButton undoButton = new FlatButton("Deshacer", FlatButton.Style.SECONDARY);
@@ -223,18 +237,25 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             playOpponentIfNeeded();
         });
 
-        // Abajo: el estado de la partida y los botones, centrados.
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Una sola barra arriba, del alto de un botón: Menú, el texto en dos filas (qué pasó y
+        // quiénes juegan) y los botones de la partida. Así el tablero ocupa todo el resto.
+        status.setFont(status.getFont().deriveFont(Font.BOLD, 13f));
+        status.setForeground(Palette.INK);
+        players.setFont(players.getFont().deriveFont(12f));
+        players.setForeground(Palette.MUTED);
+        JPanel text = new JPanel(new BorderLayout());
+        text.setPreferredSize(new Dimension(0, 36)); // siempre dos filas como máximo
+        text.add(status, BorderLayout.CENTER);
+        text.add(players, BorderLayout.SOUTH);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
         buttons.add(rankingButton);
-        status.setFont(status.getFont().deriveFont(Font.BOLD, 14f));
-        status.setForeground(Palette.INK);
-        players.setForeground(Palette.MUTED);
-        JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBorder(BorderFactory.createEmptyBorder(6, 8, 10, 8));
-        bottom.add(status, BorderLayout.NORTH);
-        bottom.add(buttons, BorderLayout.CENTER);
+        JPanel top = new JPanel(new BorderLayout(12, 0));
+        top.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        top.add(menuButton, BorderLayout.WEST);
+        top.add(text, BorderLayout.CENTER);
+        top.add(buttons, BorderLayout.EAST);
 
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.add(top, BorderLayout.NORTH);
@@ -247,11 +268,10 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         boardArea.add(rankLabels, BorderLayout.WEST);
         boardArea.add(fileRow, BorderLayout.SOUTH);
         gamePanel.add(boardArea, BorderLayout.CENTER);
-        gamePanel.add(bottom, BorderLayout.SOUTH);
 
         // Fondo crema en toda la ventana (los paneles de adentro son transparentes).
         getContentPane().setBackground(Palette.BACKGROUND);
-        for (JPanel panel : new JPanel[]{top, buttons, bottom, gamePanel, boardArea, fileRow, rankLabels, fileLabels}) {
+        for (JPanel panel : new JPanel[]{top, text, buttons, gamePanel, boardArea, fileRow, rankLabels, fileLabels}) {
             panel.setOpaque(false);
         }
         gamePanel.setOpaque(true);
@@ -259,7 +279,10 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         add(menu, MENU);
         add(gamePanel, GAME);
         add(ranking, RANKING);
-        setSize(8 * SQUARE_SIZE, 8 * SQUARE_SIZE + 150);
+        // Casillas cuadradas: el ancho suma la columna de números y el alto la barra y las letras.
+        getContentPane().setPreferredSize(new Dimension(8 * SQUARE_SIZE + COORDINATE_SIZE,
+            8 * SQUARE_SIZE + TOP_BAR_HEIGHT + COORDINATE_SIZE));
+        pack();
         setLocationRelativeTo(null);
     }
 
@@ -369,7 +392,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         if (opponent == null || thinking || !opponent.isItsTurn()) return;
         thinking = true;
         menuButton.setEnabled(false); // no se puede salir mientras la IA piensa
-        status.setText("El oponente piensa...");
+        showStatus("El oponente piensa...");
         final OpponentController controller = opponent;
         new Thread(() -> {
             Move move = controller.chooseMove();
@@ -455,52 +478,52 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     @Override
     public void onMoveMade(Position from, Position to, Piece piece, Piece captured) {
         String captureText = captured != null ? " (captura " + name(captured.getType()) + ")" : "";
-        status.setText(name(piece.getColor()) + ": " + name(piece.getType())
+        showStatus(name(piece.getColor()) + ": " + name(piece.getType())
             + " " + from + " -> " + to + captureText);
     }
 
     @Override
     public void onCastling(Color color, boolean kingside) {
-        status.setText(name(color) + ": enroque " + (kingside ? "corto" : "largo") + ".");
+        showStatus(name(color) + ": enroque " + (kingside ? "corto" : "largo") + ".");
     }
 
     @Override
     public void onPromotion(Color color, Position position, PieceType newPiece) {
-        status.setText(name(color) + ": corona en " + position + " a " + name(newPiece) + ".");
+        showStatus(name(color) + ": corona en " + position + " a " + name(newPiece) + ".");
     }
 
     @Override
     public void onUndo() {
-        status.setText("Se deshizo el último movimiento.");
+        showStatus("Se deshizo el último movimiento.");
     }
 
     @Override
     public void onRedo() {
-        status.setText("Se rehizo la jugada.");
+        showStatus("Se rehizo la jugada.");
     }
 
     @Override
     public void onInvalidMove(String reason) {
-        status.setText("Inválido: " + reason);
+        showStatus("Inválido: " + reason);
     }
 
     @Override
     public void onCheck(Color colorInCheck) {
-        status.setText("¡Jaque a " + name(colorInCheck) + "!");
+        showStatus("¡Jaque a " + name(colorInCheck) + "!");
     }
 
     @Override
     public void onCheckmate(Color winner) {
-        status.setText("¡Jaque mate! Ganan " + name(winner) + ".");
+        showStatus("¡Jaque mate! Ganan " + name(winner) + ".");
     }
 
     @Override
     public void onStalemate() {
-        status.setText("Ahogado: tablas.");
+        showStatus("Ahogado: tablas.");
     }
 
     @Override
     public void onDraw(String reason) {
-        status.setText("Tablas: " + reason + ".");
+        showStatus("Tablas: " + reason + ".");
     }
 }

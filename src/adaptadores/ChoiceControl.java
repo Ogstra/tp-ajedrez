@@ -43,7 +43,7 @@ public class ChoiceControl extends JComponent {
     }
 
     public static ChoiceControl cards(String[] options, Image[] icons) {
-        return new ChoiceControl(options, icons, 60);
+        return new ChoiceControl(options, icons, 56);
     }
 
     private ChoiceControl(String[] options, Image[] icons, int height) {

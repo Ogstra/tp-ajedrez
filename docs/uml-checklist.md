@@ -17,6 +17,10 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ## Paquete `adaptadores`
 
+### BoardStrip (class)
+- Extiende: JComponent
+- Usa: Palette
+
 ### ChoiceControl (class)
 - Extiende: JComponent
 - Usa: Color, Palette
@@ -51,17 +55,22 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### MenuPanel (class)
 - Extiende: JPanel
 - Tiene: AccountService, ChoiceControl, FlatButton, User
-- Usa: Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, Score, SwingChessView
+- Usa: BoardStrip, Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, RoundedPanel, Score, SwingChessView
 
 ### Palette (class)
 - Tiene: Color
 
 ### RankingPanel (class)
 - Extiende: JPanel
-- Usa: FlatButton, Palette, Score
+- Tiene: RoundedPanel
+- Usa: BoardStrip, FlatButton, Palette, Score
 
 ### RoundedBorder (class)
 - Extiende: AbstractBorder
+- Usa: Palette
+
+### RoundedPanel (class)
+- Extiende: JPanel
 - Usa: Palette
 
 ### SwingChessView (class)

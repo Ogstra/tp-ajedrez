@@ -19,7 +19,6 @@ public class SwingIntegrationTests {
     private static SwingChessView view;
     private static IChessGame game;
     private static JPanel boardPanel;
-    private static JTable rankingTable;
     private static JButton menuButton;
     private static Board before;
     private static Board after;
@@ -163,7 +162,8 @@ public class SwingIntegrationTests {
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
                 button(root, "Ranking").doClick();
-                require(rankingTable.getRowCount() == 1, "el ranking debe mostrar al usuario registrado");
+                require(((Container) named(root, "rankingRows")).getComponentCount() == 1,
+                    "el ranking debe mostrar una fila por usuario registrado");
                 button(root, "Volver").doClick();
             });
             System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
@@ -217,7 +217,6 @@ public class SwingIntegrationTests {
         for (Component component : container.getComponents()) {
             if (component instanceof JPanel && ((JPanel) component).getLayout() instanceof GridLayout
                     && ((JPanel) component).getComponentCount() == 64) boardPanel = (JPanel) component;
-            if (component instanceof JTable) rankingTable = (JTable) component;
             if (component instanceof Container) inspect((Container) component);
         }
     }

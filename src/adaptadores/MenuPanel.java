@@ -91,10 +91,10 @@ public class MenuPanel extends JPanel {
         strip.add(new BoardStrip());
 
         // Contra la IA: dificultad (con una línea que explica el nivel) y color propio.
-        put(aiSection, label("Dificultad"), 18);
+        put(aiSection, label("Dificultad"), 14);
         put(aiSection, levelControl, 6);
-        put(aiSection, levelHelp, 6);
-        put(aiSection, label("Jugás con"), 18);
+        put(aiSection, levelHelp, 5);
+        put(aiSection, label("Jugás con"), 14);
         put(aiSection, colorControl, 6);
 
         // Usuario nuevo: el campo y su botón; la fila aparece solo al elegir "Nuevo usuario...".
@@ -115,14 +115,14 @@ public class MenuPanel extends JPanel {
 
         JPanel content = column();
         put(content, title, 0);
-        put(content, strip, 10);
-        put(content, label("Modo"), 24);
+        put(content, strip, 8);
+        put(content, label("Modo"), 20);
         put(content, modeControl, 6);
         put(content, aiSection, 0);
-        put(content, label("Jugadores"), 18);
+        put(content, label("Jugadores"), 14);
         put(content, playersBox(), 6);
         put(content, newUserRow, 8);
-        put(content, message, 10);
+        put(content, message, 8);
         put(content, playButton, 4);
         put(content, rankingButton, 8);
 
@@ -131,7 +131,7 @@ public class MenuPanel extends JPanel {
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(24, 0, 24, 0);
+        c.insets = new Insets(12, 0, 12, 0);
         add(content, c);
         refresh();
     }
@@ -283,6 +283,7 @@ public class MenuPanel extends JPanel {
         c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.insets = new Insets(top, 0, 0, 0);
+        part.setMinimumSize(part.getPreferredSize()); // si no entra, se corta abajo en vez de aplastar los controles
         panel.add(part, c);
     }
 
@@ -318,41 +319,6 @@ public class MenuPanel extends JPanel {
             g2.setColor(Palette.CONTROL);
             Insets insets = getInsets();
             g2.drawString(hint, insets.left + 2, (getHeight() - g2.getFontMetrics().getHeight()) / 2 + g2.getFontMetrics().getAscent());
-            g2.dispose();
-        }
-    }
-
-    // Ocho casillas alternadas, solo de adorno.
-    private static class BoardStrip extends JComponent {
-        private static final int SQUARE = 18;
-
-        BoardStrip() {
-            setPreferredSize(new Dimension(8 * SQUARE, SQUARE));
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            for (int i = 0; i < 8; i++) {
-                g.setColor(i % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT);
-                g.fillRect(i * SQUARE, 0, SQUARE, SQUARE);
-            }
-        }
-    }
-
-    // Recuadro blanco con borde y esquinas redondeadas.
-    private static class RoundedPanel extends JPanel {
-        RoundedPanel() {
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(Palette.CARD);
-            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
-            g2.setColor(Palette.CONTROL);
-            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
             g2.dispose();
         }
     }
