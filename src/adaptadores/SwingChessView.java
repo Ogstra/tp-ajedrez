@@ -97,7 +97,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final JPanel fileLabels = new JPanel();
     private final JLabel status = new JLabel("Turno de Blancas", SwingConstants.CENTER);
     private final JLabel players = new JLabel(" ", SwingConstants.CENTER);
-    private final JButton menuButton = new JButton("Menú");
+    private final JButton menuButton = new FlatButton("Menú", FlatButton.Style.SECONDARY);
     private final MenuPanel menu;
     private final RankingPanel ranking;
 
@@ -175,6 +175,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         showCard(RANKING);
     }
 
+    // El menú usa las mismas imágenes para mostrar el color de cada lado.
+    static Image pieceImage(String key) {
+        return IMAGES.get(key);
+    }
+
     private static Map<String, Image> loadImages() {
         Map<String, Image> map = new HashMap<>();
         String folder = "src" + File.separator + "assets" + File.separator + "piezas" + File.separator;
@@ -200,9 +205,9 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         top.add(menuButton, BorderLayout.WEST);
         top.add(players, BorderLayout.CENTER);
 
-        JButton rankingButton = new JButton("Ranking");
+        JButton rankingButton = new FlatButton("Ranking", FlatButton.Style.SECONDARY);
         rankingButton.addActionListener(e -> showRanking());
-        JButton undoButton = new JButton("Deshacer");
+        JButton undoButton = new FlatButton("Deshacer", FlatButton.Style.SECONDARY);
         undoButton.addActionListener(e -> {
             if (thinking) return;
             // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
@@ -210,7 +215,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             render(game.getBoard());
             playOpponentIfNeeded(); // si la IA abre la partida y se deshizo su primera jugada, vuelve a jugarla
         });
-        JButton redoButton = new JButton("Rehacer");
+        JButton redoButton = new FlatButton("Rehacer", FlatButton.Style.SECONDARY);
         redoButton.addActionListener(e -> {
             if (thinking) return;
             if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
@@ -224,8 +229,10 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         buttons.add(redoButton);
         buttons.add(rankingButton);
         status.setFont(status.getFont().deriveFont(Font.BOLD, 14f));
+        status.setForeground(Palette.INK);
+        players.setForeground(Palette.MUTED);
         JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBorder(BorderFactory.createEmptyBorder(6, 8, 2, 8));
+        bottom.setBorder(BorderFactory.createEmptyBorder(6, 8, 10, 8));
         bottom.add(status, BorderLayout.NORTH);
         bottom.add(buttons, BorderLayout.CENTER);
 
@@ -242,6 +249,13 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         gamePanel.add(boardArea, BorderLayout.CENTER);
         gamePanel.add(bottom, BorderLayout.SOUTH);
 
+        // Fondo crema en toda la ventana (los paneles de adentro son transparentes).
+        getContentPane().setBackground(Palette.BACKGROUND);
+        for (JPanel panel : new JPanel[]{top, buttons, bottom, gamePanel, boardArea, fileRow, rankLabels, fileLabels}) {
+            panel.setOpaque(false);
+        }
+        gamePanel.setOpaque(true);
+        gamePanel.setBackground(Palette.BACKGROUND);
         add(menu, MENU);
         add(gamePanel, GAME);
         add(ranking, RANKING);
@@ -277,16 +291,22 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         rankLabels.setLayout(new GridLayout(rows, 1));
         rankLabels.setPreferredSize(new Dimension(COORDINATE_SIZE, 0));
         for (int i = 0; i < rows; i++) {
-            rankLabels.add(new JLabel(String.valueOf(flipped ? i + 1 : rows - i), SwingConstants.CENTER));
+            rankLabels.add(coordinate(String.valueOf(flipped ? i + 1 : rows - i)));
         }
         fileLabels.removeAll();
         fileLabels.setLayout(new GridLayout(1, columns));
         fileLabels.setPreferredSize(new Dimension(0, COORDINATE_SIZE));
         for (int j = 0; j < columns; j++) {
-            fileLabels.add(new JLabel(String.valueOf((char) ('a' + (flipped ? columns - 1 - j : j))), SwingConstants.CENTER));
+            fileLabels.add(coordinate(String.valueOf((char) ('a' + (flipped ? columns - 1 - j : j)))));
         }
         rankLabels.revalidate();
         fileLabels.revalidate();
+    }
+
+    private static JLabel coordinate(String text) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setForeground(Palette.MUTED);
+        return label;
     }
 
     private java.awt.Color squareColor(int row, int col) {

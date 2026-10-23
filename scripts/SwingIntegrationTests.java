@@ -1,3 +1,4 @@
+import adaptadores.ChoiceControl;
 import adaptadores.FileAccountStore;
 import adaptadores.GameBuilder;
 import adaptadores.SwingChessView;
@@ -59,8 +60,8 @@ public class SwingIntegrationTests {
                 require(view.getRootPane().getDefaultButton() == button(root, "Jugar"),
                     "en el menu, Enter debe apretar Jugar");
 
-                // 1 contra 1: la dificultad y el color quedan bloqueados.
-                require(!named(root, "level").isEnabled() && !named(root, "color").isEnabled(),
+                // 1 contra 1: la dificultad y el color no se muestran.
+                require(!named(root, "level").isShowing() && !named(root, "color").isShowing(),
                     "en 1 contra 1 no se elige dificultad ni color");
                 button(root, "Jugar").doClick();
                 inspect(root);
@@ -98,11 +99,11 @@ public class SwingIntegrationTests {
                 button(root, "Menú").doClick();
 
                 // Contra la IA (medio) jugando con blancas.
-                ((JComboBox<?>) named(root, "mode")).setSelectedIndex(1);
-                require(named(root, "level").isEnabled() && named(root, "color").isEnabled(),
+                ((ChoiceControl) named(root, "mode")).setSelectedIndex(1);
+                require(named(root, "level").isShowing() && named(root, "color").isShowing(),
                     "contra la IA se eligen dificultad y color");
-                ((JComboBox<?>) named(root, "level")).setSelectedIndex(1);
-                require("IA".equals(black.getSelectedItem()) && !black.isEnabled(),
+                ((ChoiceControl) named(root, "level")).setSelectedIndex(1);
+                require(!black.isShowing() && named(root, "blackAi").isShowing() && !named(root, "whiteAi").isShowing(),
                     "contra la IA con blancas, el lado de las negras dice IA");
                 button(root, "Jugar").doClick();
                 square("e2", false).doClick();
@@ -130,7 +131,7 @@ public class SwingIntegrationTests {
                 require(button(root, "Jugar").isShowing(), "si se elige Salir al menu debe verse el menu");
 
                 // Dificil, tambien con blancas.
-                ((JComboBox<?>) named(root, "level")).setSelectedIndex(2);
+                ((ChoiceControl) named(root, "level")).setSelectedIndex(2);
                 button(root, "Jugar").doClick();
                 square("d2", false).doClick();
                 square("d4", false).doClick();
@@ -143,7 +144,8 @@ public class SwingIntegrationTests {
                 clickLater("Salir al menú"); // la partida difícil sigue en juego: sale confirmando
                 button(root, "Menú").doClick();
                 require(button(root, "Jugar").isShowing(), "debe verse el menu despues de confirmar la salida");
-                ((JComboBox<?>) named(root, "color")).setSelectedIndex(1);
+                ((ChoiceControl) named(root, "color")).setSelectedIndex(1);
+                require(named(root, "whiteAi").isShowing(), "jugando con negras, el lado de las blancas dice IA");
                 button(root, "Jugar").doClick();
                 require(((JButton) boardPanel.getComponent(0)).getIcon() != null
                         && boardPanel.getComponent(0) == square("h1", true),

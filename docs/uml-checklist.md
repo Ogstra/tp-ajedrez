@@ -17,6 +17,10 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ## Paquete `adaptadores`
 
+### ChoiceControl (class)
+- Extiende: JComponent
+- Usa: Color, Palette
+
 ### ConsoleAccounts (class)
 - Usa: AccountService, Score, User
 
@@ -33,23 +37,30 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: IAccountStore
 - Usa: Score, User
 
+### FlatButton (class)
+- Extiende: JButton
+- Usa: Color, Palette
+
 ### GameBuilder (interface)
 - Usa: IChessGame, ScoreRecorder, SwingChessView
 
 ### MenuPanel (class)
 - Extiende: JPanel
-- Tiene: AccountService, User
-- Usa: Color, OpponentLevel, Score
+- Tiene: AccountService, ChoiceControl, FlatButton, User
+- Usa: Color, OpponentLevel, Palette, Score, SwingChessView
+
+### Palette (class)
+- Tiene: Color
 
 ### RankingPanel (class)
 - Extiende: JPanel
-- Usa: Score
+- Usa: FlatButton, Palette, Score
 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
-- Usa: Board, Color, Move, Opponents, Piece, ScoreRecorder, User
+- Tiene: AccountService, Board, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
+- Usa: Color, FlatButton, Move, Opponents, Palette, Piece, ScoreRecorder, User
 
 ## Paquete `ai`
 

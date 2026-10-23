@@ -7,20 +7,28 @@ import usuarios.Score;
 import usuarios.User;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,136 +36,136 @@ import java.util.List;
 // y registro. Solo junta las elecciones; arrancar la partida lo hace SwingChessView.
 public class MenuPanel extends JPanel {
 
-    private static final java.awt.Color ACCENT = new java.awt.Color(0x4E, 0x6B, 0x3A); // verde oscuro, como el tablero
-    private static final java.awt.Color ERROR = new java.awt.Color(0xA3, 0x2A, 0x2A);
+    private static final int COLUMN_WIDTH = 360;
     private static final String NO_USER = "Sin usuario";
     // Orden de cada desplegable: Sin usuario, Nuevo usuario... y después los registrados.
     private static final int NEW_USER_INDEX = 1;
     private static final String NEW_USER = "Nuevo usuario...";
+    private static final String[] LEVEL_HELP = {
+        "Juega jugadas al azar.", "Prioriza las capturas.", "Piensa dos jugadas por delante."};
 
     private final AccountService accounts;
     private final Runnable onPlay;
-    private final JComboBox<String> modeBox = new JComboBox<>(new String[]{"1 contra 1", "Contra la IA"});
-    private final JComboBox<String> levelBox = new JComboBox<>(new String[]{"Fácil", "Medio", "Difícil"});
-    private final JComboBox<String> colorBox = new JComboBox<>(new String[]{"Blancas", "Negras"});
+    private final ChoiceControl modeControl = ChoiceControl.segments("1 contra 1", "Contra la IA");
+    private final ChoiceControl levelControl = ChoiceControl.segments("Fácil", "Medio", "Difícil");
+    private final ChoiceControl colorControl = ChoiceControl.cards(new String[]{"Blancas", "Negras"},
+        new Image[]{SwingChessView.pieceImage("wK"), SwingChessView.pieceImage("bK")});
     private final JComboBox<String> whiteBox = new JComboBox<>();
     private final JComboBox<String> blackBox = new JComboBox<>();
-    private final JTextField nameField = new JTextField(12);
-    private final JLabel message = new JLabel(" ");
-    private final JButton playButton = new JButton("Jugar");
-    private final JLabel newUserLabel = new JLabel("Usuario nuevo");
-    private final JPanel newUserRow = new JPanel(new BorderLayout(6, 0));
+    private final JPanel whiteSlot = new JPanel(new CardLayout());   // el desplegable o la etiqueta "IA"
+    private final JPanel blackSlot = new JPanel(new CardLayout());
+    private final JPanel aiSection = column();
+    private final JLabel levelHelp = small(LEVEL_HELP[0]);
+    private final JTextField nameField = new HintField("Nombre del usuario nuevo");
+    private final JPanel newUserRow = new JPanel(new BorderLayout(8, 0));
+    private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
+    private final FlatButton playButton = new FlatButton("Jugar", FlatButton.Style.PRIMARY);
     private List<User> users = new ArrayList<>();
-    private User whiteChoice;      // lo elegido en cada lado, para no perderlo cuando un lado pasa a ser la IA
-    private User blackChoice;
-    private boolean filling = false; // true mientras se rearman los desplegables (no son elecciones de la persona)
+    private boolean whiteAi = false;   // qué lado juega la IA en este momento
+    private boolean blackAi = false;
+    private boolean filling = false;   // true mientras se rearman los desplegables (no son elecciones de la persona)
 
     public MenuPanel(AccountService accounts, Runnable onPlay, Runnable onRanking) {
         this.accounts = accounts;
         this.onPlay = onPlay;
-        modeBox.setName("mode");
-        levelBox.setName("level");
-        nameField.setName("newUser");
-        colorBox.setName("color");
+        modeControl.setName("mode");
+        levelControl.setName("level");
+        colorControl.setName("color");
         whiteBox.setName("white");
         blackBox.setName("black");
+        nameField.setName("newUser");
 
-        JLabel title = new JLabel("Ajedrez");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 38f));
-        title.setForeground(ACCENT);
-
-        JButton registerButton = new JButton("Registrar");
-        registerButton.addActionListener(e -> register());
-        nameField.addActionListener(e -> register()); // Enter en el campo también registra
-        playButton.setFont(playButton.getFont().deriveFont(Font.BOLD, 18f));
-        playButton.addActionListener(e -> play());
-        JButton rankingButton = new JButton("Ver ranking");
-        rankingButton.addActionListener(e -> onRanking.run());
-        modeBox.addActionListener(e -> updateEnabled());
-        colorBox.addActionListener(e -> updateEnabled());
-
-        // Usuario nuevo: el campo y su botón van juntos; la fila aparece solo al elegir "Nuevo usuario...".
-        newUserRow.add(nameField, BorderLayout.CENTER);
-        newUserRow.add(registerButton, BorderLayout.EAST);
+        modeControl.addActionListener(e -> update());
+        colorControl.addActionListener(e -> update());
+        levelControl.addActionListener(e -> levelHelp.setText(LEVEL_HELP[levelControl.getSelectedIndex()]));
         whiteBox.addActionListener(e -> showNewUserRow());
         blackBox.addActionListener(e -> showNewUserRow());
+        playButton.addActionListener(e -> play());
 
-        // Dos grupos con título: cómo se juega y quién juega.
-        JPanel game = section("Partida");
-        addRow(game, 0, "Modo", modeBox);
-        addRow(game, 1, "Dificultad", levelBox);
-        addRow(game, 2, "Juego con", colorBox);
-        JPanel people = section("Jugadores");
-        addRow(people, 0, "Blancas", whiteBox);
-        addRow(people, 1, "Negras", blackBox);
-        addRow(people, 2, newUserLabel, newUserRow);
+        // Encabezado: el título y una fila de casillas como las del tablero.
+        JLabel title = new JLabel("Ajedrez", SwingConstants.CENTER);
+        title.setFont(Palette.title(36));
+        title.setForeground(Palette.PRIMARY);
+        JPanel strip = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        strip.setOpaque(false);
+        strip.add(new BoardStrip());
 
-        message.setHorizontalAlignment(SwingConstants.CENTER);
-        message.setForeground(ERROR);
-        JPanel buttons = new JPanel(new GridLayout(2, 1, 0, 8));
-        buttons.add(playButton);
-        buttons.add(rankingButton);
-        playButton.setPreferredSize(new Dimension(300, 44));
+        // Contra la IA: dificultad (con una línea que explica el nivel) y color propio.
+        put(aiSection, label("Dificultad"), 18);
+        put(aiSection, levelControl, 6);
+        put(aiSection, levelHelp, 6);
+        put(aiSection, label("Jugás con"), 18);
+        put(aiSection, colorControl, 6);
 
+        // Usuario nuevo: el campo y su botón; la fila aparece solo al elegir "Nuevo usuario...".
+        JButton registerButton = new FlatButton("Registrar", FlatButton.Style.SECONDARY);
+        registerButton.addActionListener(e -> register());
+        nameField.addActionListener(e -> register()); // Enter en el campo también registra
+        nameField.setPreferredSize(new Dimension(200, 34));
+        newUserRow.setOpaque(false);
+        newUserRow.add(nameField, BorderLayout.CENTER);
+        newUserRow.add(registerButton, BorderLayout.EAST);
+
+        message.setForeground(Palette.ERROR);
+        FlatButton rankingButton = new FlatButton("Ver ranking", FlatButton.Style.LINK);
+        rankingButton.addActionListener(e -> onRanking.run());
+
+        JPanel content = column();
+        put(content, title, 0);
+        put(content, strip, 10);
+        put(content, label("Modo"), 24);
+        put(content, modeControl, 6);
+        put(content, aiSection, 0);
+        put(content, label("Jugadores"), 18);
+        put(content, playersBox(), 6);
+        put(content, newUserRow, 8);
+        put(content, message, 10);
+        put(content, playButton, 4);
+        put(content, rankingButton, 8);
+
+        // La columna queda centrada y pegada arriba, así no se mueve cuando aparecen o se van filas.
+        setBackground(Palette.BACKGROUND);
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(50, 0, 2, 0);
-        add(title, c);
-        title.setHorizontalAlignment(SwingConstants.CENTER);
-        c.insets = new Insets(22, 0, 0, 0);
-        add(game, c);
-        c.insets = new Insets(12, 0, 0, 0);
-        add(people, c);
-        c.insets = new Insets(10, 0, 4, 0);
-        add(message, c);
-        c.insets = new Insets(4, 20, 0, 20);
-        add(buttons, c);
-        // Un espacio que empuja todo hacia arriba, así el menú no se mueve cuando aparece el campo de usuario nuevo.
+        c.anchor = GridBagConstraints.NORTH;
         c.weighty = 1;
-        add(new JLabel(), c);
+        c.insets = new Insets(56, 0, 0, 0);
+        add(content, c);
         refresh();
-    }
-
-    // Grupo con título y margen interno.
-    private static JPanel section(String title) {
-        JPanel section = new JPanel(new GridBagLayout());
-        section.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder(title),
-            BorderFactory.createEmptyBorder(4, 10, 8, 10)));
-        return section;
     }
 
     // Vuelve a leer los usuarios (cambian los puntos y los registros) conservando lo elegido.
     public void refresh() {
-        saveChoices();
+        User white = userAt(whiteBox);
+        User black = userAt(blackBox);
         users = new ArrayList<>();
         for (Score score : accounts.ranking()) users.add(score.getUser());
-        updateEnabled();
+        fill(whiteBox, white);
+        fill(blackBox, black);
+        update();
     }
 
     // Para que la ventana lo use como botón por defecto (Enter) mientras se ve el menú.
     public JButton getPlayButton() { return playButton; }
 
-    public boolean versusAi() { return modeBox.getSelectedIndex() == 1; }
+    public boolean versusAi() { return modeControl.getSelectedIndex() == 1; }
 
     // Los niveles de OpponentLevel van después de NONE: Fácil es el 1.
-    public OpponentLevel level() { return OpponentLevel.values()[levelBox.getSelectedIndex() + 1]; }
+    public OpponentLevel level() { return OpponentLevel.values()[levelControl.getSelectedIndex() + 1]; }
 
     public Color humanColor() {
-        return versusAi() && colorBox.getSelectedIndex() == 1 ? Color.BLACK : Color.WHITE;
+        return versusAi() && colorControl.getSelectedIndex() == 1 ? Color.BLACK : Color.WHITE;
     }
 
     public Color aiColor() { return humanColor() == Color.WHITE ? Color.BLACK : Color.WHITE; }
 
     // El lado que juega la IA no tiene usuario.
-    public User whiteUser() { return whiteBox.isEnabled() ? userAt(whiteBox) : null; }
+    public User whiteUser() { return whiteAi ? null : userAt(whiteBox); }
 
-    public User blackUser() { return blackBox.isEnabled() ? userAt(blackBox) : null; }
+    public User blackUser() { return blackAi ? null : userAt(blackBox); }
 
     private void play() {
-        if (isNew(whiteBox) || isNew(blackBox)) {
+        if (isNew(whiteBox, whiteAi) || isNew(blackBox, blackAi)) {
             message.setText("Registrá el usuario nuevo o elegí otra opción.");
             return;
         }
@@ -172,46 +180,37 @@ public class MenuPanel extends JPanel {
 
     // El usuario nuevo queda elegido en el lado que pidió "Nuevo usuario...".
     private void register() {
-        JComboBox<String> target = isNew(whiteBox) ? whiteBox : blackBox;
+        JComboBox<String> target = isNew(whiteBox, whiteAi) ? whiteBox : blackBox;
         try {
             User user = accounts.register(nameField.getText());
             nameField.setText("");
             refresh();
             target.setSelectedIndex(users.indexOf(user) + NEW_USER_INDEX + 1);
-            message.setText("Registrado: " + user.getName() + ".");
+            message.setText(" ");
         } catch (IllegalArgumentException e) {
             message.setText(e.getMessage());
         }
     }
 
-    // Contra la IA solo se elige el usuario del lado propio; el otro lado dice "IA".
-    private void updateEnabled() {
-        saveChoices();
-        boolean ai = versusAi();
-        levelBox.setEnabled(ai);
-        colorBox.setEnabled(ai);
-        fill(whiteBox, whiteChoice, !ai || humanColor() == Color.WHITE);
-        fill(blackBox, blackChoice, !ai || humanColor() == Color.BLACK);
+    // Contra la IA aparecen la dificultad y el color, y el lado de la IA muestra la etiqueta "IA".
+    private void update() {
+        aiSection.setVisible(versusAi());
+        whiteAi = versusAi() && aiColor() == Color.WHITE;
+        blackAi = versusAi() && aiColor() == Color.BLACK;
+        ((CardLayout) whiteSlot.getLayout()).show(whiteSlot, whiteAi ? "ai" : "user");
+        ((CardLayout) blackSlot.getLayout()).show(blackSlot, blackAi ? "ai" : "user");
         showNewUserRow();
-    }
-
-    // Guarda lo que muestran los desplegables habilitados (los de la IA no tienen elección).
-    private void saveChoices() {
-        if (whiteBox.isEnabled()) whiteChoice = userAt(whiteBox);
-        if (blackBox.isEnabled()) blackChoice = userAt(blackBox);
     }
 
     private void showNewUserRow() {
         if (filling) return;
-        boolean visible = isNew(whiteBox) || isNew(blackBox);
-        newUserLabel.setVisible(visible);
-        newUserRow.setVisible(visible);
+        newUserRow.setVisible(isNew(whiteBox, whiteAi) || isNew(blackBox, blackAi));
         revalidate();
         repaint();
     }
 
-    private boolean isNew(JComboBox<String> box) {
-        return box.isEnabled() && box.getSelectedIndex() == NEW_USER_INDEX;
+    private boolean isNew(JComboBox<String> box, boolean ai) {
+        return !ai && box.getSelectedIndex() == NEW_USER_INDEX;
     }
 
     private User userAt(JComboBox<String> box) {
@@ -219,37 +218,160 @@ public class MenuPanel extends JPanel {
         return index <= NEW_USER_INDEX ? null : users.get(index - NEW_USER_INDEX - 1);
     }
 
-    private void fill(JComboBox<String> box, User selected, boolean enabled) {
+    private void fill(JComboBox<String> box, User selected) {
         filling = true;
         box.removeAllItems();
-        if (enabled) {
-            box.addItem(NO_USER);
-            box.addItem(NEW_USER);
-            for (User user : users) box.addItem(user.getName());
-            box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + NEW_USER_INDEX + 1);
-        } else {
-            box.addItem("IA");
-        }
-        box.setEnabled(enabled);
+        box.addItem(NO_USER);
+        box.addItem(NEW_USER);
+        for (User user : users) box.addItem(user.getName());
+        box.setSelectedIndex(selected == null ? 0 : users.indexOf(selected) + NEW_USER_INDEX + 1);
         filling = false;
     }
 
-    private static void addRow(JPanel form, int y, String label, Component control) {
-        addRow(form, y, new JLabel(label), control);
+    // Recuadro blanco con una fila por lado: la pieza, el nombre del lado y el usuario (o "IA").
+    private JPanel playersBox() {
+        JPanel box = new RoundedPanel();
+        box.setLayout(new GridBagLayout());
+        put(box, playerRow("wK", "Blancas", whiteBox, whiteSlot, "whiteAi", false), 0);
+        put(box, playerRow("bK", "Negras", blackBox, blackSlot, "blackAi", true), 0);
+        return box;
     }
 
-    private static void addRow(JPanel form, int y, JLabel label, Component control) {
+    private static JPanel playerRow(String piece, String side, JComboBox<String> box, JPanel slot,
+                                    String badgeName, boolean divider) {
+        JLabel name = new JLabel(side);
+        name.setForeground(Palette.INK);
+        name.setFont(name.getFont().deriveFont(14f));
+        name.setIconTextGap(10);
+        name.setPreferredSize(new Dimension(108, 30));
+        Image image = SwingChessView.pieceImage(piece);
+        if (image != null) name.setIcon(new ImageIcon(image.getScaledInstance(28, 28, Image.SCALE_SMOOTH)));
+
+        JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        badge.setOpaque(false);
+        badge.setName(badgeName);
+        badge.add(new Badge("IA"));
+        badge.add(small("Juega con " + side.toLowerCase()));
+
+        slot.setOpaque(false);
+        slot.add(box, "user");
+        slot.add(badge, "ai");
+
+        JPanel row = new JPanel(new BorderLayout(10, 0));
+        row.setOpaque(false);
+        row.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(divider ? 1 : 0, 0, 0, 0, Palette.LINE),
+            BorderFactory.createEmptyBorder(9, 12, 9, 12)));
+        row.add(name, BorderLayout.WEST);
+        row.add(slot, BorderLayout.CENTER);
+        return row;
+    }
+
+    // Una columna donde cada componente ocupa todo el ancho, uno debajo del otro.
+    private static JPanel column() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        put(panel, Box.createHorizontalStrut(COLUMN_WIDTH), 0);
+        return panel;
+    }
+
+    private static void put(JPanel panel, Component part, int top) {
         GridBagConstraints c = new GridBagConstraints();
-        c.gridy = y;
-        c.insets = new Insets(6, 8, 6, 8);
-        c.anchor = GridBagConstraints.EAST;
-        label.setHorizontalAlignment(SwingConstants.RIGHT);
-        label.setPreferredSize(new Dimension(95, 28)); // mismo ancho en los dos grupos: los controles quedan alineados
-        form.add(label, c);
-        c.gridx = 1;
-        c.anchor = GridBagConstraints.CENTER;
+        c.gridx = 0;
+        c.weightx = 1;
         c.fill = GridBagConstraints.HORIZONTAL;
-        control.setPreferredSize(new Dimension(200, 28));
-        form.add(control, c);
+        c.insets = new Insets(top, 0, 0, 0);
+        panel.add(part, c);
+    }
+
+    private static JLabel label(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(Palette.MUTED);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 13f));
+        return label;
+    }
+
+    private static JLabel small(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(Palette.MUTED);
+        label.setFont(label.getFont().deriveFont(12.5f));
+        return label;
+    }
+
+    // Campo de texto que muestra una pista gris mientras está vacío.
+    private static class HintField extends JTextField {
+        private final String hint;
+
+        HintField(String hint) {
+            super(12);
+            this.hint = hint;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (!getText().isEmpty()) return;
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setColor(Palette.CONTROL);
+            Insets insets = getInsets();
+            g2.drawString(hint, insets.left + 2, (getHeight() - g2.getFontMetrics().getHeight()) / 2 + g2.getFontMetrics().getAscent());
+            g2.dispose();
+        }
+    }
+
+    // Ocho casillas alternadas, solo de adorno.
+    private static class BoardStrip extends JComponent {
+        private static final int SQUARE = 18;
+
+        BoardStrip() {
+            setPreferredSize(new Dimension(8 * SQUARE, SQUARE));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            for (int i = 0; i < 8; i++) {
+                g.setColor(i % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT);
+                g.fillRect(i * SQUARE, 0, SQUARE, SQUARE);
+            }
+        }
+    }
+
+    // Recuadro blanco con borde y esquinas redondeadas.
+    private static class RoundedPanel extends JPanel {
+        RoundedPanel() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Palette.CARD);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+            g2.setColor(Palette.CONTROL);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+            g2.dispose();
+        }
+    }
+
+    // Etiqueta oscura con esquinas redondeadas ("IA").
+    private static class Badge extends JLabel {
+        Badge(String text) {
+            super(text);
+            setForeground(Palette.BADGE_TEXT);
+            setFont(getFont().deriveFont(Font.BOLD, 12f));
+            setBorder(BorderFactory.createEmptyBorder(3, 9, 3, 9));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(Palette.BADGE);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 }

@@ -88,3 +88,7 @@ Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilde
 Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.
 
 También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Jugar en el menú (y registra en el campo de usuario nuevo), y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
+
+### Diseño de la ventana
+
+Los colores están en `Palette` (un solo lugar) y sus contrastes de texto superan 4,5:1. El menú usa `ChoiceControl` para modo, dificultad y color (segmentos y tarjetas dibujados a mano, porque con el aspecto del sistema Swing ignora el fondo de los botones) y `FlatButton` para Jugar, Registrar, Ver ranking y los botones de la partida. La dificultad muestra una línea que explica cómo juega cada nivel. El ranking muestra un aviso cuando todavía no hay usuarios y la tabla mide lo que sus filas.
