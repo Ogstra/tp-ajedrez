@@ -1,6 +1,8 @@
 # Skins: id;nombre;puntos para desbloquear;casilla clara;casilla oscura;carpeta de las piezas (dentro de src/assets)
 # La primera es la de siempre y tiene que pedir 0 puntos. Cada carpeta lleva las 12 imágenes:
-# wK wQ wR wB wN wP bK bQ bR bB bN bP (.png). Madera y Hielo son de ejemplo: solo cambian el tablero.
+# wK wQ wR wB wN wP bK bQ bR bB bN bP (.png). Una victoria suma 3 puntos y un empate 1.
+# Créditos y licencias de las imágenes en CREDITS.md.
 clasico;Clásico;0;EEEED2;769656;piezas
-madera;Madera;10;F0D9B5;B58863;piezas
-hielo;Hielo;25;DEE3E6;8CA2AD;piezas
+staunton;Staunton;6;F1EEDB;7B9561;skins/staunton
+age_of_empires;Age of Empires;15;ECDDBB;8C806A;skins/age_of_empires
+minecraft;Minecraft;30;DED3AA;708E50;skins/minecraft

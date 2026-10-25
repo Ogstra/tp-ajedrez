@@ -14,7 +14,18 @@ Una skin cambia las piezas y los colores del tablero. Se desbloquea cuando los p
 
    Los campos son: id, nombre, puntos para desbloquearla, color de la casilla clara, color de la casilla oscura (hexadecimal, sin `#`) y carpeta de las piezas dentro de `src/assets`.
 
-No hay que tocar código. Si falta alguna imagen, se usa la del set de siempre. La primera línea del catálogo es la skin de siempre y tiene que pedir 0 puntos. Madera y Hielo son de ejemplo: solo cambian el tablero y se pueden borrar.
+No hay que tocar código. Si falta alguna imagen, se usa la del set de siempre. La primera línea del catálogo es la skin de siempre y tiene que pedir 0 puntos. No hace falta recortar las imágenes: el juego quita el margen transparente sobrante con un mismo recuadro para las 12 piezas de la carpeta, así no cambian los tamaños relativos ni la alineación de las bases.
+
+## Skins incluidas
+
+| Skin | Puntos | Equivale a | Piezas |
+|---|---|---|---|
+| Clásico | 0 | — | Set Cburnett de siempre (`src/assets/piezas`). |
+| Staunton | 6 | 2 victorias | Piezas Staunton con contorno marcado (`skins/staunton`). |
+| Age of Empires | 15 | 5 victorias | Ejércitos de Age of Empires II: azul las blancas y rojo las negras (`skins/age_of_empires`). |
+| Minecraft | 30 | 10 victorias | Aldea contra hostiles, en pixel art (`skins/minecraft`). |
+
+Los puntos crecen con lo vistoso de cada una: Staunton es un primer premio rápido y Minecraft queda como meta. Los créditos y licencias de las imágenes están en `src/assets/skins/CREDITS.md`.
 
 ## Cómo está armado
 
@@ -27,7 +38,7 @@ Igual que los usuarios: la lógica no sabe de archivos ni de Swing, y se guarda 
 | `ISkinStore` | `puertos` | Puerto de salida: dónde se guarda la skin elegida por cada usuario. |
 | `FileSkinStore` | `adaptadores` | Lo implementa con `data/skins.csv`, una línea `idUsuario;idSkin`. |
 | `FileSkinCatalog` | `adaptadores` | Lee el catálogo `src/assets/skins/skins.csv` (saltea comentarios y líneas mal formadas). |
-| `SkinImages` | `adaptadores` | Lee las imágenes de cada skin una sola vez; si falta alguna, usa la de siempre. |
+| `SkinImages` | `adaptadores` | Lee las imágenes de cada skin una sola vez, les quita el margen sobrante con un recuadro común y, si falta alguna, usa la de siempre. |
 | `SkinsPanel` | `adaptadores` | La pantalla de skins, con una vista previa de cada una. |
 
 `AccountService.pointsOf(user)` da los puntos del ranking (0 para un invitado). `MainSwing` arma el `SkinService` con el catálogo y el archivo, y se lo pasa a la ventana, que pide la skin en uso al empezar cada partida.

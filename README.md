@@ -41,7 +41,7 @@ Con "Por LAN" en el menú, dos PCs de la misma red juegan sin escribir ninguna I
 
 ## Skins
 
-Las skins cambian las piezas y los colores del tablero, y se desbloquean al llegar a un puntaje del ranking (los puntos no se gastan). Se eligen desde el menú, en Skins. Para agregar una alcanza con una carpeta con las 12 imágenes y una línea en `src/assets/skins/skins.csv`; está explicado en `docs/skins.md`.
+Las skins cambian las piezas y los colores del tablero, y se desbloquean al llegar a un puntaje del ranking (los puntos no se gastan). Vienen Staunton (6 puntos), Age of Empires (15) y Minecraft (30), además de la clásica. Se eligen desde el menú, en Skins. Para agregar una alcanza con una carpeta con las 12 imágenes y una línea en `src/assets/skins/skins.csv`; está explicado en `docs/skins.md`.
 
 ## Qué reglas tiene
 

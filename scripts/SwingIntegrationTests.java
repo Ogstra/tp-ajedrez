@@ -84,9 +84,9 @@ public class SwingIntegrationTests {
                 visibleButton(root, "Skins").doClick();
                 require(visibleLabel(root, "Tus puntos: 0") != null && named(root, "skin-clasico").isShowing(),
                     "la pantalla de skins muestra los puntos y el catalogo");
-                require(label((Container) named(root, "skin-clasico"), "En uso") != null && named(root, "use-madera") == null
-                        && label((Container) named(root, "skin-madera"), "10 puntos") != null,
-                    "la de siempre esta en uso y Madera esta bloqueada hasta los 10 puntos");
+                require(label((Container) named(root, "skin-clasico"), "En uso") != null && named(root, "use-staunton") == null
+                        && label((Container) named(root, "skin-staunton"), "6 puntos") != null,
+                    "la de siempre esta en uso y Staunton esta bloqueada hasta los 6 puntos");
                 visibleButton(root, "Volver").doClick();
                 require(button(root, "Jugar").isShowing(), "Volver de skins lleva al menu");
 
