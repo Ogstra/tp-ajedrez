@@ -1,4 +1,6 @@
 import adaptadores.FileAccountStore;
+import adaptadores.FileSkinCatalog;
+import adaptadores.FileSkinStore;
 import adaptadores.GameBuilder;
 import adaptadores.Match;
 import adaptadores.SwingChessView;
@@ -21,6 +23,7 @@ import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 import red.LanOpponent;
+import skins.SkinService;
 import usuarios.AccountService;
 import usuarios.ScoreRecorder;
 
@@ -42,6 +45,9 @@ public class MainSwing {
             // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
+            // Skins: el catálogo está en src/assets/skins/skins.csv y la elegida por cada usuario en data/skins.csv.
+            SkinService skins = new SkinService(FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")),
+                accounts, new FileSkinStore(dataDir.resolve("skins.csv")));
 
             // La ventana pide una partida nueva cada vez que se aprieta Jugar: acá se arma con sus
             // reglas, el que acredita los puntos y, si corresponde, la IA o el rival por LAN.
@@ -77,7 +83,7 @@ public class MainSwing {
                 return new Match(game, opponent);
             };
 
-            new SwingChessView(accounts, builder).setVisible(true);
+            new SwingChessView(accounts, skins, builder).setVisible(true);
         });
     }
 }

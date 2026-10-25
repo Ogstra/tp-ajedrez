@@ -1,5 +1,7 @@
 import adaptadores.ChoiceControl;
 import adaptadores.FileAccountStore;
+import adaptadores.FileSkinCatalog;
+import adaptadores.FileSkinStore;
 import adaptadores.GameBuilder;
 import adaptadores.Match;
 import adaptadores.SwingChessView;
@@ -11,6 +13,7 @@ import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
 import red.LanOpponent;
+import skins.SkinService;
 import usuarios.AccountService;
 import usuarios.ScoreRecorder;
 import usuarios.User;
@@ -41,7 +44,7 @@ public class SwingIntegrationTests {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 8));
+                view = new SwingChessView(accounts, skins(accounts, data), builder(accounts, 8));
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
@@ -77,6 +80,15 @@ public class SwingIntegrationTests {
                 ((JTextField) named(root, "loginName")).setText("ana");
                 button(root, "Entrar").doClick();
                 require(button(root, "Jugar").isShowing(), "Ana entra con su nombre");
+                // Skins: con 0 puntos solo se usa la de siempre; las otras muestran los puntos que piden.
+                visibleButton(root, "Skins").doClick();
+                require(visibleLabel(root, "Tus puntos: 0") != null && named(root, "skin-clasico").isShowing(),
+                    "la pantalla de skins muestra los puntos y el catalogo");
+                require(label((Container) named(root, "skin-clasico"), "En uso") != null && named(root, "use-madera") == null
+                        && label((Container) named(root, "skin-madera"), "10 puntos") != null,
+                    "la de siempre esta en uso y Madera esta bloqueada hasta los 10 puntos");
+                visibleButton(root, "Volver").doClick();
+                require(button(root, "Jugar").isShowing(), "Volver de skins lleva al menu");
 
                 // 1 contra 1: la dificultad y el color no se muestran.
                 require(!named(root, "level").isShowing() && !named(root, "color").isShowing(),
@@ -213,7 +225,7 @@ public class SwingIntegrationTests {
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
                 AccountService otherAccounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
-                view = new SwingChessView(otherAccounts, builder(otherAccounts, 10));
+                view = new SwingChessView(otherAccounts, skins(otherAccounts, data), builder(otherAccounts, 10));
                 view.setVisible(true);
                 Container root = view.getContentPane();
                 button(root, "Entrar como invitado").doClick();
@@ -239,8 +251,8 @@ public class SwingIntegrationTests {
             SwingChessView[] lanViews = new SwingChessView[2];
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    lanViews[0] = new SwingChessView(hostAccounts, lanBuilder(hostAccounts, lanGames, 0));
-                    lanViews[1] = new SwingChessView(guestAccounts, lanBuilder(guestAccounts, lanGames, 1));
+                    lanViews[0] = new SwingChessView(hostAccounts, skins(hostAccounts, data), lanBuilder(hostAccounts, lanGames, 0));
+                    lanViews[1] = new SwingChessView(guestAccounts, skins(guestAccounts, data), lanBuilder(guestAccounts, lanGames, 1));
                     lanViews[0].setVisible(true);
                     lanViews[1].setVisible(true);
                     Container host = lanViews[0].getContentPane();
@@ -330,6 +342,12 @@ public class SwingIntegrationTests {
 
     private static JButton menuButton() {
         return button(view.getContentPane(), "Menú");
+    }
+
+    // Las skins del catálogo real, con la elección de cada usuario en la carpeta temporal.
+    private static SkinService skins(AccountService accounts, Path data) {
+        return new SkinService(FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")),
+            accounts, new FileSkinStore(data.resolve("skins-" + System.identityHashCode(accounts) + ".csv")));
     }
 
     // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.

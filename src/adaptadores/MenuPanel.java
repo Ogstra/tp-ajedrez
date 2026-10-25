@@ -32,7 +32,7 @@ public class MenuPanel extends JPanel {
     private final JLabel levelHelp = small(LEVEL_HELP[0]);
     private final FlatButton playButton = new FlatButton("Jugar", FlatButton.Style.PRIMARY);
 
-    public MenuPanel(Runnable onPlay, Runnable onRanking, Runnable onLogout) {
+    public MenuPanel(Runnable onPlay, Runnable onRanking, Runnable onSkins, Runnable onLogout) {
         modeControl.setName("mode");
         levelControl.setName("level");
         colorControl.setName("color");
@@ -58,6 +58,8 @@ public class MenuPanel extends JPanel {
 
         FlatButton rankingButton = new FlatButton("Ver ranking", FlatButton.Style.LINK);
         rankingButton.addActionListener(e -> onRanking.run());
+        FlatButton skinsButton = new FlatButton("Skins", FlatButton.Style.LINK);
+        skinsButton.addActionListener(e -> onSkins.run());
         FlatButton logoutButton = new FlatButton("Cerrar sesión", FlatButton.Style.LINK);
         logoutButton.addActionListener(e -> onLogout.run());
 
@@ -69,6 +71,7 @@ public class MenuPanel extends JPanel {
         put(content, aiSection, 0);
         put(content, playButton, 20);
         put(content, rankingButton, 8);
+        put(content, skinsButton, 4);
         put(content, logoutButton, 4);
 
         // La columna queda centrada en la ventana, a lo ancho y a lo alto.

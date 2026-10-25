@@ -28,7 +28,7 @@ public class CaptureScreenshot {
                 r.attachGame(g);
                 return new Match(g, null);
             };
-            view = new SwingChessView(acc, b);
+            view = new SwingChessView(acc, new skins.SkinService(adaptadores.FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")), acc, new adaptadores.FileSkinStore(data.resolve("s.csv"))), b);
             view.setVisible(true);
             ((JComboBox<?>) named(view.getContentPane(), "white")).setSelectedIndex(2);
             ((JComboBox<?>) named(view.getContentPane(), "black")).setSelectedIndex(3);

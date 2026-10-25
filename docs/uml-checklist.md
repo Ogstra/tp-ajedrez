@@ -16,7 +16,11 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, CastlingMove, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, PromotionMove, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### MainSwing (class)
-- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, LanOpponent, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule
+- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, FileSkinCatalog, FileSkinStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, LanOpponent, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SkinService, SwingChessView, ThreefoldRepetitionRule
+
+### SkinTests (class)
+- Tiene: Skin
+- Usa: AccountService, FileSkinCatalog, FileSkinStore, IAccountStore, ISkinStore, Result, Score, SkinService, User
 
 ## Paquete `adaptadores`
 
@@ -43,6 +47,12 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### FileAccountStore (class)
 - Implementa: IAccountStore
 - Usa: Score, User
+
+### FileSkinCatalog (class)
+- Usa: Skin
+
+### FileSkinStore (class)
+- Implementa: ISkinStore
 
 ### FlatButton (class)
 - Extiende: JButton
@@ -89,13 +99,21 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Extiende: JPanel
 - Usa: Palette, RoundedBorder
 
+### SkinImages (class)
+- Usa: Color, Skin
+
+### SkinsPanel (class)
+- Extiende: JPanel
+- Tiene: SkinService, User
+- Usa: BoardStrip, Color, FlatButton, MenuPanel, Palette, RoundedPanel, Skin, SkinImages, SmoothImage
+
 ### SmoothImage (class)
 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, Board, GameBuilder, IChessGame, LanOpponent, LanPanel, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, User
-- Usa: Color, FlatButton, LanConnection, Match, Move, OpponentLevel, Palette, Piece, SmoothImage
+- Tiene: AccountService, Board, GameBuilder, IChessGame, LanOpponent, LanPanel, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, Skin, SkinService, SkinsPanel, User
+- Usa: Color, FlatButton, LanConnection, Match, Move, OpponentLevel, Palette, Piece, SkinImages, SmoothImage
 
 ## Paquete `ai`
 
@@ -316,6 +334,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### IPromotionChooser (interface)
 - Usa: Color, PieceType
 
+### ISkinStore (interface)
+
 ## Paquete `red`
 
 ### LanAnnouncer (class)
@@ -332,6 +352,14 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: IOpponent, IMoveListener, IPromotionChooser
 - Tiene: Color, IChessGame, IPromotionChooser, LanConnection, PieceType
 - Usa: Move, Piece, Position
+
+## Paquete `skins`
+
+### Skin (class)
+
+### SkinService (class)
+- Tiene: AccountService, ISkinStore, Skin
+- Usa: User
 
 ## Paquete `usuarios`
 
@@ -356,8 +384,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `adaptadores`, `ai`, `nucleo`, `nucleo.especiales`, `nucleo.tablas`, `puertos`, `red`, `usuarios` |
-| `adaptadores` | `ai`, `nucleo`, `puertos`, `red`, `usuarios` |
+| `(raíz, sin paquete)` | `adaptadores`, `ai`, `nucleo`, `nucleo.especiales`, `nucleo.tablas`, `puertos`, `red`, `skins`, `usuarios` |
+| `adaptadores` | `ai`, `nucleo`, `puertos`, `red`, `skins`, `usuarios` |
 | `ai` | `nucleo`, `nucleo.especiales`, `puertos` |
 | `nucleo` | `nucleo.estrategias`, `puertos` |
 | `nucleo.especiales` | `nucleo`, `puertos` |
@@ -365,6 +393,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 | `nucleo.tablas` | `nucleo` |
 | `puertos` | `nucleo`, `usuarios` |
 | `red` | `ai`, `nucleo`, `puertos` |
+| `skins` | `puertos`, `usuarios` |
 | `usuarios` | `nucleo`, `puertos` |
 
 ## Dónde está cada patrón (para marcarlo en el diagrama)

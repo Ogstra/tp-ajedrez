@@ -14,6 +14,8 @@ import puertos.IMoveListener;
 import puertos.IPromotionChooser;
 import red.LanConnection;
 import red.LanOpponent;
+import skins.Skin;
+import skins.SkinService;
 import usuarios.AccountService;
 import usuarios.User;
 
@@ -52,8 +54,6 @@ import java.util.Map;
 // con el teclado, pero con Swing. El núcleo no cambió para que esto funcione.
 public class SwingChessView extends JFrame implements IMoveListener, IGameStatusListener, IPromotionChooser {
 
-    private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
-    private static final java.awt.Color DARK = new java.awt.Color(0x76, 0x96, 0x56);
     private static final java.awt.Color SELECTED = new java.awt.Color(0xF6, 0xF6, 0x69);
     private static final java.awt.Color LEGAL = new java.awt.Color(0xF2, 0xC9, 0x6B);   // destino libre
     private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B); // destino con captura
@@ -65,11 +65,10 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final int TOP_BAR_HEIGHT = 52;  // botón de 36 más el margen
     private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
 
-    // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0.
-    // Se cargan una sola vez desde src/assets/piezas/ y se escalan al tamaño
-    // de casilla. Si falta algún archivo, o la pieza es de un tipo que este
-    // adaptador no conoce, se cae a un símbolo de texto.
-    private static final Map<String, Image> IMAGES = loadImages();
+    // Las piezas y los colores del tablero salen de la skin elegida (ver SkinImages). La de
+    // siempre usa el set "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0, de
+    // src/assets/piezas/. Si falta algún archivo, o la pieza es de un tipo que este adaptador
+    // no conoce, se cae a un símbolo de texto.
     private static final Map<PieceType, String> LETTERS = new HashMap<>();
     private static final Map<PieceType, String> WHITE_SYMBOLS = new HashMap<>();
     private static final Map<PieceType, String> BLACK_SYMBOLS = new HashMap<>();
@@ -94,10 +93,12 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final String MENU = "menu";
     private static final String LOGIN = "login";
     private static final String LAN = "lan";
+    private static final String SKINS = "skins";
     private static final String GAME = "game";
     private static final String RANKING = "ranking";
 
     private final AccountService accounts;
+    private final SkinService skins;
     private final GameBuilder builder;
     private final JPanel boardPanel = new JPanel();
     private final JPanel rankLabels = new JPanel();
@@ -110,6 +111,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final MenuPanel menu;
     private final LoginPanel login;
     private final LanPanel lanPanel;
+    private final SkinsPanel skinsPanel;
     private final RankingPanel ranking;
 
     private JButton[][] squares;
@@ -117,6 +119,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private OpponentController opponent; // null mientras juegan dos personas en la misma PC
     private LanOpponent lan;             // el rival de la otra PC; null si no es una partida por LAN
     private boolean disconnected = false; // el rival por LAN se fue
+    private Skin skin;                    // la skin con la que se dibuja la partida
     private User user;                  // el que entró en el login; null si entró como invitado
     private User human;                 // el usuario de la persona contra la IA; null en 1 contra 1 o invitado
     private Position selection = null;
@@ -126,13 +129,16 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
 
-    // Una sola ventana con cinco pantallas (login, menú, LAN, partida y ranking) que se cambian con un CardLayout.
-    // Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
-    public SwingChessView(AccountService accounts, GameBuilder builder) {
+    // Una sola ventana con seis pantallas (login, menú, LAN, skins, partida y ranking) que se cambian
+    // con un CardLayout. Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
+    public SwingChessView(AccountService accounts, SkinService skins, GameBuilder builder) {
         super("Ajedrez");
         this.accounts = accounts;
+        this.skins = skins;
         this.builder = builder;
-        this.menu = new MenuPanel(this::play, this::showRanking, this::logout);
+        this.skin = skins.defaultSkin();
+        this.menu = new MenuPanel(this::play, this::showRanking, this::showSkins, this::logout);
+        this.skinsPanel = new SkinsPanel(skins, this::showMenu);
         this.login = new LoginPanel(accounts, this::loggedIn);
         this.lanPanel = new LanPanel(this::startLanGame, this::showMenu);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
@@ -193,6 +199,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     private void begin(Match match, boolean flipped) {
+        skin = skins.selected(user); // la skin es de quien entró, en cualquier modo
         game = match.getGame();
         opponent = match.getOpponent();
         selection = null;
@@ -269,29 +276,20 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         showCard(MENU);
     }
 
+    private void showSkins() {
+        skinsPanel.show(user);
+        showCard(SKINS);
+    }
+
     private void showRanking() {
         cardBeforeRanking = currentCard;
         ranking.show(accounts.ranking());
         showCard(RANKING);
     }
 
-    // El menú usa las mismas imágenes para mostrar el color de cada lado.
+    // El menú usa las piezas de siempre para mostrar el color de cada lado.
     static Image pieceImage(String key) {
-        return IMAGES.get(key);
-    }
-
-    private static Map<String, Image> loadImages() {
-        Map<String, Image> map = new HashMap<>();
-        String folder = "src" + File.separator + "assets" + File.separator + "piezas" + File.separator;
-        for (String key : new String[]{"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"}) {
-            try {
-                BufferedImage image = ImageIO.read(new File(folder + key + ".png"));
-                map.put(key, image);
-            } catch (IOException e) {
-                map.put(key, null);
-            }
-        }
-        return map;
+        return SkinImages.load(SkinImages.DEFAULT_FOLDER, key);
     }
 
     private void buildInterface() {
@@ -364,6 +362,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         add(login, LOGIN);
         add(menu, MENU);
         add(lanPanel, LAN);
+        add(skinsPanel, SKINS);
         add(gamePanel, GAME);
         add(ranking, RANKING);
         fitWindow(8, 8); // tamaño inicial; cada partida lo ajusta a su tablero
@@ -439,7 +438,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     private java.awt.Color squareColor(int row, int col) {
-        return (row + col) % 2 == 0 ? DARK : LIGHT;
+        return SkinImages.color((row + col) % 2 == 0 ? skin.getDarkSquare() : skin.getLightSquare());
     }
 
     private void onSquareClicked(Position pos) {
@@ -557,7 +556,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             button.setText("");
             return;
         }
-        Image image = IMAGES.get(imageKey(piece));
+        String key = imageKey(piece);
+        Image image = key == null ? null : SkinImages.piece(skin, key);
         if (image == null) {
             button.setIcon(null);
             button.setText(symbol(piece)); // asset faltante o pieza desconocida: texto

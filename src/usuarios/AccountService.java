@@ -64,6 +64,15 @@ public class AccountService {
         return scores;
     }
 
+    // Los puntos de un usuario en el ranking (0 si es invitado). Las skins se desbloquean con esto.
+    public int pointsOf(User user) {
+        if (user == null) return 0;
+        for (Score score : store.loadAll()) {
+            if (score.getUser().equals(user)) return score.getPoints();
+        }
+        return 0;
+    }
+
     public void record(User user, Result result) {
         adjust(user, result, 1);
     }

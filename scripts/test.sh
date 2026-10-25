@@ -6,4 +6,5 @@ cd "$(dirname "$0")/.."
 java -cp out ChessCoreTests
 java -cp out AccountTests
 java -cp out LanTests
+java -cp out SkinTests
 ./scripts/test-console.sh

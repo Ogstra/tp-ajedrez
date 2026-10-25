@@ -1,0 +1,6 @@
+# Skins: id;nombre;puntos para desbloquear;casilla clara;casilla oscura;carpeta de las piezas (dentro de src/assets)
+# La primera es la de siempre y tiene que pedir 0 puntos. Cada carpeta lleva las 12 imágenes:
+# wK wQ wR wB wN wP bK bQ bR bB bN bP (.png). Madera y Hielo son de ejemplo: solo cambian el tablero.
+clasico;Clásico;0;EEEED2;769656;piezas
+madera;Madera;10;F0D9B5;B58863;piezas
+hielo;Hielo;25;DEE3E6;8CA2AD;piezas
