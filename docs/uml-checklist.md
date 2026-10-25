@@ -23,7 +23,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### ChoiceControl (class)
 - Extiende: JComponent
-- Usa: Color, Palette
+- Usa: Color, Palette, RoundedBorder, SmoothImage
 
 ### ConsoleAccounts (class)
 - Usa: AccountService, Score, User
@@ -43,7 +43,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### FlatButton (class)
 - Extiende: JButton
-- Usa: Color, FlatComboBox, Palette
+- Usa: Color, FlatComboBox, Palette, RoundedBorder
 
 ### FlatComboBox (class)
 - Extiende: JComboBox
@@ -55,7 +55,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### LoginPanel (class)
 - Extiende: JPanel
 - Tiene: AccountService, FlatButton, User
-- Usa: BoardStrip, FlatComboBox, MenuPanel, Palette, RoundedBorder, Score
+- Usa: BoardStrip, FlatComboBox, MenuPanel, Palette, RoundedBorder
 
 ### Match (class)
 - Tiene: IChessGame, OpponentController
@@ -79,13 +79,15 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### RoundedPanel (class)
 - Extiende: JPanel
-- Usa: Palette
+- Usa: Palette, RoundedBorder
+
+### SmoothImage (class)
 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
 - Tiene: AccountService, Board, GameBuilder, IChessGame, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, User
-- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece
+- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, SmoothImage
 
 ## Paquete `ai`
 
