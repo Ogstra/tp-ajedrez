@@ -39,7 +39,9 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
@@ -122,6 +124,16 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
+        // Ícono de la ventana, achicado de antemano a los tamaños que usa Windows para que no se pixele.
+        try {
+            BufferedImage icon = ImageIO.read(new File("src" + File.separator + "assets" + File.separator + "icono.png"));
+            List<Image> icons = new ArrayList<>();
+            for (int size : new int[]{16, 20, 24, 32, 40, 48, 64}) icons.add(icon.getScaledInstance(size, size, Image.SCALE_SMOOTH));
+            icons.add(icon);
+            setIconImages(icons);
+        } catch (IOException e) {
+            // sin el archivo queda el ícono de Java
+        }
         showCard(MENU); // la primera pantalla es el menú (y Enter aprieta Jugar)
     }
 
