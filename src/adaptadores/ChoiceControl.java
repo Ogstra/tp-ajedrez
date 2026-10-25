@@ -151,7 +151,7 @@ public class ChoiceControl extends JComponent {
             FontMetrics fm = g2.getFontMetrics();
             int iconWidth = icons[i] != null ? ICON + 10 : 0;
             int start = x + (card - iconWidth - fm.stringWidth(options[i])) / 2;
-            if (icons[i] != null) g2.drawImage(icons[i], start, (h - ICON) / 2, ICON, ICON, null);
+            if (icons[i] != null) SmoothImage.draw(g2, icons[i], start, (h - ICON) / 2, ICON);
             g2.setColor(Palette.INK);
             g2.drawString(options[i], start + iconWidth, (h - fm.getHeight()) / 2 + fm.getAscent());
         }

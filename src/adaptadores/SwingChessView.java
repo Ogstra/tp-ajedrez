@@ -18,7 +18,6 @@ import usuarios.User;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -124,11 +123,12 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
-        // Ícono de la ventana, achicado de antemano a los tamaños que usa Windows para que no se pixele.
+        // Ícono de la ventana, achicado de antemano a los tamaños que pide Windows (también con la
+        // pantalla escalada: 20, 30 y 40 px al 125%) para que no lo reescale y se vea borroso.
         try {
             BufferedImage icon = ImageIO.read(new File("src" + File.separator + "assets" + File.separator + "icono.png"));
             List<Image> icons = new ArrayList<>();
-            for (int size : new int[]{16, 20, 24, 32, 40, 48, 64}) icons.add(icon.getScaledInstance(size, size, Image.SCALE_SMOOTH));
+            for (int size : new int[]{16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 96, 128}) icons.add(SmoothImage.scaled(icon, size));
             icons.add(icon);
             setIconImages(icons);
         } catch (IOException e) {
@@ -488,7 +488,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             return;
         }
         button.setText("");
-        button.setIcon(new ImageIcon(image.getScaledInstance(squareSize * 85 / 100, squareSize * 85 / 100, Image.SCALE_SMOOTH)));
+        button.setIcon(SmoothImage.icon(image, squareSize * 85 / 100));
     }
 
     private String imageKey(Piece piece) {
