@@ -34,7 +34,7 @@ public class RankingPanel extends JPanel {
     private final RowsPanel rows = new RowsPanel();
     private final JScrollPane scroll = new JScrollPane(rows);
     private final RoundedPanel card = new RoundedPanel();
-    private final JLabel empty = new JLabel("Todavía no hay usuarios. Se crean desde el menú.", SwingConstants.CENTER);
+    private final JLabel empty = new JLabel("Todavía no hay usuarios. Se crean al jugar contra la IA.", SwingConstants.CENTER);
 
     public RankingPanel(Runnable onBack) {
         JLabel title = new JLabel("Ranking", SwingConstants.CENTER);

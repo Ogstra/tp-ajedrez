@@ -5,7 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-// Recuadro blanco con borde gris y esquinas redondeadas (jugadores del menú, tabla del ranking).
+// Recuadro blanco con borde gris y esquinas redondeadas (tabla del ranking).
 class RoundedPanel extends JPanel {
 
     RoundedPanel() {
