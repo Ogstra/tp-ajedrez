@@ -4,8 +4,8 @@ Este documento explica qué se agregó para tener un login básico (por nombre d
 
 ## 1. Qué hace
 
-- Al jugar contra la IA, la persona puede iniciar sesión, registrarse o jugar sin usuario. En 1 contra 1 no hay usuarios ni puntos.
-- No hay contraseña. Se entra solo con el nombre (en la ventana se elige de una lista en la pantalla de usuario). El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
+- Al arrancar se inicia sesión, se registra un usuario o se entra como invitado. Solo las partidas contra la IA suman puntos; el 1 contra 1 no.
+- No hay contraseña. Se entra solo con el nombre, en la pantalla de login. El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
 - Cuando una partida contra la IA termina se acredita el resultado a la persona: 3 puntos por victoria, 1 por empate, 0 por derrota.
 - El ranking se ve con el comando `ranking` en la consola y con el botón Ranking en la ventana (dentro de la misma ventana, sin diálogos).
 - Los datos persisten en `data/usuarios.csv`.
@@ -25,7 +25,7 @@ El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se
 | `FileAccountStore` | `adaptadores` | Adaptador de salida: guarda en CSV. |
 | `ConsoleAccounts` | `adaptadores` | Adaptador de entrada por consola: login, registro y tabla. |
 | `MenuPanel` | `adaptadores` | Para la ventana Swing: el menú elige modo, dificultad y color. |
-| `LoginPanel` | `adaptadores` | Pantalla de usuario contra la IA: login eligiendo de la lista, registro por nombre o sin usuario. |
+| `LoginPanel` | `adaptadores` | Primera pantalla de la ventana: Entrar con el nombre, Registrarse o Entrar como invitado. |
 | `RankingPanel` | `adaptadores` | El ranking como tabla. |
 
 `Main` y `MainSwing` (los composition roots) crean el almacén, el servicio y el recorder, y pasan el recorder en las listas de listeners de `ChessGame`. Es la misma inyección por constructor que ya se usaba.
@@ -64,7 +64,7 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 ## 7. Pruebas
 
 - `AccountTests` (20): registro, validaciones, login, orden del ranking, persistencia en CSV (incluida la línea mal formada), acreditación por mate, ahogado y tablas, deshacer y rehacer, usuario anónimo, la persona con negras contra la IA. Usa un `InMemoryAccountStore` como fake. Marcados con `// TDD:` los escritos antes del código.
-- `scripts/test-console.sh`: cuatro escenarios de punta a punta por consola con una carpeta de datos temporal (1 contra 1 sin usuarios con deshacer y repetir el mate, registro contra la IA, un 1 contra 1 que no suma al ranking, segunda ejecución con login y ranking persistente).
+- `scripts/test-console.sh`: cuatro escenarios de punta a punta por consola con una carpeta de datos temporal (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, segunda ejecución con login y ranking persistente).
 - `scripts/test.sh` corre todo junto: 65 pruebas del juego, 20 de usuarios y la consola.
 
 ## 8. Decisiones y límites
@@ -77,12 +77,12 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 
 Se había subido una implementación paralela de login y ranking en dos commits del 23/10. Se pidió borrarlos del historial y rehacerlo sin tener en cuenta esa versión. Los commits se respaldaron antes en la rama local `backup/commits-del-23-10` y en un bundle de git, y se reescribió `main` con `--force-with-lease`. Quien tenga un clon con esos commits tiene que resetearlo a `origin/main`.
 
-## 10. Una sola ventana (menú, usuario, partida y ranking)
+## 10. Una sola ventana (login, menú, partida y ranking)
 
 `SwingChessView` pasó a tener cuatro pantallas dentro del mismo `JFrame`, que se cambian con un `CardLayout`:
 
 - `MenuPanel`: modo (1 contra 1 o contra la IA), dificultad, color propio y los botones Jugar y Ver ranking. No tiene usuarios.
-- `LoginPanel`: la pantalla de usuario, solo contra la IA. Tiene un desplegable con "Sin usuario", "Nuevo usuario..." (justo debajo) y los registrados; solo al elegir esta última opción aparece el campo para registrar. Los botones son Empezar y Volver al menú.
+- `LoginPanel`: la primera pantalla. Tiene el campo con el nombre de usuario y los botones Entrar, Registrarse y Entrar como invitado. El menú tiene Cerrar sesión para volver.
 - La partida: el tablero, el botón Menú, la etiqueta de jugadores y de estado, y los botones Ranking, Deshacer y Rehacer. Si la persona juega con negras el tablero se gira.
 - `RankingPanel`: la tabla y un botón Volver.
 
@@ -90,11 +90,11 @@ Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilde
 
 Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.
 
-También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Jugar en el menú y Empezar en la pantalla de usuario (y registra en el campo de usuario nuevo), y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
+También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Entrar en el login y Jugar en el menú, y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
 
 ### Diseño de la ventana
 
-Los colores están en `Palette` (un solo lugar) y sus contrastes de texto superan 4,5:1. El menú usa `ChoiceControl` para modo, dificultad y color (segmentos y tarjetas dibujados a mano, porque con el aspecto del sistema Swing ignora el fondo de los botones) y `FlatButton` para Jugar, Ver ranking y los botones de la partida, y también para Registrar, Empezar y Volver al menú. El desplegable de usuario, en la pantalla de usuario, es un `FlatComboBox` (el del sistema tiene un alto fijo menor). La dificultad muestra una línea que explica cómo juega cada nivel. En la partida, Menú, el estado (en una o dos filas), los jugadores y los botones Deshacer, Rehacer y Ranking van en una sola barra arriba, y la ventana mide justo el tablero con casillas cuadradas. El ranking usa el mismo estilo que el menú: título, casillas de adorno y la tabla en un recuadro blanco con el puntero resaltado; si no hay usuarios muestra un aviso.
+Los colores están en `Palette` (un solo lugar) y sus contrastes de texto superan 4,5:1. El menú usa `ChoiceControl` para modo, dificultad y color (segmentos y tarjetas dibujados a mano, porque con el aspecto del sistema Swing ignora el fondo de los botones) y `FlatButton` para Jugar, Ver ranking y los botones de la partida, y también para Entrar, Registrarse, Entrar como invitado y Cerrar sesión. La dificultad muestra una línea que explica cómo juega cada nivel. En la partida, Menú, el estado (en una o dos filas), los jugadores y los botones Deshacer, Rehacer y Ranking van en una sola barra arriba, y la ventana mide justo el tablero con casillas cuadradas. El ranking usa el mismo estilo que el menú: título, casillas de adorno y la tabla en un recuadro blanco con el puntero resaltado; si no hay usuarios muestra un aviso. Los bordes redondeados se dibujan medio píxel adentro (`RoundedBorder.outline`) para que con la pantalla escalada no se corte ningún lado, y los botones de la barra de la partida no toman el foco.
 
 ## 11. Login separado del modo
 
@@ -103,3 +103,5 @@ Antes el menú tenía dos desplegables de usuario (uno por lado) además del mod
 El porqué: en 1 contra 1 en la misma máquina el ranking no tiene sentido, y permitiría que dos cuentas se sumen puntos entre sí. Solo las partidas contra la IA acreditan puntos.
 
 Sobre el cambio a la IA a mitad de partida: la ventana no lo permite. `ScoreRecorder.setBlackUser` no tenía ningún llamador en `src/`, y el modo, la dificultad y el color solo se eligen en el menú; cada Jugar arma un `Match` y un `ScoreRecorder` nuevos con el `GameBuilder`. Lo mínimo y consistente fue borrar ese setter (código muerto, con un comentario que decía algo falso), dejar el usuario de negras `final` como el de blancas y reemplazar el test que lo usaba por uno de la persona con negras contra la IA. Con los usuarios fijos desde el constructor, una partida que empezó 1 contra 1 nunca puede sumar puntos.
+
+Después se movió el login al principio: la ventana arranca en `LoginPanel` (Entrar con el nombre, Registrarse o Entrar como invitado) y recién después va al menú, que tiene Cerrar sesión. La pantalla intermedia contra la IA ya no existe: contra la IA se usa el usuario con el que se entró (`null` si es invitado) y en 1 contra 1 los dos llegan en `null`. En la consola el login también va antes de elegir el modo.

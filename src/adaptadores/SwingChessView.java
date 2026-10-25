@@ -108,7 +108,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private JButton[][] squares;
     private IChessGame game;
     private OpponentController opponent; // null mientras juegan dos personas
-    private User human;                 // el usuario de la persona contra la IA; null en 1 contra 1 o sin usuario
+    private User user;                  // el que entró en el login; null si entró como invitado
+    private User human;                 // el usuario de la persona contra la IA; null en 1 contra 1 o invitado
     private Position selection = null;
     private boolean thinking = false;
     private int squareSize = MAX_SQUARE;
@@ -116,33 +117,35 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
 
-    // Una sola ventana con cuatro pantallas (menú, usuario, partida y ranking) que se cambian con un CardLayout.
+    // Una sola ventana con cuatro pantallas (login, menú, partida y ranking) que se cambian con un CardLayout.
     // Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
     public SwingChessView(AccountService accounts, GameBuilder builder) {
         super("Ajedrez");
         this.accounts = accounts;
         this.builder = builder;
-        this.menu = new MenuPanel(this::play, this::showRanking);
-        this.login = new LoginPanel(accounts, this::startGame, this::showMenu);
+        this.menu = new MenuPanel(this::startGame, this::showRanking, this::logout);
+        this.login = new LoginPanel(accounts, this::loggedIn);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
-        showCard(MENU); // la primera pantalla es el menú (y Enter aprieta Jugar)
+        showCard(LOGIN); // la primera pantalla es el login (y Enter aprieta Entrar)
     }
 
-    // Jugar del menú: contra la IA primero se elige el usuario; en 1 contra 1 se empieza directo.
-    private void play() {
-        if (menu.versusAi()) {
-            login.refresh();
-            showCard(LOGIN);
-        } else {
-            startGame();
-        }
+    private void loggedIn(User user) {
+        this.user = user;
+        showMenu();
+    }
+
+    private void logout() {
+        user = null;
+        login.clear();
+        showCard(LOGIN);
     }
 
     // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
     private void startGame() {
         OpponentLevel level = menu.versusAi() ? menu.level() : OpponentLevel.NONE;
-        human = menu.versusAi() ? login.user() : null;
+        // Solo contra la IA se usa el usuario: el 1 contra 1 no suma al ranking.
+        human = menu.versusAi() ? user : null;
         User white = menu.humanColor() == Color.WHITE ? human : null;
         User black = menu.humanColor() == Color.BLACK ? human : null;
         Match match = builder.build(this, white, black, level, menu.aiColor());
@@ -152,7 +155,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         thinking = false;
         startBoard = game.getBoard().cloneBoard();
         menuButton.setEnabled(true);
-        players.setText(opponent == null ? "1 contra 1: no suma al ranking"
+        players.setText(opponent == null ? "1 contra 1"
             : "Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
         showStatus("Turno de Blancas");
         squareSize = squareSizeFor(game.getBoard());
@@ -165,14 +168,14 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private String playerName(Color color) {
         if (opponent != null && opponent.getColor() == color) return "la IA";
-        return human == null ? "sin usuario" : human.getName();
+        return human == null ? "invitado" : human.getName();
     }
 
     private void showCard(String card) {
         currentCard = card;
-        // Enter aprieta Jugar en el menú y Empezar en la pantalla de usuario; en el resto no hace nada.
+        // Enter aprieta Entrar en el login y Jugar en el menú; en el resto no hace nada.
         getRootPane().setDefaultButton(card.equals(MENU) ? menu.getPlayButton()
-            : card.equals(LOGIN) ? login.getStartButton() : null);
+            : card.equals(LOGIN) ? login.getLoginButton() : null);
         ((CardLayout) getContentPane().getLayout()).show(getContentPane(), card);
     }
 
@@ -272,6 +275,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         buttons.add(undoButton);
         buttons.add(redoButton);
         buttons.add(rankingButton);
+        // En la partida se juega con el mouse: los botones no toman el foco, así no aparecen marcados al empezar.
+        for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel top = new JPanel(new BorderLayout(12, 0));
         top.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         top.add(menuButton, BorderLayout.WEST);
@@ -302,8 +307,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }
         gamePanel.setOpaque(true);
         gamePanel.setBackground(Palette.BACKGROUND);
-        add(menu, MENU);
         add(login, LOGIN);
+        add(menu, MENU);
         add(gamePanel, GAME);
         add(ranking, RANKING);
         fitWindow(8, 8); // tamaño inicial; cada partida lo ajusta a su tablero

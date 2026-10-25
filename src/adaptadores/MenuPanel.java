@@ -16,9 +16,8 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 
-// Pantalla de inicio de la ventana: modo (1 contra 1 o contra la IA), dificultad y color.
-// Solo junta las elecciones; arrancar la partida lo hace SwingChessView. El usuario se
-// elige aparte, en LoginPanel, y solo contra la IA.
+// Menú de la ventana, después del login: modo (1 contra 1 o contra la IA), dificultad y color.
+// Solo junta las elecciones; arrancar la partida lo hace SwingChessView.
 public class MenuPanel extends JPanel {
 
     private static final int COLUMN_WIDTH = 360;
@@ -33,7 +32,7 @@ public class MenuPanel extends JPanel {
     private final JLabel levelHelp = small(LEVEL_HELP[0]);
     private final FlatButton playButton = new FlatButton("Jugar", FlatButton.Style.PRIMARY);
 
-    public MenuPanel(Runnable onPlay, Runnable onRanking) {
+    public MenuPanel(Runnable onPlay, Runnable onRanking, Runnable onLogout) {
         modeControl.setName("mode");
         levelControl.setName("level");
         colorControl.setName("color");
@@ -59,6 +58,8 @@ public class MenuPanel extends JPanel {
 
         FlatButton rankingButton = new FlatButton("Ver ranking", FlatButton.Style.LINK);
         rankingButton.addActionListener(e -> onRanking.run());
+        FlatButton logoutButton = new FlatButton("Cerrar sesión", FlatButton.Style.LINK);
+        logoutButton.addActionListener(e -> onLogout.run());
 
         JPanel content = column();
         put(content, title, 0);
@@ -68,6 +69,7 @@ public class MenuPanel extends JPanel {
         put(content, aiSection, 0);
         put(content, playButton, 20);
         put(content, rankingButton, 8);
+        put(content, logoutButton, 4);
 
         // La columna queda centrada en la ventana, a lo ancho y a lo alto.
         setBackground(Palette.BACKGROUND);

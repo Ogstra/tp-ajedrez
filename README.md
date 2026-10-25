@@ -17,11 +17,11 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y, solo contra la IA, el usuario de la persona; se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene cuatro pantallas. En el menú se elige 1 contra 1 o contra la IA y, contra la IA, la dificultad (fácil, medio o difícil) y el color con el que se juega (el tablero se gira si son las negras). En 1 contra 1, Jugar empieza enseguida. Contra la IA aparece antes la pantalla de usuario: se inicia sesión eligiéndolo de la lista, se registra con el nombre (con "Nuevo usuario..." aparece el campo) o se sigue sin usuario, y se aprieta Empezar o Volver al menú. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
+En la consola primero va el login (iniciar sesión, registrarse o invitado) y después contra quién se juega (dos personas o la IA en tres niveles); se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene cuatro pantallas. Arranca en el login: se escribe el nombre de usuario y se aprieta Entrar, Registrarse (crea el usuario con ese nombre y entra) o Entrar como invitado. En el menú se elige 1 contra 1 o contra la IA y, contra la IA, la dificultad (fácil, medio o difícil) y el color con el que se juega (el tablero se gira si son las negras). Jugar empieza la partida y Cerrar sesión vuelve al login. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 
-Contra la IA (en consola y en ventana) la persona puede iniciar sesión, registrarse o jugar sin usuario. No hay contraseña: se entra solo con el nombre (en la ventana se elige de una lista) y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. Solo tiene usuario el lado de la persona, nunca la IA. En 1 contra 1 (dos personas en la misma máquina) no se piden usuarios ni se acreditan puntos.
+Al arrancar (en consola y en ventana) se inicia sesión, se registra un usuario o se entra como invitado. No hay contraseña: se entra solo con el nombre y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. El usuario solo suma puntos en las partidas contra la IA (la IA nunca tiene usuario). En 1 contra 1 (dos personas en la misma máquina) no se acreditan puntos.
 
 Cuando una partida contra la IA termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar una partida con usuario) y en la ventana con el botón Ranking.
 
@@ -29,7 +29,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y cuatro regresiones de consola (1 contra 1 sin usuarios con deshacer y repetir el mate, registro contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (menú, pantalla de usuario, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking y un tablero de 10x10):
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking y un tablero de 10x10):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java

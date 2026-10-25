@@ -44,14 +44,15 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        OpponentLevel level = askLevel(scanner);
 
         // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
         Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
         AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
-        // Solo contra la IA se pide usuario, el de la persona (blancas): el 1 contra 1 en la
-        // misma máquina no suma al ranking.
-        User player = level == OpponentLevel.NONE ? null : ConsoleAccounts.askUser(scanner, accounts, "blancas");
+        // Primero el login y después el modo. El usuario solo se usa contra la IA: el 1 contra 1
+        // en la misma máquina no suma al ranking.
+        User user = ConsoleAccounts.askUser(scanner, accounts);
+        OpponentLevel level = askLevel(scanner);
+        User player = level == OpponentLevel.NONE ? null : user;
 
         PieceFactory pieces = PieceFactory.standard();
         Board board = BoardSetup.standard(pieces);
@@ -87,8 +88,8 @@ public class Main {
         renderer.render(board);
         System.out.println("Ajedrez");
         System.out.println(level == OpponentLevel.NONE
-            ? "1 contra 1: la partida no suma al ranking."
-            : "Blancas: " + (player == null ? "sin usuario" : player) + " | Negras: la IA");
+            ? "1 contra 1"
+            : "Blancas: " + (player == null ? "invitado" : player) + " | Negras: la IA");
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");
 
         while (true) {

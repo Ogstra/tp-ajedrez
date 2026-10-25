@@ -41,23 +41,34 @@ public class SwingIntegrationTests {
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
-                // Menu: solo modo, dificultad, color, Jugar y Ver ranking; los usuarios van en otra pantalla.
-                require(named(root, "white") == null && named(root, "black") == null,
-                    "el menu no tiene desplegables de usuario por lado");
-                require(!named(root, "user").isShowing() && !named(root, "newUser").isShowing(),
-                    "la pantalla de usuario no se ve en el menu");
+                // La ventana arranca en el login: un usuario inexistente se rechaza.
+                require(named(root, "loginName").isShowing() && !button(root, "Jugar").isShowing(),
+                    "la primera pantalla es el login");
+                require(view.getRootPane().getDefaultButton() == button(root, "Entrar"),
+                    "en el login, Enter debe apretar Entrar");
+                ((JTextField) named(root, "loginName")).setText("Nadie");
+                button(root, "Entrar").doClick();
+                require(named(root, "loginName").isShowing(), "un usuario inexistente no entra");
+                // Registrarse con Ana entra directo al menu.
+                ((JTextField) named(root, "loginName")).setText("Ana");
+                button(root, "Registrarse").doClick();
+                require(accounts.ranking().size() == 1, "el registro debe guardarse");
+                require(button(root, "Jugar").isShowing(), "al registrarse se entra al menu");
                 require(view.getRootPane().getDefaultButton() == button(root, "Jugar"),
                     "en el menu, Enter debe apretar Jugar");
+                // Cerrar sesion vuelve al login; se entra de nuevo con el nombre.
+                button(root, "Cerrar sesión").doClick();
+                require(named(root, "loginName").isShowing(), "Cerrar sesion vuelve al login");
+                ((JTextField) named(root, "loginName")).setText("ana");
+                button(root, "Entrar").doClick();
+                require(button(root, "Jugar").isShowing(), "Ana entra con su nombre");
 
                 // 1 contra 1: la dificultad y el color no se muestran.
                 require(!named(root, "level").isShowing() && !named(root, "color").isShowing(),
                     "en 1 contra 1 no se elige dificultad ni color");
                 button(root, "Jugar").doClick();
                 inspect(root);
-                require(!named(root, "user").isShowing() && lastWhite == null && lastBlack == null,
-                    "en 1 contra 1 se empieza directo y sin usuarios");
-                require(label(root, "1 contra 1: no suma al ranking") != null,
-                    "la partida 1 contra 1 avisa que no suma al ranking");
+                require(lastWhite == null && lastBlack == null, "en 1 contra 1 se juega sin usuarios");
                 require(boardPanel.getComponentCount() == 64, "debe armarse el tablero de 64 casillas");
                 require(view.getRootPane().getDefaultButton() == null, "en la partida no hay boton por defecto");
                 require(label(root, "a") != null && label(root, "h") != null && label(root, "1") != null && label(root, "8") != null,
@@ -96,27 +107,7 @@ public class SwingIntegrationTests {
                 require(named(root, "level").isShowing() && named(root, "color").isShowing(),
                     "contra la IA se eligen dificultad y color");
                 ((ChoiceControl) named(root, "level")).setSelectedIndex(1);
-                // Jugar contra la IA lleva a la pantalla de usuario; se puede volver al menu.
                 button(root, "Jugar").doClick();
-                require(named(root, "user").isShowing() && !named(root, "newUser").isShowing(),
-                    "contra la IA, Jugar muestra la pantalla de usuario sin la fila de usuario nuevo");
-                require(view.getRootPane().getDefaultButton() == button(root, "Empezar"),
-                    "en la pantalla de usuario, Enter debe apretar Empezar");
-                button(root, "Volver al menú").doClick();
-                require(button(root, "Jugar").isShowing(), "Volver al menu muestra el menu");
-                button(root, "Jugar").doClick();
-                // Registrar a Ana: "Nuevo usuario..." va justo abajo de "Sin usuario" y muestra el campo.
-                JComboBox<?> user = (JComboBox<?>) named(root, "user");
-                user.setSelectedIndex(1);
-                require("Nuevo usuario...".equals(user.getSelectedItem()), "Nuevo usuario va justo abajo de Sin usuario");
-                require(named(root, "newUser").isShowing(), "al elegir Nuevo usuario debe aparecer el campo");
-                ((JTextField) named(root, "newUser")).setText("Ana");
-                button(root, "Registrar").doClick();
-                require(user.getItemCount() == 3 && "Ana".equals(user.getSelectedItem()),
-                    "al registrar a Ana debe quedar elegida");
-                require(!named(root, "newUser").isShowing(), "al registrar, el campo vuelve a ocultarse");
-                require(accounts.ranking().size() == 1, "el registro debe guardarse");
-                button(root, "Empezar").doClick();
                 require(lastWhite != null && "Ana".equals(lastWhite.getName()) && lastBlack == null,
                     "contra la IA con blancas, Ana juega con blancas y la IA no tiene usuario");
                 square("e2", false).doClick();
@@ -143,12 +134,9 @@ public class SwingIntegrationTests {
                 menuButton().doClick();
                 require(button(root, "Jugar").isShowing(), "si se elige Salir al menu debe verse el menu");
 
-                // Dificil, tambien con blancas: la pantalla de usuario recuerda a Ana.
+                // Dificil, tambien con blancas.
                 ((ChoiceControl) named(root, "level")).setSelectedIndex(2);
                 button(root, "Jugar").doClick();
-                require(named(root, "user").isShowing() && "Ana".equals(((JComboBox<?>) named(root, "user")).getSelectedItem()),
-                    "al volver a jugar contra la IA, la pantalla de usuario recuerda a Ana");
-                button(root, "Empezar").doClick();
                 square("d2", false).doClick();
                 square("d4", false).doClick();
                 require(!menuButton().isEnabled(), "el nivel dificil tambien debe bloquear el boton Menu");
@@ -162,7 +150,6 @@ public class SwingIntegrationTests {
                 require(button(root, "Jugar").isShowing(), "debe verse el menu despues de confirmar la salida");
                 ((ChoiceControl) named(root, "color")).setSelectedIndex(1);
                 button(root, "Jugar").doClick();
-                button(root, "Empezar").doClick();
                 require(lastWhite == null && lastBlack != null && "Ana".equals(lastBlack.getName()),
                     "jugando con negras, Ana va en negras y la IA (blancas) no tiene usuario");
                 require(((JButton) boardPanel.getComponent(0)).getIcon() != null
@@ -205,7 +192,7 @@ public class SwingIntegrationTests {
                     "el ranking debe mostrar una fila por usuario registrado");
                 button(root, "Volver").doClick();
             });
-            System.out.println("[OK]   Swing: menu, pantalla de usuario, 1 contra 1 sin ranking, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
+            System.out.println("[OK]   Swing: login, menu, 1 contra 1 sin ranking, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
 
             // Otro tamaño de tablero (lo que puede pedirse en la defensa): la ventana se adapta sola.
             SwingUtilities.invokeAndWait(() -> {
@@ -214,6 +201,7 @@ public class SwingIntegrationTests {
                 view = new SwingChessView(otherAccounts, builder(otherAccounts, 10));
                 view.setVisible(true);
                 Container root = view.getContentPane();
+                button(root, "Entrar como invitado").doClick();
                 button(root, "Jugar").doClick();
                 inspect(root);
                 require(boardPanel.getComponentCount() == 100, "un tablero de 10x10 debe tener 100 casillas");
