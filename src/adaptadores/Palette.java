@@ -18,7 +18,6 @@ final class Palette {
     static final Color PRIMARY_HOVER = new Color(0x1D, 0x3E, 0x17);
     static final Color TINT = new Color(0xE3, 0xEE, 0xDC);          // tarjeta elegida
     static final Color ERROR = new Color(0xA1, 0x20, 0x27);
-    static final Color BADGE = new Color(0x23, 0x3B, 0x1D);         // etiqueta "IA"
     static final Color BADGE_TEXT = new Color(0xF3, 0xF1, 0xDF);
     static final Color BOARD_LIGHT = new Color(0xEE, 0xEE, 0xD2);   // los del tablero
     static final Color BOARD_DARK = new Color(0x76, 0x96, 0x56);
