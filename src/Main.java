@@ -49,8 +49,9 @@ public class Main {
         // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
         Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
         AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
-        User white = ConsoleAccounts.askUser(scanner, accounts, "blancas");
-        User black = level == OpponentLevel.NONE ? ConsoleAccounts.askUser(scanner, accounts, "negras") : null;
+        // Solo contra la IA se pide usuario, el de la persona (blancas): el 1 contra 1 en la
+        // misma máquina no suma al ranking.
+        User player = level == OpponentLevel.NONE ? null : ConsoleAccounts.askUser(scanner, accounts, "blancas");
 
         PieceFactory pieces = PieceFactory.standard();
         Board board = BoardSetup.standard(pieces);
@@ -70,7 +71,7 @@ public class Main {
             new FiftyMoveRule(),
             new ThreefoldRepetitionRule());
 
-        ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+        ScoreRecorder recorder = new ScoreRecorder(accounts, player, null);
         IChessGame game = new ChessGame(board,
             Arrays.<IMoveListener>asList(renderer, recorder),
             Arrays.<IGameStatusListener>asList(renderer, recorder),
@@ -85,8 +86,9 @@ public class Main {
 
         renderer.render(board);
         System.out.println("Ajedrez");
-        System.out.println("Blancas: " + (white == null ? "sin usuario" : white)
-            + " | Negras: " + (level != OpponentLevel.NONE ? "la IA" : black == null ? "sin usuario" : black));
+        System.out.println(level == OpponentLevel.NONE
+            ? "1 contra 1: la partida no suma al ranking."
+            : "Blancas: " + (player == null ? "sin usuario" : player) + " | Negras: la IA");
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");
 
         while (true) {
@@ -128,7 +130,7 @@ public class Main {
                     renderer.render(board);
                 }
                 // Al terminar la partida, el ranking ya incluye el resultado.
-                if (game.isGameOver() && (white != null || black != null)) {
+                if (game.isGameOver() && player != null) {
                     ConsoleAccounts.printRanking(accounts);
                 }
             }

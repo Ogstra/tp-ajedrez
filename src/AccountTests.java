@@ -63,7 +63,7 @@ public class AccountTests {
         testUndoRevertsTheResult();
         testRedoReappliesTheResult();
         testRedoOfAnEarlierMoveDoesNotReapply();
-        testBlackUserCanChangeDuringTheGame();
+        testNoWhiteUserCreditsOnlyBlack();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -503,22 +503,20 @@ public class AccountTests {
             "la partida sigue en juego, así que no hay resultado que acreditar");
     }
 
-    // TDD: si en la ventana se pasa a jugar contra la IA, el usuario negro deja de acreditarse.
-    private static void testBlackUserCanChangeDuringTheGame() {
+    // TDD: contra la IA jugando con negras, el lado blanco es la IA y no tiene usuario: solo se acredita a la persona.
+    private static void testNoWhiteUserCreditsOnlyBlack() {
         // Arrange
         AccountService service = newService();
         User ana = service.register("Ana");
-        User beto = service.register("Beto");
-        ScoreRecorder recorder = new ScoreRecorder(service, ana, beto);
-        ChessGame game = newGame(BoardSetup.standard(PieceFactory.standard()), recorder);
+        ChessGame game = newGame(BoardSetup.standard(PieceFactory.standard()), new ScoreRecorder(service, null, ana));
 
         // Act
-        recorder.setBlackUser(null);
         foolsCheckmate(game);
 
         // Assert
-        assertTrue("testBlackUserCanChangeDuringTheGame",
-            scoreOf(service, ana).getLosses() == 1 && scoreOf(service, beto).getGames() == 0,
-            "Beto no debería sumar nada si ya no es el rival");
+        Score score = scoreOf(service, ana);
+        assertTrue("testNoWhiteUserCreditsOnlyBlack",
+            score.getWins() == 1 && score.getPoints() == 3 && service.ranking().size() == 1,
+            "solo Ana debería figurar, con una victoria y 3 puntos");
     }
 }

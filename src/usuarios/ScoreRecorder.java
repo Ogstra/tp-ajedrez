@@ -12,8 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Observer (Clase 3): se entera de cómo termina la partida y acredita el resultado a los
-// usuarios que juegan, sin que ChessGame sepa que existen los usuarios. Si el usuario de
-// las negras es null (juega la IA o nadie inició sesión) solo se acredita al de las blancas.
+// usuarios que juegan, sin que ChessGame sepa que existen los usuarios. Los usuarios quedan
+// fijos al crearlo: solo tiene usuario el lado de la persona en una partida contra la IA (la
+// IA nunca tiene), y en 1 contra 1 llegan los dos en null, así que no se acredita nada.
 //
 // Como la partida se puede deshacer y rehacer, también escucha eso: al deshacer el mate o
 // las tablas retira lo que acreditó, y al rehacerlo (si la partida terminó de nuevo) lo
@@ -32,7 +33,7 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
 
     private final AccountService accounts;
     private final User whiteUser;
-    private User blackUser;
+    private final User blackUser;
     private IChessGame game;
     private List<Credit> recorded = new ArrayList<>();
     private List<Credit> reverted = new ArrayList<>();
@@ -46,11 +47,6 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
     // Hace falta para saber, al rehacer, si la partida volvió a terminar.
     public void attachGame(IChessGame game) {
         this.game = game;
-    }
-
-    // En la ventana se puede pasar a jugar contra la IA a mitad de partida.
-    public void setBlackUser(User blackUser) {
-        this.blackUser = blackUser;
     }
 
     @Override
