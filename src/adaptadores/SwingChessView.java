@@ -175,7 +175,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         currentCard = card;
         // Enter aprieta Entrar en el login y Jugar en el menú; en el resto no hace nada.
         getRootPane().setDefaultButton(card.equals(MENU) ? menu.getPlayButton()
-            : card.equals(LOGIN) ? login.getLoginButton() : null);
+            : card.equals(LOGIN) ? login.getDefaultButton() : null);
         ((CardLayout) getContentPane().getLayout()).show(getContentPane(), card);
     }
 

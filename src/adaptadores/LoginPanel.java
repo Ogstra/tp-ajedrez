@@ -6,8 +6,10 @@ import usuarios.User;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -18,71 +20,81 @@ import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.util.function.Consumer;
 
-// Primera pantalla de la ventana: entrar con el nombre de usuario, registrarse o entrar como
-// invitado. No hay contraseña. Le pasa el usuario (null si es invitado) a SwingChessView.
+// Primera pantalla de la ventana, con dos vistas: el login (entrar con el nombre o como
+// invitado) y el registro. No hay contraseña. Le pasa el usuario (null si es invitado) a
+// SwingChessView.
 public class LoginPanel extends JPanel {
+
+    private static final String LOGIN = "login";
+    private static final String REGISTER = "register";
 
     private final AccountService accounts;
     private final Consumer<User> onLogin;
-    private final JTextField nameField = new HintField("Nombre de usuario");
-    private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
+    private final JPanel views = new JPanel(new CardLayout());
+    private final JTextField loginField = field("loginName");
+    private final JTextField registerField = field("registerName");
+    private final JLabel loginMessage = message();
+    private final JLabel registerMessage = message();
     private final FlatButton loginButton = new FlatButton("Entrar", FlatButton.Style.PRIMARY);
+    private final FlatButton createButton = new FlatButton("Crear usuario", FlatButton.Style.PRIMARY);
+    private boolean registering = false;
 
     public LoginPanel(AccountService accounts, Consumer<User> onLogin) {
         this.accounts = accounts;
         this.onLogin = onLogin;
-        nameField.setName("loginName");
-        nameField.setPreferredSize(new Dimension(200, FlatComboBox.HEIGHT));
-        nameField.setBorder(new RoundedBorder());
-        nameField.setFont(nameField.getFont().deriveFont(14f));
-        nameField.setForeground(Palette.INK);
 
         loginButton.addActionListener(e -> login());
-        FlatButton registerButton = new FlatButton("Registrarse", FlatButton.Style.SECONDARY);
-        registerButton.addActionListener(e -> register());
+        FlatButton registerButton = new FlatButton("Registrarse", FlatButton.Style.LINK);
+        registerButton.addActionListener(e -> show(REGISTER));
         FlatButton guestButton = new FlatButton("Entrar como invitado", FlatButton.Style.LINK);
         guestButton.addActionListener(e -> enter(null));
 
-        JLabel title = new JLabel("Login", SwingConstants.CENTER);
-        title.setFont(Palette.title(36));
-        title.setForeground(Palette.PRIMARY);
-        JPanel strip = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        strip.setOpaque(false);
-        strip.add(new BoardStrip());
-        message.setForeground(Palette.ERROR);
+        createButton.addActionListener(e -> register());
+        FlatButton backButton = new FlatButton("Volver", FlatButton.Style.LINK);
+        backButton.addActionListener(e -> show(LOGIN));
 
-        JPanel content = MenuPanel.column();
-        MenuPanel.put(content, title, 0);
-        MenuPanel.put(content, strip, 8);
-        MenuPanel.put(content, MenuPanel.label("Usuario"), 20);
-        MenuPanel.put(content, nameField, 6);
-        MenuPanel.put(content, message, 8);
-        MenuPanel.put(content, loginButton, 4);
-        MenuPanel.put(content, registerButton, 8);
-        MenuPanel.put(content, guestButton, 8);
+        JPanel login = view("Login", loginField, loginMessage, loginButton);
+        MenuPanel.put(login, registerButton, 8);
+        MenuPanel.put(login, guestButton, 4);
+        JPanel register = view("Registro", registerField, registerMessage, createButton);
+        MenuPanel.put(register, backButton, 8);
 
-        // La columna queda centrada en la ventana, a lo ancho y a lo alto.
+        views.setOpaque(false);
+        views.add(login, LOGIN);
+        views.add(register, REGISTER);
+
+        // Las vistas quedan centradas en la ventana, a lo ancho y a lo alto.
         setBackground(Palette.BACKGROUND);
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.CENTER;
         c.insets = new Insets(12, 0, 12, 0);
-        add(content, c);
+        add(views, c);
     }
 
-    // Para que la ventana lo use como botón por defecto (Enter) mientras se ve esta pantalla.
-    public JButton getLoginButton() { return loginButton; }
+    // El botón que aprieta Enter: Entrar en el login y Crear usuario en el registro.
+    public JButton getDefaultButton() { return registering ? createButton : loginButton; }
 
-    // Al cerrar sesión se vuelve acá con el campo vacío.
+    // Al cerrar sesión se vuelve al login con los campos vacíos.
     public void clear() {
-        nameField.setText("");
-        message.setText(" ");
+        loginField.setText("");
+        registerField.setText("");
+        show(LOGIN);
+    }
+
+    private void show(String view) {
+        registering = view.equals(REGISTER);
+        loginMessage.setText(" ");
+        registerMessage.setText(" ");
+        ((CardLayout) views.getLayout()).show(views, view);
+        JRootPane root = getRootPane();
+        if (root != null) root.setDefaultButton(getDefaultButton());
     }
 
     private void login() {
-        User user = accounts.login(nameField.getText());
+        User user = accounts.login(loginField.getText());
         if (user == null) {
-            message.setText("No existe ese usuario. Si es nuevo, registrate.");
+            loginMessage.setText("No existe ese usuario.");
             return;
         }
         enter(user);
@@ -90,15 +102,50 @@ public class LoginPanel extends JPanel {
 
     private void register() {
         try {
-            enter(accounts.register(nameField.getText()));
+            enter(accounts.register(registerField.getText()));
         } catch (IllegalArgumentException e) {
-            message.setText(e.getMessage());
+            registerMessage.setText(e.getMessage());
         }
     }
 
     private void enter(User user) {
         clear();
         onLogin.accept(user);
+    }
+
+    // Una vista: título, casillas de adorno, el campo de usuario, el mensaje de error y el botón principal.
+    private static JPanel view(String titleText, JTextField field, JLabel message, JButton main) {
+        JLabel title = new JLabel(titleText, SwingConstants.CENTER);
+        title.setFont(Palette.title(36));
+        title.setForeground(Palette.PRIMARY);
+        JPanel strip = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        strip.setOpaque(false);
+        strip.add(new BoardStrip());
+
+        JPanel view = MenuPanel.column();
+        MenuPanel.put(view, title, 0);
+        MenuPanel.put(view, strip, 8);
+        MenuPanel.put(view, MenuPanel.label("Usuario"), 20);
+        MenuPanel.put(view, field, 6);
+        MenuPanel.put(view, message, 8);
+        MenuPanel.put(view, main, 4);
+        return view;
+    }
+
+    private static JTextField field(String name) {
+        JTextField field = new HintField("Nombre de usuario");
+        field.setName(name);
+        field.setPreferredSize(new Dimension(200, FlatComboBox.HEIGHT));
+        field.setBorder(new RoundedBorder());
+        field.setFont(field.getFont().deriveFont(14f));
+        field.setForeground(Palette.INK);
+        return field;
+    }
+
+    private static JLabel message() {
+        JLabel message = new JLabel(" ", SwingConstants.CENTER);
+        message.setForeground(Palette.ERROR);
+        return message;
     }
 
     // Campo de texto que muestra una pista gris mientras está vacío.

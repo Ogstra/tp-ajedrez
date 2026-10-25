@@ -25,7 +25,7 @@ El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se
 | `FileAccountStore` | `adaptadores` | Adaptador de salida: guarda en CSV. |
 | `ConsoleAccounts` | `adaptadores` | Adaptador de entrada por consola: login, registro y tabla. |
 | `MenuPanel` | `adaptadores` | Para la ventana Swing: el menú elige modo, dificultad y color. |
-| `LoginPanel` | `adaptadores` | Primera pantalla de la ventana: Entrar con el nombre, Registrarse o Entrar como invitado. |
+| `LoginPanel` | `adaptadores` | Primera pantalla de la ventana, con dos vistas: login (Entrar con el nombre o como invitado) y registro (Crear usuario). |
 | `RankingPanel` | `adaptadores` | El ranking como tabla. |
 
 `Main` y `MainSwing` (los composition roots) crean el almacén, el servicio y el recorder, y pasan el recorder en las listas de listeners de `ChessGame`. Es la misma inyección por constructor que ya se usaba.
@@ -82,7 +82,7 @@ Se había subido una implementación paralela de login y ranking en dos commits 
 `SwingChessView` pasó a tener cuatro pantallas dentro del mismo `JFrame`, que se cambian con un `CardLayout`:
 
 - `MenuPanel`: modo (1 contra 1 o contra la IA), dificultad, color propio y los botones Jugar y Ver ranking. No tiene usuarios.
-- `LoginPanel`: la primera pantalla. Tiene el campo con el nombre de usuario y los botones Entrar, Registrarse y Entrar como invitado. El menú tiene Cerrar sesión para volver.
+- `LoginPanel`: la primera pantalla, con dos vistas en un `CardLayout`. El login tiene el campo de usuario, Entrar y los links Registrarse y Entrar como invitado; el registro tiene su campo, Crear usuario y Volver. Enter aprieta el botón principal de la vista que se ve. El menú tiene Cerrar sesión para volver.
 - La partida: el tablero, el botón Menú, la etiqueta de jugadores y de estado, y los botones Ranking, Deshacer y Rehacer. Si la persona juega con negras el tablero se gira.
 - `RankingPanel`: la tabla y un botón Volver.
 
@@ -90,11 +90,11 @@ Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilde
 
 Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.
 
-También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Entrar en el login y Jugar en el menú, y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
+También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Entrar en el login, Crear usuario en el registro y Jugar en el menú, y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
 
 ### Diseño de la ventana
 
-Los colores están en `Palette` (un solo lugar) y sus contrastes de texto superan 4,5:1. El menú usa `ChoiceControl` para modo, dificultad y color (segmentos y tarjetas dibujados a mano, porque con el aspecto del sistema Swing ignora el fondo de los botones) y `FlatButton` para Jugar, Ver ranking y los botones de la partida, y también para Entrar, Registrarse, Entrar como invitado y Cerrar sesión. La dificultad muestra una línea que explica cómo juega cada nivel. En la partida, Menú, el estado (en una o dos filas), los jugadores y los botones Deshacer, Rehacer y Ranking van en una sola barra arriba, y la ventana mide justo el tablero con casillas cuadradas. El ranking usa el mismo estilo que el menú: título, casillas de adorno y la tabla en un recuadro blanco con el puntero resaltado; si no hay usuarios muestra un aviso. Los bordes redondeados se dibujan medio píxel adentro (`RoundedBorder.outline`) para que con la pantalla escalada no se corte ningún lado, y los botones de la barra de la partida no toman el foco.
+Los colores están en `Palette` (un solo lugar) y sus contrastes de texto superan 4,5:1. El menú usa `ChoiceControl` para modo, dificultad y color (segmentos y tarjetas dibujados a mano, porque con el aspecto del sistema Swing ignora el fondo de los botones) y `FlatButton` para Jugar, Ver ranking y los botones de la partida, y también para Entrar, Crear usuario, Registrarse, Entrar como invitado, Volver y Cerrar sesión (los dos principales en verde y el resto como links, igual que Jugar y Ver ranking). La dificultad muestra una línea que explica cómo juega cada nivel. En la partida, Menú, el estado (en una o dos filas), los jugadores y los botones Deshacer, Rehacer y Ranking van en una sola barra arriba, y la ventana mide justo el tablero con casillas cuadradas. El ranking usa el mismo estilo que el menú: título, casillas de adorno y la tabla en un recuadro blanco con el puntero resaltado; si no hay usuarios muestra un aviso. Los bordes redondeados se dibujan medio píxel adentro (`RoundedBorder.outline`) para que con la pantalla escalada no se corte ningún lado, y los botones de la barra de la partida no toman el foco.
 
 ## 11. Login separado del modo
 

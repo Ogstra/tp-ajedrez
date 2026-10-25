@@ -49,9 +49,20 @@ public class SwingIntegrationTests {
                 ((JTextField) named(root, "loginName")).setText("Nadie");
                 button(root, "Entrar").doClick();
                 require(named(root, "loginName").isShowing(), "un usuario inexistente no entra");
-                // Registrarse con Ana entra directo al menu.
-                ((JTextField) named(root, "loginName")).setText("Ana");
+                // Registrarse lleva a la vista de registro; Volver regresa al login.
                 button(root, "Registrarse").doClick();
+                require(named(root, "registerName").isShowing() && !named(root, "loginName").isShowing(),
+                    "Registrarse muestra la vista de registro");
+                require(view.getRootPane().getDefaultButton() == button(root, "Crear usuario"),
+                    "en el registro, Enter debe apretar Crear usuario");
+                button(root, "Volver").doClick();
+                require(named(root, "loginName").isShowing(), "Volver regresa al login");
+                require(view.getRootPane().getDefaultButton() == button(root, "Entrar"),
+                    "al volver, Enter aprieta Entrar otra vez");
+                // Crear a Ana entra directo al menu.
+                button(root, "Registrarse").doClick();
+                ((JTextField) named(root, "registerName")).setText("Ana");
+                button(root, "Crear usuario").doClick();
                 require(accounts.ranking().size() == 1, "el registro debe guardarse");
                 require(button(root, "Jugar").isShowing(), "al registrarse se entra al menu");
                 require(view.getRootPane().getDefaultButton() == button(root, "Jugar"),
