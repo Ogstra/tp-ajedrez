@@ -16,7 +16,7 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 
-// Menú de la ventana, después del login: modo (1 contra 1 o contra la IA), dificultad y color.
+// Menú de la ventana, después del login: modo (1 contra 1, contra la IA o por LAN), dificultad y color.
 // Solo junta las elecciones; arrancar la partida lo hace SwingChessView.
 public class MenuPanel extends JPanel {
 
@@ -24,7 +24,7 @@ public class MenuPanel extends JPanel {
     private static final String[] LEVEL_HELP = {
         "Juega jugadas al azar.", "Prioriza las capturas.", "Piensa dos jugadas por delante."};
 
-    private final ChoiceControl modeControl = ChoiceControl.segments("1 contra 1", "Contra la IA");
+    private final ChoiceControl modeControl = ChoiceControl.segments("1 contra 1", "Contra la IA", "Por LAN");
     private final ChoiceControl levelControl = ChoiceControl.segments("Fácil", "Medio", "Difícil");
     private final ChoiceControl colorControl = ChoiceControl.cards(new String[]{"Blancas", "Negras"},
         new Image[]{SwingChessView.pieceImage("wK"), SwingChessView.pieceImage("bK")});
@@ -85,6 +85,8 @@ public class MenuPanel extends JPanel {
     public JButton getPlayButton() { return playButton; }
 
     public boolean versusAi() { return modeControl.getSelectedIndex() == 1; }
+
+    public boolean overLan() { return modeControl.getSelectedIndex() == 2; }
 
     // Los niveles de OpponentLevel van después de NONE: Fácil es el 1.
     public OpponentLevel level() { return OpponentLevel.values()[levelControl.getSelectedIndex() + 1]; }

@@ -19,11 +19,14 @@ import nucleo.tablas.InsufficientMaterialRule;
 import nucleo.tablas.ThreefoldRepetitionRule;
 import puertos.IGameStatusListener;
 import puertos.IMoveListener;
+import puertos.IPromotionChooser;
+import red.LanOpponent;
 import usuarios.AccountService;
 import usuarios.ScoreRecorder;
 
 import javax.swing.SwingUtilities;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -41,28 +44,36 @@ public class MainSwing {
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
 
             // La ventana pide una partida nueva cada vez que se aprieta Jugar: acá se arma con sus
-            // reglas, el que acredita los puntos y, si corresponde, la IA.
+            // reglas, el que acredita los puntos y, si corresponde, la IA o el rival por LAN.
             Random random = new Random();
-            GameBuilder builder = (view, white, black, level, aiColor) -> {
+            GameBuilder builder = (view, white, black, level, aiColor, lan) -> {
                 PieceFactory pieces = PieceFactory.standard();
+                // Por LAN, las coronaciones del rival las decide el mensaje que llega por la red.
+                IPromotionChooser chooser = lan != null ? lan : view;
                 List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
                     new CastlingMove(),
                     new EnPassantMove(),
-                    new PromotionMove(pieces, view));
+                    new PromotionMove(pieces, chooser));
                 List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
                     new InsufficientMaterialRule(),
                     new FiftyMoveRule(),
                     new ThreefoldRepetitionRule());
                 ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+                List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(view, recorder));
+                if (lan != null) moveListeners.add(lan); // manda las jugadas propias a la otra PC
                 IChessGame game = new ChessGame(BoardSetup.standard(pieces),
-                    Arrays.<IMoveListener>asList(view, recorder),
+                    moveListeners,
                     Arrays.<IGameStatusListener>asList(view, recorder),
                     specialMoves,
                     drawRules);
                 recorder.attachGame(game);
-                OpponentController opponent = level == OpponentLevel.NONE
-                    ? null
-                    : new OpponentController(game, Opponents.create(level, random), aiColor);
+                OpponentController opponent = null;
+                if (lan != null) {
+                    lan.attachGame(game);
+                    opponent = new OpponentController(game, lan, lan.getRivalColor());
+                } else if (level != OpponentLevel.NONE) {
+                    opponent = new OpponentController(game, Opponents.create(level, random), aiColor);
+                }
                 return new Match(game, opponent);
             };
 

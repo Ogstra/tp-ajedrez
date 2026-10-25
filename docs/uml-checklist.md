@@ -9,11 +9,14 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### AccountTests (class)
 - Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
 
+### LanTests (class)
+- Usa: Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, LanAnnouncer, LanBrowser, LanConnection, LanGame, LanOpponent, Move, Piece, PieceFactory, PieceType, Position, PromotionMove
+
 ### Main (class)
 - Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, CastlingMove, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, PromotionMove, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### MainSwing (class)
-- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, InsufficientMaterialRule, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule
+- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, LanOpponent, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule
 
 ## Paquete `adaptadores`
 
@@ -50,7 +53,12 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: Palette, RoundedBorder
 
 ### GameBuilder (interface)
-- Usa: Color, Match, OpponentLevel, SwingChessView, User
+- Usa: Color, LanOpponent, Match, OpponentLevel, SwingChessView, User
+
+### LanPanel (class)
+- Extiende: JPanel
+- Tiene: FlatButton, LanAnnouncer, LanBrowser
+- Usa: BoardStrip, Color, LanConnection, LanGame, MenuPanel, Palette
 
 ### LoginPanel (class)
 - Extiende: JPanel
@@ -86,8 +94,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, Board, GameBuilder, IChessGame, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, User
-- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, SmoothImage
+- Tiene: AccountService, Board, GameBuilder, IChessGame, LanOpponent, LanPanel, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, User
+- Usa: Color, FlatButton, LanConnection, Match, Move, OpponentLevel, Palette, Piece, SmoothImage
 
 ## Paquete `ai`
 
@@ -308,6 +316,23 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### IPromotionChooser (interface)
 - Usa: Color, PieceType
 
+## Paquete `red`
+
+### LanAnnouncer (class)
+
+### LanBrowser (class)
+- Tiene: LanGame
+- Usa: LanAnnouncer
+
+### LanConnection (class)
+
+### LanGame (class)
+
+### LanOpponent (class)
+- Implementa: IOpponent, IMoveListener, IPromotionChooser
+- Tiene: Color, IChessGame, IPromotionChooser, LanConnection, PieceType
+- Usa: Move, Piece, Position
+
 ## Paquete `usuarios`
 
 ### AccountService (class)
@@ -331,14 +356,15 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `adaptadores`, `ai`, `nucleo`, `nucleo.especiales`, `nucleo.tablas`, `puertos`, `usuarios` |
-| `adaptadores` | `ai`, `nucleo`, `puertos`, `usuarios` |
+| `(raíz, sin paquete)` | `adaptadores`, `ai`, `nucleo`, `nucleo.especiales`, `nucleo.tablas`, `puertos`, `red`, `usuarios` |
+| `adaptadores` | `ai`, `nucleo`, `puertos`, `red`, `usuarios` |
 | `ai` | `nucleo`, `nucleo.especiales`, `puertos` |
 | `nucleo` | `nucleo.estrategias`, `puertos` |
 | `nucleo.especiales` | `nucleo`, `puertos` |
 | `nucleo.estrategias` | `nucleo` |
 | `nucleo.tablas` | `nucleo` |
 | `puertos` | `nucleo`, `usuarios` |
+| `red` | `ai`, `nucleo`, `puertos` |
 | `usuarios` | `nucleo`, `puertos` |
 
 ## Dónde está cada patrón (para marcarlo en el diagrama)

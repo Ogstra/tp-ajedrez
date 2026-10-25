@@ -4,9 +4,9 @@ Este documento explica qué se agregó para tener un login básico (por nombre d
 
 ## 1. Qué hace
 
-- Al arrancar se inicia sesión, se registra un usuario o se entra como invitado. Solo las partidas contra la IA suman puntos; el 1 contra 1 no.
+- Al arrancar se inicia sesión, se registra un usuario o se entra como invitado. Suman puntos las partidas contra la IA y por LAN; el 1 contra 1 en la misma PC no.
 - No hay contraseña. Se entra solo con el nombre, en la pantalla de login. El id lo asigna el sistema al registrarse, es interno y no se le pide ni se le muestra a la persona.
-- Cuando una partida contra la IA termina se acredita el resultado a la persona: 3 puntos por victoria, 1 por empate, 0 por derrota.
+- Cuando una partida contra la IA o por LAN termina se acredita el resultado a la persona: 3 puntos por victoria, 1 por empate, 0 por derrota.
 - El ranking se ve con el comando `ranking` en la consola y con el botón Ranking en la ventana (dentro de la misma ventana, sin diálogos).
 - Los datos persisten en `data/usuarios.csv`.
 
@@ -41,15 +41,15 @@ El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se
 - `onCheckmate(winner)`: gana quien dio el mate y pierde el otro.
 - `onStalemate()` y `onDraw(...)`: empate para los dos.
 
-Si un lado no tiene usuario (jugó anónimo o es la IA), a ese lado no se le acredita nada, pero el otro sí. `ScoreRecorder` es genérico: acredita a los usuarios que recibe. La regla de que solo cuentan las partidas contra la IA la aplican `Main` y la ventana, que en 1 contra 1 le pasan los dos usuarios en `null`.
+Si un lado no tiene usuario (jugó anónimo o es la IA), a ese lado no se le acredita nada, pero el otro sí. `ScoreRecorder` es genérico: acredita a los usuarios que recibe. La regla de qué partidas cuentan la aplican `Main` y la ventana, que en 1 contra 1 le pasan los dos usuarios en `null`.
 
 ### Deshacer y rehacer
 
 Una partida terminada puede reabrirse con `undo`. Si no se hiciera nada, al volver a terminar se sumaría dos veces. Por eso el recorder guarda lo que acreditó (`Credit`) y, en `onUndo`, lo revierte. En `onRedo` vuelve a aplicarlo solo si la partida quedó otra vez terminada (`game.isGameOver()`). Rehacer una jugada anterior a la final no suma nada. Esto está cubierto por tests.
 
-### Solo contra la IA
+### Contra la IA y por LAN
 
-Solo las partidas contra la IA acreditan puntos. Se acredita a la persona, juegue con blancas o con negras. Los usuarios quedan fijos al crear el `ScoreRecorder`, y la ventana no deja cambiar a la IA a mitad de partida (el modo, la dificultad y el color solo se eligen en el menú, y cada Jugar arma una partida nueva). Por eso se borró `setBlackUser`, el setter que lo permitía: una partida que empezó 1 contra 1 nunca puede sumar puntos.
+Acreditan puntos las partidas contra la IA y por LAN. Por LAN, cada PC acredita a su propio usuario en su propio archivo (ver `docs/juego-en-red.md`). En los dos casos se acredita a la persona, juegue con blancas o con negras. Los usuarios quedan fijos al crear el `ScoreRecorder`, y la ventana no deja cambiar a la IA a mitad de partida (el modo, la dificultad y el color solo se eligen en el menú, y cada Jugar arma una partida nueva). Por eso se borró `setBlackUser`, el setter que lo permitía: una partida que empezó 1 contra 1 nunca puede sumar puntos.
 
 ## 5. Persistencia
 

@@ -12,6 +12,8 @@ import nucleo.Position;
 import puertos.IGameStatusListener;
 import puertos.IMoveListener;
 import puertos.IPromotionChooser;
+import red.LanConnection;
+import red.LanOpponent;
 import usuarios.AccountService;
 import usuarios.User;
 
@@ -91,6 +93,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private static final String MENU = "menu";
     private static final String LOGIN = "login";
+    private static final String LAN = "lan";
     private static final String GAME = "game";
     private static final String RANKING = "ranking";
 
@@ -102,13 +105,18 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final JLabel status = new JLabel("Turno de Blancas");
     private final JLabel players = new JLabel(" ");
     private final JButton menuButton = new FlatButton("Menú", FlatButton.Style.SECONDARY);
+    private final JButton undoButton = new FlatButton("Deshacer", FlatButton.Style.SECONDARY);
+    private final JButton redoButton = new FlatButton("Rehacer", FlatButton.Style.SECONDARY);
     private final MenuPanel menu;
     private final LoginPanel login;
+    private final LanPanel lanPanel;
     private final RankingPanel ranking;
 
     private JButton[][] squares;
     private IChessGame game;
-    private OpponentController opponent; // null mientras juegan dos personas
+    private OpponentController opponent; // null mientras juegan dos personas en la misma PC
+    private LanOpponent lan;             // el rival de la otra PC; null si no es una partida por LAN
+    private boolean disconnected = false; // el rival por LAN se fue
     private User user;                  // el que entró en el login; null si entró como invitado
     private User human;                 // el usuario de la persona contra la IA; null en 1 contra 1 o invitado
     private Position selection = null;
@@ -118,14 +126,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
 
-    // Una sola ventana con cuatro pantallas (login, menú, partida y ranking) que se cambian con un CardLayout.
+    // Una sola ventana con cinco pantallas (login, menú, LAN, partida y ranking) que se cambian con un CardLayout.
     // Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
     public SwingChessView(AccountService accounts, GameBuilder builder) {
         super("Ajedrez");
         this.accounts = accounts;
         this.builder = builder;
-        this.menu = new MenuPanel(this::startGame, this::showRanking, this::logout);
+        this.menu = new MenuPanel(this::play, this::showRanking, this::logout);
         this.login = new LoginPanel(accounts, this::loggedIn);
+        this.lanPanel = new LanPanel(this::startLanGame, this::showMenu);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
         // Ícono de la ventana, achicado de antemano a los tamaños que pide Windows (también con la
@@ -153,25 +162,52 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         showCard(LOGIN);
     }
 
+    // Jugar del menú: por LAN primero se busca o se crea la partida; si no, se empieza directo.
+    private void play() {
+        if (menu.overLan()) {
+            lanPanel.open(user == null ? "invitado" : user.getName());
+            showCard(LAN);
+        } else {
+            startGame();
+        }
+    }
+
     // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
     private void startGame() {
         OpponentLevel level = menu.versusAi() ? menu.level() : OpponentLevel.NONE;
-        // Solo contra la IA se usa el usuario: el 1 contra 1 no suma al ranking.
+        // Solo contra la IA y por LAN se usa el usuario: el 1 contra 1 en la misma PC no suma al ranking.
         human = menu.versusAi() ? user : null;
+        lan = null;
         User white = menu.humanColor() == Color.WHITE ? human : null;
         User black = menu.humanColor() == Color.BLACK ? human : null;
-        Match match = builder.build(this, white, black, level, menu.aiColor());
+        begin(builder.build(this, white, black, level, menu.aiColor(), null), menu.humanColor() == Color.BLACK);
+    }
+
+    // Por LAN: ya hay conexión con la otra PC. El usuario de esta PC suma en su propio ranking.
+    private void startLanGame(LanConnection connection, Color localColor, String rivalName) {
+        human = user;
+        lan = new LanOpponent(connection, localColor, rivalName, this);
+        User white = localColor == Color.WHITE ? human : null;
+        User black = localColor == Color.BLACK ? human : null;
+        begin(builder.build(this, white, black, OpponentLevel.NONE, lan.getRivalColor(), lan), localColor == Color.BLACK);
+    }
+
+    private void begin(Match match, boolean flipped) {
         game = match.getGame();
         opponent = match.getOpponent();
         selection = null;
         thinking = false;
+        disconnected = false;
         startBoard = game.getBoard().cloneBoard();
         menuButton.setEnabled(true);
+        // Por LAN no se deshace: habría que pedirle permiso al rival.
+        undoButton.setEnabled(lan == null);
+        redoButton.setEnabled(lan == null);
         players.setText(opponent == null ? "1 contra 1"
             : "Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
         showStatus("Turno de Blancas");
         squareSize = squareSizeFor(game.getBoard());
-        buildBoard(game.getBoard(), menu.humanColor() == Color.BLACK);
+        buildBoard(game.getBoard(), flipped);
         fitWindow(game.getBoard().getRows(), game.getBoard().getColumns());
         render(game.getBoard());
         showCard(GAME);
@@ -179,25 +215,33 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     private String playerName(Color color) {
+        if (lan != null && lan.getRivalColor() == color) return lan.getRivalName();
         if (opponent != null && opponent.getColor() == color) return "la IA";
         return human == null ? "invitado" : human.getName();
     }
 
     private void showCard(String card) {
         currentCard = card;
-        // Enter aprieta Entrar en el login y Jugar en el menú; en el resto no hace nada.
+        // Enter aprieta Entrar en el login, Jugar en el menú y Crear partida en LAN; en el resto no hace nada.
         getRootPane().setDefaultButton(card.equals(MENU) ? menu.getPlayButton()
-            : card.equals(LOGIN) ? login.getDefaultButton() : null);
+            : card.equals(LOGIN) ? login.getDefaultButton()
+            : card.equals(LAN) ? lanPanel.getDefaultButton() : null);
         ((CardLayout) getContentPane().getLayout()).show(getContentPane(), card);
     }
 
     // Salir con una partida empezada y sin terminar la pierde: se pide confirmación.
+    // Por LAN, salir cierra la conexión y el rival lo ve como desconexión.
     private void leaveGame() {
-        if (!game.isGameOver() && !game.getBoard().equals(startBoard)) {
+        if (!game.isGameOver() && !disconnected && !game.getBoard().equals(startBoard)) {
             String[] options = {"Salir al menú", "Seguir jugando"};
             int choice = JOptionPane.showOptionDialog(this, "La partida sigue en juego. Si salís, se pierde.",
                 "Salir al menú", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
             if (choice != 0) return;
+        }
+        if (lan != null) {
+            lan.close();
+            lan = null;
+            opponent = null; // si se estaba esperando la jugada del rival, esa espera se descarta
         }
         showMenu();
     }
@@ -257,7 +301,6 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         menuButton.addActionListener(e -> leaveGame());
         JButton rankingButton = new FlatButton("Ranking", FlatButton.Style.SECONDARY);
         rankingButton.addActionListener(e -> showRanking());
-        JButton undoButton = new FlatButton("Deshacer", FlatButton.Style.SECONDARY);
         undoButton.addActionListener(e -> {
             if (thinking) return;
             // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
@@ -265,7 +308,6 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             render(game.getBoard());
             playOpponentIfNeeded(); // si la IA abre la partida y se deshizo su primera jugada, vuelve a jugarla
         });
-        JButton redoButton = new FlatButton("Rehacer", FlatButton.Style.SECONDARY);
         redoButton.addActionListener(e -> {
             if (thinking) return;
             if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
@@ -321,6 +363,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         gamePanel.setBackground(Palette.BACKGROUND);
         add(login, LOGIN);
         add(menu, MENU);
+        add(lanPanel, LAN);
         add(gamePanel, GAME);
         add(ranking, RANKING);
         fitWindow(8, 8); // tamaño inicial; cada partida lo ajusta a su tablero
@@ -400,7 +443,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     private void onSquareClicked(Position pos) {
-        if (game.isGameOver() || thinking) return;
+        if (game.isGameOver() || thinking || disconnected) return;
 
         Piece clicked = game.getBoard().pieceAt(pos);
         boolean ownPiece = clicked != null && clicked.getColor() == game.getTurn();
@@ -451,15 +494,25 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     // La IA piensa en otro hilo para no congelar la ventana, y la jugada se
     // aplica después en el hilo de la interfaz. Mientras piensa, se ignoran los clicks.
+    // El rival por LAN usa el mismo camino: en vez de pensar, espera la jugada por la red.
     private void playOpponentIfNeeded() {
-        if (opponent == null || thinking || !opponent.isItsTurn()) return;
+        if (opponent == null || thinking || disconnected || !opponent.isItsTurn()) return;
         thinking = true;
-        menuButton.setEnabled(false); // no se puede salir mientras la IA piensa
-        showStatus("El oponente piensa...");
+        menuButton.setEnabled(lan != null); // no se puede salir mientras la IA piensa; esperando al rival, sí
+        showStatus(lan != null ? "Turno de " + lan.getRivalName() : "El oponente piensa...");
         final OpponentController controller = opponent;
+        final LanOpponent rival = lan;
         new Thread(() -> {
             Move move = controller.chooseMove();
             SwingUtilities.invokeLater(() -> {
+                if (controller != opponent) return; // se salió de la partida mientras se esperaba
+                if (move == null) {                 // el rival por LAN se fue
+                    thinking = false;
+                    disconnected = true;
+                    menuButton.setEnabled(true);
+                    showStatus(rival.getRivalName() + " se desconectó.");
+                    return;
+                }
                 controller.play(move);
                 render(game.getBoard());
                 thinking = false;

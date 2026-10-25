@@ -17,11 +17,11 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola primero va el login (iniciar sesión, registrarse o invitado) y después contra quién se juega (dos personas o la IA en tres niveles); se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene cuatro pantallas. Arranca en el login: se escribe el nombre de usuario y se aprieta Entrar, o Entrar como invitado. Registrarse lleva a la pantalla de registro, donde se escribe el nombre y se aprieta Crear usuario (o Volver). En el menú se elige 1 contra 1 o contra la IA y, contra la IA, la dificultad (fácil, medio o difícil) y el color con el que se juega (el tablero se gira si son las negras). Jugar empieza la partida y Cerrar sesión vuelve al login. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
+En la consola primero va el login (iniciar sesión, registrarse o invitado) y después contra quién se juega (dos personas o la IA en tres niveles); se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene cinco pantallas. Arranca en el login: se escribe el nombre de usuario y se aprieta Entrar, o Entrar como invitado. Registrarse lleva a la pantalla de registro, donde se escribe el nombre y se aprieta Crear usuario (o Volver). En el menú se elige 1 contra 1, contra la IA o por LAN y, contra la IA, la dificultad (fácil, medio o difícil) y el color con el que se juega (el tablero se gira si son las negras). Jugar empieza la partida (por LAN, primero se crea una partida o se elige una de la lista de la red) y Cerrar sesión vuelve al login. En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 
-Al arrancar (en consola y en ventana) se inicia sesión, se registra un usuario o se entra como invitado. No hay contraseña: se entra solo con el nombre y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. El usuario solo suma puntos en las partidas contra la IA (la IA nunca tiene usuario). En 1 contra 1 (dos personas en la misma máquina) no se acreditan puntos.
+Al arrancar (en consola y en ventana) se inicia sesión, se registra un usuario o se entra como invitado. No hay contraseña: se entra solo con el nombre y al registrarse alcanza con escribir el nombre, porque el id lo asigna el sistema solo y no hay que anotarlo. El usuario suma puntos en las partidas contra la IA (la IA nunca tiene usuario) y por LAN (cada PC acredita a su propio usuario). En 1 contra 1 (dos personas en la misma máquina) no se acreditan puntos.
 
 Cuando una partida contra la IA termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar una partida con usuario) y en la ventana con el botón Ranking.
 
@@ -29,11 +29,15 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking y un tablero de 10x10):
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, 6 del juego por LAN y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10 y una partida por LAN entre dos ventanas):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
 ```
+
+## Jugar por LAN
+
+Con "Por LAN" en el menú, dos PCs de la misma red juegan sin escribir ninguna IP: una aprieta Crear partida y la otra la elige de la lista ("Partida de Ana"). Quien crea juega con blancas. Por LAN no hay Deshacer ni Rehacer, y si el rival se va se avisa. La primera vez Windows pregunta si deja que Java use la red: hay que permitirlo (redes privadas). Cómo funciona por dentro está en `docs/juego-en-red.md`.
 
 ## Qué reglas tiene
 
@@ -51,10 +55,12 @@ src/
   adaptadores/   consola, Swing y archivo CSV, que implementan esos puertos
   usuarios/      cuentas, puntajes y ranking, afuera del núcleo
   ai/            el oponente, afuera del núcleo
+  red/           el juego por LAN: avisos, lista de partidas, conexión y el rival de la otra PC
   Main.java      arma todo para jugar por consola
   MainSwing.java arma todo para jugar con ventana
   ChessCoreTests.java
   AccountTests.java
+  LanTests.java
 ```
 
 El núcleo no conoce a los adaptadores ni a la IA: son ellos los que dependen de él. Por eso la ventana y la IA se pudieron agregar sin tocar `ChessGame`.

@@ -19,7 +19,7 @@ public class CaptureScreenshot {
         SwingUtilities.invokeAndWait(() -> {
             AccountService acc = new AccountService(new FileAccountStore(data.resolve("u.csv")));
             acc.register("Ana"); acc.register("Beto");
-            GameBuilder b = (v, w, bl, level, aiColor) -> {
+            GameBuilder b = (v, w, bl, level, aiColor, lan) -> {
                 PieceFactory p = PieceFactory.standard();
                 ScoreRecorder r = new ScoreRecorder(acc, w, bl);
                 IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),

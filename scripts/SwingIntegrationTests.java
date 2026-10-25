@@ -10,6 +10,7 @@ import puertos.*;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
+import red.LanOpponent;
 import usuarios.AccountService;
 import usuarios.ScoreRecorder;
 import usuarios.User;
@@ -17,7 +18,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.BooleanSupplier;
 
 // Prueba de integracion de la ventana real (menu, usuario, partida y ranking en una sola ventana),
 // sin reflection ni librerias de tests.
@@ -224,6 +228,64 @@ public class SwingIntegrationTests {
                     "la ventana debe entrar en la pantalla");
             });
             System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
+
+            // Por LAN: dos ventanas en esta misma PC. Una crea la partida (invitado, blancas) y la
+            // otra (Ana, negras) la elige de la lista. Juegan el mate del loco y a Ana le suma la victoria.
+            SwingUtilities.invokeAndWait(() -> view.dispose());
+            AccountService hostAccounts = new AccountService(new FileAccountStore(data.resolve("host.csv")));
+            AccountService guestAccounts = new AccountService(new FileAccountStore(data.resolve("guest.csv")));
+            guestAccounts.register("Ana");
+            IChessGame[] lanGames = new IChessGame[2];
+            SwingChessView[] lanViews = new SwingChessView[2];
+            try {
+                SwingUtilities.invokeAndWait(() -> {
+                    lanViews[0] = new SwingChessView(hostAccounts, lanBuilder(hostAccounts, lanGames, 0));
+                    lanViews[1] = new SwingChessView(guestAccounts, lanBuilder(guestAccounts, lanGames, 1));
+                    lanViews[0].setVisible(true);
+                    lanViews[1].setVisible(true);
+                    Container host = lanViews[0].getContentPane();
+                    Container guest = lanViews[1].getContentPane();
+                    visibleButton(host, "Entrar como invitado").doClick();
+                    ((ChoiceControl) named(host, "mode")).setSelectedIndex(2);
+                    visibleButton(host, "Jugar").doClick();
+                    require(visibleButton(host, "Crear partida") != null, "Por LAN, Jugar muestra la pantalla de LAN");
+                    visibleButton(host, "Crear partida").doClick();
+                    require(visibleLabel(host, "Esperando rival...") != null, "al crear la partida se espera rival");
+                    ((JTextField) named(guest, "loginName")).setText("Ana");
+                    visibleButton(guest, "Entrar").doClick();
+                    ((ChoiceControl) named(guest, "mode")).setSelectedIndex(2);
+                    visibleButton(guest, "Jugar").doClick();
+                });
+                waitFor(() -> visibleButton(lanViews[1].getContentPane(), "Partida de invitado") != null,
+                    "la partida creada debe aparecer en la lista de la otra ventana");
+                SwingUtilities.invokeAndWait(() -> visibleButton(lanViews[1].getContentPane(), "Partida de invitado").doClick());
+                waitFor(() -> lanGames[0] != null && lanGames[1] != null
+                        && visibleButton(lanViews[0].getContentPane(), "Deshacer") != null
+                        && visibleButton(lanViews[1].getContentPane(), "Deshacer") != null,
+                    "al unirse, las dos ventanas deben pasar a la partida");
+                SwingUtilities.invokeAndWait(() -> {
+                    require(!visibleButton(lanViews[0].getContentPane(), "Deshacer").isEnabled(),
+                        "por LAN, Deshacer queda desactivado");
+                    require(visibleLabel(lanViews[0].getContentPane(), "Blancas: invitado   |   Negras: Ana") != null,
+                        "la barra muestra los nombres de los dos jugadores");
+                });
+                lanMove(lanViews, lanGames, 0, "f2", "f3");
+                lanMove(lanViews, lanGames, 1, "e7", "e5");
+                lanMove(lanViews, lanGames, 0, "g2", "g4");
+                lanMove(lanViews, lanGames, 1, "d8", "h4");
+                waitFor(() -> lanGames[0].isGameOver() && lanGames[1].isGameOver(),
+                    "el mate debe verse en las dos ventanas");
+                SwingUtilities.invokeAndWait(() -> {
+                    require(lanGames[0].getBoard().equals(lanGames[1].getBoard()), "los dos tableros deben quedar iguales");
+                    require(guestAccounts.ranking().get(0).getPoints() == 3 && hostAccounts.ranking().isEmpty(),
+                        "a Ana le suma la victoria por LAN; el invitado no suma");
+                });
+            } finally {
+                SwingUtilities.invokeAndWait(() -> {
+                    for (SwingChessView lanView : lanViews) if (lanView != null) lanView.dispose();
+                });
+            }
+            System.out.println("[OK]   Swing: por LAN, lista de partidas, conexion, mate del loco en las dos ventanas y puntos para Ana");
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
@@ -272,7 +334,7 @@ public class SwingIntegrationTests {
 
     // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.
     private static GameBuilder builder(AccountService accounts, int size) {
-        return (v, white, black, level, aiColor) -> {
+        return (v, white, black, level, aiColor, lan) -> {
             PieceFactory pieces = PieceFactory.standard();
             Board board = size == 8 ? BoardSetup.standard(pieces) : BoardSetup.custom(size, size, backRow(size), pieces);
             before = board.cloneBoard();
@@ -288,6 +350,80 @@ public class SwingIntegrationTests {
                 ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
             return new Match(game, opponent);
         };
+    }
+
+    // El armado de MainSwing para una partida por LAN; guarda cada partida en games[index].
+    private static GameBuilder lanBuilder(AccountService accounts, IChessGame[] games, int index) {
+        return (v, white, black, level, aiColor, lan) -> {
+            PieceFactory pieces = PieceFactory.standard();
+            ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+            List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(v, recorder));
+            if (lan != null) moveListeners.add(lan);
+            IChessGame lanGame = new ChessGame(BoardSetup.standard(pieces), moveListeners,
+                Arrays.<IGameStatusListener>asList(v, recorder),
+                Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(),
+                    new PromotionMove(pieces, lan != null ? lan : v)),
+                Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+            recorder.attachGame(lanGame);
+            OpponentController opponent = null;
+            if (lan != null) {
+                lan.attachGame(lanGame);
+                opponent = new OpponentController(lanGame, lan, lan.getRivalColor());
+            }
+            games[index] = lanGame;
+            return new Match(lanGame, opponent);
+        };
+    }
+
+    // Juega una jugada con clicks en la ventana index (0 blancas, 1 negras, que ve el tablero
+    // girado) y espera a que la otra ventana la reciba por la red.
+    private static void lanMove(SwingChessView[] views, IChessGame[] games, int index, String from, String to) throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            lanSquare(views[index], from, index == 1).doClick();
+            lanSquare(views[index], to, index == 1).doClick();
+        });
+        int other = 1 - index;
+        waitFor(() -> games[other].getBoard().pieceAt(Position.fromAlgebraic(to)) != null
+                && games[other].getBoard().pieceAt(Position.fromAlgebraic(from)) == null,
+            "la jugada " + from + " " + to + " debe llegar a la otra ventana");
+    }
+
+    private static JButton lanSquare(SwingChessView lanView, String text, boolean flipped) {
+        JPanel board = (JPanel) named(lanView.getContentPane(), "board");
+        Position position = Position.fromAlgebraic(text);
+        int index = flipped
+            ? position.getRow() * 8 + (7 - position.getColumn())
+            : (7 - position.getRow()) * 8 + position.getColumn();
+        return (JButton) board.getComponent(index);
+    }
+
+    // Espera (hasta 8 segundos) a que se cumpla la condición, mirándola en el hilo de la interfaz.
+    private static void waitFor(BooleanSupplier condition, String message) throws Exception {
+        long deadline = System.currentTimeMillis() + 8000;
+        boolean[] done = {false};
+        while (!done[0] && System.currentTimeMillis() < deadline) {
+            SwingUtilities.invokeAndWait(() -> done[0] = condition.getAsBoolean());
+            if (!done[0]) Thread.sleep(50);
+        }
+        require(done[0], message);
+    }
+
+    private static JButton visibleButton(Container container, String text) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof JButton && text.equals(((JButton) component).getText()) && component.isShowing()) {
+                return (JButton) component;
+            }
+            if (component instanceof Container) {
+                JButton found = visibleButton((Container) component, text);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private static JLabel visibleLabel(Container container, String text) {
+        JLabel found = label(container, text);
+        return found != null && found.isShowing() ? found : null;
     }
 
     // Fila trasera de cualquier ancho: la estándar y, si sobran columnas, torres.
