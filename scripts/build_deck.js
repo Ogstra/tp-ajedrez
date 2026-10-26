@@ -223,19 +223,19 @@ function callout(slide, head, text, x, y, w) {
   arrow(s, 8.4, 3.72, 9.15, 3.72, ACCENT);
   panel(s, 0.7, 5.85, 11.9, 0.85, WHITE);
   s.addText([
-    { text: "nucleo", options: { fontFace: MONO, bold: true, color: ACCENT } },
+    { text: "core", options: { fontFace: MONO, bold: true, color: ACCENT } },
     { text: " no importa nada de ", options: { fontFace: BODY, color: INK } },
-    { text: "adaptadores", options: { fontFace: MONO, bold: true, color: ACCENT } },
+    { text: "adapters, network", options: { fontFace: MONO, bold: true, color: ACCENT } },
     { text: " ni de ", options: { fontFace: BODY, color: INK } },
     { text: "ai", options: { fontFace: MONO, bold: true, color: ACCENT } },
-    { text: ". Por eso la ventana y la IA se agregaron sin tocar el núcleo.", options: { fontFace: BODY, color: INK } },
+    { text: ". Por eso la ventana, la IA y la red se agregaron sin tocar el núcleo.", options: { fontFace: BODY, color: INK } },
   ], { x: 1.0, y: 5.85, w: 11.3, h: 0.85, margin: 0, valign: "middle", fontSize: 18 });
 }
 
 // ---------- 4. UML ----------
 {
   const s = content("Diagrama de clases", "El UML refleja el código real",
-    "Recorrer el diagrama por paquetes: nucleo, puertos, adaptadores y ai. Señalar la interfaz IChessGame como única entrada y las estrategias de movimiento.");
+    "Recorrer el diagrama por paquetes: core, ports, adapters, network, accounts, skins y ai (en inglés, como pide la convención de la cátedra). Señalar la interfaz IChessGame como única entrada y las estrategias de movimiento.");
   label(s, "Qué mirar", 0.7, 1.95, 3.8, { head: true, size: 20, bold: true });
   rows(s, [
     "Una sola entrada: IChessGame",
@@ -534,7 +534,7 @@ function callout(slide, head, text, x, y, w) {
 // ---------- 17. usuarios y ranking ----------
 {
   const s = content("Usuarios y ranking", "Un puerto de salida más, sin tocar el núcleo",
-    "Las cuentas no son reglas del ajedrez: viven en el paquete usuarios. ScoreRecorder escucha la partida con los mismos listeners que la consola y la ventana, y acredita el resultado. Guardar es un puerto, IAccountStore; hoy lo implementa un CSV y mañana podría ser una base de datos sin cambiar nada más.");
+    "Las cuentas no son reglas del ajedrez: viven en el paquete accounts. ScoreRecorder escucha la partida con los mismos listeners que la consola y la ventana, y acredita el resultado. Guardar es un puerto, IAccountStore; hoy lo implementa un CSV y mañana podría ser una base de datos sin cambiar nada más.");
   box(s, "ChessGame", 0.7, 2.0, 2.6, 0.8, { mono: true, bold: true, size: 14 });
   box(s, "ScoreRecorder\n(Observer)", 4.0, 2.0, 2.9, 0.8, { mono: true, size: 13, line: ACCENT, lineWidth: 1.5, fill: ACCENT_SOFT });
   box(s, "AccountService", 7.6, 2.0, 2.6, 0.8, { mono: true, bold: true, size: 14 });

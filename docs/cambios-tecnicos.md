@@ -2,7 +2,7 @@
 
 Este documento resume, de forma técnica, todo lo que se agregó y cambió en esta etapa del trabajo: qué se hizo, por qué y cómo está implementado. Para el detalle de cada tema hay documentos propios: `docs/cambios-usuarios-y-ranking.md`, `docs/juego-en-red.md` y `docs/skins.md`.
 
-El principio de siempre se mantuvo: **el núcleo (`src/nucleo`) no cambió**. Todo lo nuevo son adaptadores, servicios afuera del núcleo o pantallas, conectados en los composition roots (`Main` y `MainSwing`).
+El principio de siempre se mantuvo: **el núcleo (`src/core`) no cambió**. Todo lo nuevo son adaptadores, servicios afuera del núcleo o pantallas, conectados en los composition roots (`Main` y `MainSwing`).
 
 ## Resumen
 
@@ -10,8 +10,8 @@ El principio de siempre se mantuvo: **el núcleo (`src/nucleo`) no cambió**. To
 |---|---|
 | Login | La ventana y la consola arrancan con el login (entrar, registrarse o invitado). El registro tiene su propia vista. |
 | Puntos | Suman las partidas contra la IA y por LAN. El 1 contra 1 en la misma PC no suma. |
-| Juego por LAN | Modo nuevo "Por LAN": lista de partidas de la red, sin escribir IPs. Paquete `red/`. |
-| Skins | Skins desbloqueables por puntos (piezas y colores del tablero): Clásico, Staunton, Age of Empires y Minecraft. Paquete `skins/`. |
+| Juego por LAN | Modo nuevo "Por LAN": lista de partidas de la red, sin escribir IPs. Paquete `network/`. |
+| Skins | Skins desbloqueables por puntos (piezas y colores del tablero): Clásico, Staunton y Medieval (hasta el 26/10 había "Age of Empires" y "Minecraft"; ver la sección 8). Paquete `skins/`. |
 | Ventana | Bordes completos con la pantalla escalada, imágenes nítidas, ícono propio, menos textos de relleno. |
 | Pruebas | 65 del juego, 20 de usuarios, 6 de LAN, 9 de skins, 4 de consola y la prueba de la ventana real con LAN y skins. |
 
@@ -65,14 +65,14 @@ Dos PCs de la misma red juegan sin escribir ninguna IP: una crea la partida y la
 
 | Para qué | Protocolo | Puerto | Mensaje |
 |---|---|---|---|
-| Anunciar partidas | UDP broadcast | 5001 | `AJEDREZ;<id>;<nombre>;5000`, cada segundo |
-| Jugar | TCP | 5000 | `HOLA;<nombre>` al conectarse; después una jugada por línea: `e2 e4`, o `e7 e8 Q` si corona; `CHAU` al salir |
+| Anunciar partidas | UDP broadcast | 47123 (configurable con `-Dajedrez.lan.port`) | `AJEDREZ;<id>;<nombre>;<puerto TCP>`, cada segundo |
+| Jugar | TCP | libre, lo elige el sistema (antes 5000, que en macOS ocupa AirPlay) | `HOLA;<nombre>` al conectarse; después una jugada por línea: `e2 e4`, o `e7 e8 Q` si corona; `CHAU` al salir |
 
 - **UDP** permite mandar un mensaje a todas las PCs de la red sin saber quiénes son. Si un aviso se pierde no importa, porque llega otro al segundo.
 - **TCP** garantiza que las jugadas lleguen completas y en orden, y avisa si el otro se va.
 - Cada PC tiene su propio `ChessGame` y aplica las jugadas del rival con `tryMove`, con las mismas reglas. Solo viajan jugadas, nunca el tablero, y las dos partidas terminan iguales.
 
-### Clases (`src/red`)
+### Clases (`src/network`)
 
 | Clase | Responsabilidad |
 |---|---|
@@ -109,8 +109,7 @@ Una skin cambia las piezas y los colores del tablero. Se desbloquea cuando los p
 |---|---|---|
 | Clásico | 0 | — |
 | Staunton | 6 | 2 victorias |
-| Age of Empires | 15 | 5 victorias |
-| Minecraft | 30 | 10 victorias |
+| Medieval | 15 | 5 victorias |
 
 Para agregar una skin alcanza con una carpeta con las 12 imágenes (`wK`…`bP`) y una línea en el catálogo, sin tocar código.
 
@@ -120,11 +119,11 @@ Para agregar una skin alcanza con una carpeta con las 12 imágenes (`wK`…`bP`)
 |---|---|---|
 | `Skin` | `skins` | Value object. Los colores van como texto hexadecimal para no depender de Swing. |
 | `SkinService` | `skins` | Desbloqueo (`puntos del usuario >= puntos que pide`), skin en uso y elección (rechaza las bloqueadas). Un invitado tiene 0 puntos y su elección dura la sesión. Si los puntos bajan, se vuelve a la de siempre sin perder la elección. |
-| `ISkinStore` | `puertos` | Puerto de salida: dónde se guarda la skin elegida por cada usuario. |
-| `FileSkinStore` | `adaptadores` | Lo implementa con `data/skins.csv` (`idUsuario;idSkin`). |
-| `FileSkinCatalog` | `adaptadores` | Lee el catálogo; saltea comentarios y líneas mal formadas. |
-| `SkinImages` | `adaptadores` | Lee las imágenes una vez por carpeta. Quita el margen transparente sobrante con un único recuadro para las 12 piezas (el más chico que las contiene a todas), así llenan la casilla sin cambiar sus tamaños relativos ni la alineación de las bases. |
-| `SkinsPanel` | `adaptadores` | Pantalla Skins: "Tus puntos", vista previa (cuatro casillas con el rey) y "En uso", **Usar** o los puntos que pide. |
+| `ISkinStore` | `skins` | Puerto de salida: dónde se guarda la skin elegida por cada usuario. |
+| `FileSkinStore` | `adapters` | Lo implementa con `data/skins.csv` (`idUsuario;idSkin`). |
+| `SkinCatalogReader` | `adapters` | Lee el catálogo; saltea comentarios y líneas mal formadas. |
+| `SkinImages` | `adapters` | Lee las imágenes una vez por carpeta. Quita el margen transparente sobrante con un único recuadro para las 12 piezas (el más chico que las contiene a todas), así llenan la casilla sin cambiar sus tamaños relativos ni la alineación de las bases. |
+| `SkinsPanel` | `adapters` | Pantalla Skins: "Tus puntos", vista previa (cuatro casillas con el rey) y "En uso", **Usar** o los puntos que pide. |
 
 Se agregó `AccountService.pointsOf(user)`, que devuelve 0 para un invitado. `MainSwing` arma el `SkinService`, y la ventana pide la skin en uso al empezar cada partida (la de quien entró, en cualquier modo).
 
@@ -132,12 +131,12 @@ Se agregó `AccountService.pointsOf(user)`, que devuelve 0 para un invitado. `Ma
 
 **Nuevos**
 
-- `src/red/`: `LanAnnouncer`, `LanBrowser`, `LanConnection`, `LanGame`, `LanOpponent`.
+- `src/network/`: `LanAnnouncer`, `LanBrowser`, `LanConnection`, `LanGame`, `LanOpponent`.
 - `src/skins/`: `Skin`, `SkinService`.
-- `src/puertos/ISkinStore.java`.
-- `src/adaptadores/`: `LoginPanel`, `LanPanel`, `SkinsPanel`, `SkinImages`, `SmoothImage`, `FileSkinStore`, `FileSkinCatalog`.
+- `src/skins/ISkinStore.java`.
+- `src/adapters/`: `LoginPanel`, `LanPanel`, `SkinsPanel`, `SkinImages`, `SmoothImage`, `FileSkinStore`, `SkinCatalogReader`.
 - `src/LanTests.java`, `src/SkinTests.java`.
-- `src/assets/icono.png`, `src/assets/skins/` (catálogo, créditos y las carpetas de piezas).
+- `src/assets/icono/` (el ícono en 7 tamaños), `src/assets/skins/` (catálogo, créditos y las carpetas de piezas).
 - `docs/juego-en-red.md`, `docs/skins.md` y este documento.
 
 **Modificados**
@@ -160,3 +159,19 @@ java --class-path out scripts/SwingIntegrationTests.java
 - `SkinTests` (9): desbloqueo por puntos, rechazo de una bloqueada, skin en uso, vuelta a la de siempre si bajan los puntos, invitado, archivo por usuario y lectura del catálogo.
 - `test-console.sh` (4): invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma y login persistente.
 - `SwingIntegrationTests`: la ventana real con login, registro, menú, skins, 1 contra 1, la IA en tres niveles y dos colores, deshacer, rehacer, ranking, un tablero de 10x10 y una partida por LAN entre dos ventanas (lista, conexión, mate del loco en las dos y puntos para quien estaba registrado).
+
+## 8. Arreglos del 26/10: multiplataforma y normas de la cátedra
+
+| Problema | Arreglo |
+|---|---|
+| El ícono solo se veía en Windows | Se cargan los tamaños estándar (16 a 256) con `setIconImages` y Java elige cuál usar; en macOS se pone el del Dock con `Taskbar`. |
+| El ícono se preescalaba a mano a 13 tamaños | Ya no: los PNG están en `src/assets/icono/` y el sistema elige. Las piezas usan imágenes de varias resoluciones (`SmoothImage`). |
+| Las piezas no seguían el tamaño de la ventana | El tablero pasó a `BoardView`: al agrandar o achicar la ventana, las casillas se ajustan y las piezas se rehacen a ese tamaño. |
+| La partida por LAN usaba el puerto 5000 (AirPlay en macOS) | Puerto libre elegido por el sistema; avisos en el 47123, configurable. `SO_REUSEPORT` en macOS y Linux. |
+| Recursos leídos de `src/assets` con una ruta relativa | Se leen del classpath (`Assets`): andan desde cualquier carpeta y en cualquier sistema. `build.sh` copia los recursos y compila con `--release 21`. |
+| Paquetes en español (`nucleo`, `adaptadores`, ...) | En inglés (`core`, `adapters`, ...): la convención de la cátedra es identificadores en inglés y comentarios en español. |
+| `ports` dependía de `accounts` (y el núcleo, de forma transitiva, de los usuarios) | `IAccountStore` pasó a `accounts` e `ISkinStore` a `skins`. |
+| La ventana creaba el rival por LAN con `new` y la pantalla de LAN manejaba sockets | `GameBuilder.overLan` arma la partida por LAN; `LanLobby` maneja la red y `LanPanel` solo muestra. `GameBuilder` depende de `IGameView`. |
+| Lo que llegaba por la red se usaba sin validar | Nombres limpios, líneas acotadas, jugadas validadas contra las legales (ver `docs/juego-en-red.md`). |
+| Skins con marcas y personajes de terceros | "Age of Empires" pasó a "Medieval"; se sacó la de Minecraft (ver `src/assets/skins/CREDITS.md`). |
+| `scripts/Capture.java` no compilaba y `list_types.py` pedía Python | Se borró `Capture.java`; la lista del UML se genera con `java scripts/ListTypes.java`. |

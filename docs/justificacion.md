@@ -6,7 +6,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 1. El núcleo no conoce a los adaptadores
 
-**Qué.** Las reglas del ajedrez viven en el paquete `nucleo`, que no importa nada de `adaptadores` ni de `ai`. La consola, la ventana y la IA son piezas externas que dependen del núcleo, nunca al revés.
+**Qué.** Las reglas del ajedrez viven en el paquete `core`, que no importa nada de `adapters`, `network`, `accounts`, `skins` ni `ai`. La consola, la ventana, la red, los usuarios y la IA son piezas externas que dependen del núcleo, nunca al revés.
 
 **Por qué.** La prueba es una sola pregunta: si cambia la tecnología, ¿esto cambia? Las reglas no cambian si pasamos de consola a ventana, por eso son núcleo. Gracias a esto la ventana Swing se agregó después sin tocar `ChessGame`, y el núcleo se prueba sin levantar ninguna infraestructura.
 
@@ -22,7 +22,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 3. Inyección de dependencias por constructor
 
-**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores. En la ventana, cada vez que se aprieta Jugar la partida la arma un `GameBuilder` que implementa `MainSwing`: devuelve el juego, el que acredita los puntos y, si corresponde, la IA. La vista no crea ninguno de esos colaboradores con `new`.
+**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores. En la ventana, cada partida la arma un `GameBuilder` que implementa `MainSwing`, con dos métodos: `local` (1 contra 1 o contra la IA) y `overLan` (contra otra PC). Devuelve el juego, el que acredita los puntos y, si corresponde, la IA o el rival por LAN. `GameBuilder` recibe un `IGameView` (lo que la partida necesita de una pantalla), no la ventana concreta. La vista no crea ninguno de esos colaboradores con `new`.
 
 **Por qué.** Es el nivel 4 de inyección. Permite probar el núcleo con dobles de prueba (un stub que siempre corona a reina, un mock que registra los avisos) y cambiar el comportamiento sin editar `ChessGame`. El tablero y las cuatro listas son colaboradores distintos; el constructor deja esas dependencias explícitas.
 
@@ -102,21 +102,69 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 11 bis. Usuarios y ranking también viven afuera del núcleo
 
-**Qué.** El paquete `usuarios` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
+**Qué.** El paquete `accounts` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`, en el mismo paquete `accounts`: es el puerto que necesitan las cuentas, no el núcleo) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
 
 **Por qué.** Quién juega y cuántas partidas ganó no es una regla del ajedrez. Como `ScoreRecorder` implementa los mismos `IMoveListener` e `IGameStatusListener` que ya usaban la consola y la ventana, no se tocó ninguna clase del núcleo. Cambiar el CSV por otra forma de guardar es escribir otro adaptador de `IAccountStore`. Deshacer la jugada final revierte el resultado y rehacerla lo vuelve a sumar, para que una misma partida no cuente dos veces.
 
 **Cuándo se rompería.** Con usuarios reales haría falta contraseña, y el CSV no soporta bien dos procesos escribiendo a la vez; ahí convendría una base de datos detrás del mismo puerto.
 
-## 12. Tests del núcleo con un runner propio
+## 12. La red es otro adaptador, y el núcleo arbitra
 
-**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías.
+**Qué.** El juego por LAN vive en `network/`. El rival de la otra PC (`LanOpponent`) es un `IOpponent` más: en vez de pensar la jugada, la espera por la red. Cada PC tiene su propio `ChessGame` y por la red solo viajan jugadas. Lo que llega se valida: el nombre del rival se limpia (`LanNames`), una línea más larga de lo que el juego usa se corta, y una jugada mal formada o que no está entre las legales de la partida cierra la conexión.
+
+**Por qué.** Es la idea de la Unidad 5 con la IA: el otro lado propone y el núcleo decide. Otra PC puede tener otra versión del juego o alguien puede mandar cualquier cosa al puerto, y eso no puede trabar ni romper la partida. Como el rival entra por las mismas interfaces que la IA (`IOpponent`, `IMoveListener`, `IPromotionChooser`), el núcleo no cambió para que exista la red.
+
+**Cuándo se rompería.** Si hubiera que jugar por internet o con desconocidos, haría falta autenticación y un servidor que arbitre; validar en cada punta deja de alcanzar.
+
+## 13. Sin puerto fijo para la partida
+
+**Qué.** Quien crea la partida abre el socket en el puerto 0 (el sistema elige uno libre) y lo anuncia por UDP. El único puerto fijo es el de los avisos, 47123, y se cambia con `-Dajedrez.lan.port`.
+
+**Por qué.** La primera versión usaba el 5000, que en macOS ocupa el receptor de AirPlay: en una Mac la partida no se podía crear. Un puerto elegido por el sistema no choca con ningún programa. Los avisos sí necesitan un puerto acordado para que las dos PCs se encuentren, así que se eligió uno fuera de los conocidos y se dejó configurable. En macOS y Linux además se activa `SO_REUSEPORT` para poder buscar con dos ventanas en la misma máquina; Windows no lo tiene y no lo necesita.
+
+**Cuándo se rompería.** Si una red bloqueara el broadcast (pasa en redes de facultad o de invitados), la lista quedaría vacía y haría falta poder escribir la IP a mano.
+
+## 14. La pantalla no maneja sockets
+
+**Qué.** `LanLobby` (en `network/`) busca partidas, crea una y espera rival, o se une a una de la lista, cada cosa en su hilo. `LanPanel` solo muestra la lista y los botones, y recibe el lobby por constructor.
+
+**Por qué.** Antes la pantalla abría el `ServerSocket`, lanzaba los hilos y armaba el rival: tenía dos razones para cambiar (cómo se ve y cómo se conecta). Separado, cada una cambia sola (SRP) y el lobby se prueba sin ventana (`LanTests.testHostedGameUsesAFreePortAndConnects`).
+
+**Cuándo se rompería.** Si la conexión fuera un solo botón sin estados, una clase aparte sería indirección de más.
+
+## 15. El tablero de la ventana es su propio componente y sigue a la ventana
+
+**Qué.** `BoardView` dibuja las casillas, las coordenadas y las piezas; `SwingChessView` maneja las pantallas y el turno. Cuando la ventana cambia de tamaño, `BoardView.fitTo` calcula el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño, con imágenes de varias resoluciones (`SmoothImage`) para que se vean nítidas con la pantalla escalada (125 %, 150 %, Retina).
+
+**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento) y se guardan por tamaño (caching).
+
+**Cuándo se rompería.** Si la ventana tuviera un tamaño fijo, recalcular las casillas sería trabajo de más.
+
+## 16. Los recursos se leen del classpath
+
+**Qué.** El ícono, las piezas y el catálogo de skins se leen con `getResourceAsStream` (`Assets`), no con una ruta como `src/assets/...`. `build.sh` copia los recursos al lado de las clases e IntelliJ lo hace solo. El ícono se carga en sus tamaños estándar (16 a 256) con `setIconImages`, que deja que Java elija el que corresponde a cada lugar; en macOS, donde el ícono de la ventana no se usa, se pone el del Dock con `Taskbar`.
+
+**Por qué.** Con la ruta relativa, el juego dependía de la carpeta desde la que se lo ejecutaba: corrido desde otra carpeta, o en una Mac desde el IDE con otro directorio de trabajo, quedaba sin ícono y sin piezas. Y el ícono solo aparecía en Windows. Es portabilidad, un requisito no funcional: tiene que andar igual en las PCs de todo el grupo.
+
+**Cuándo se rompería.** Si los recursos tuvieran que poder cambiarse sin recompilar (por ejemplo, skins que agrega el usuario), habría que leerlos de una carpeta configurable además del classpath.
+
+## 17. Las skins son datos, y sin derechos de terceros
+
+**Qué.** El catálogo de skins es un archivo (`assets/skins/skins.csv`) más una carpeta con las 12 piezas. `SkinService` decide cuáles están desbloqueadas por los puntos del ranking y la elegida se guarda por el puerto `ISkinStore`. Solo se incluyen imágenes con licencia que lo permita y con autor citado.
+
+**Por qué.** Una skin nueva no toca código (Open/Closed llevado a datos). Y la Unidad 5 pide respetar la propiedad intelectual: por eso "Age of Empires" pasó a llamarse "Medieval" (era una marca) y se sacó la skin de Minecraft, que usaba personajes y texturas de Mojang sin una licencia que cubra este uso. `SkinTests` revisa que ninguna skin del catálogo use esas marcas.
+
+**Cuándo se rompería.** Si las skins necesitaran comportamiento propio (animaciones, sonidos), un archivo de datos no alcanzaría y cada una sería una clase.
+
+## 18. Tests del núcleo con un runner propio
+
+**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías. Afuera del núcleo hay tests de integración de los adaptadores: `LanTests` (dos partidas conectadas por la propia máquina), `SkinTests` y `scripts/SwingIntegrationTests.java`, que maneja la ventana real (pirámide de testing: muchos unitarios, menos de integración y uno de sistema).
 
 **Por qué.** Corren solo con `javac`, sin infraestructura, que es lo que pide la consigna, y no hay nada para instalar ni explicar en la defensa.
 
 **Cuándo se rompería.** En un proyecto real con un equipo grande convendría JUnit, por el reporte, los filtros y la integración con las herramientas.
 
-## 13. Simplificaciones declaradas
+## 19. Simplificaciones declaradas
 
 - La repetición de posición ignora los derechos de enroque y de captura al paso.
 - La simulación de captura al paso no retira el peón capturado: puede permitir un jaque descubierto horizontal y también rechazar una captura que eliminaría al peón que da jaque.

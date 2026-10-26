@@ -36,7 +36,7 @@ Las fases 0 a 6 estan implementadas y revisadas. El codigo y los entregables se 
 1. Rehacer un mate o unas tablas restaura el estado terminal correctamente, pero el mensaje de Swing solo dice que se rehizo la jugada. Se podria volver a informar el resultado sin recalcularlo.
 2. La condicion que impide el doble paso fuera de la fila inicial es correcta, pero el test actual solo comprueba el camino libre y sus bloqueos desde la fila inicial. Se podria sumar el caso fuera de esa fila.
 
-Estas observaciones no bloquean la entrega. Las simplificaciones funcionales aceptadas se explican en la seccion 13 de docs/justificacion.md.
+Estas observaciones no bloquean la entrega. Las simplificaciones funcionales aceptadas se explican en la seccion 19 de docs/justificacion.md.
 
 ## Datos y UML que completa el grupo
 
@@ -55,3 +55,21 @@ Franco dibuja el UML usando docs/uml-checklist.md. No se genero ningun diagrama.
 | README, justificacion, lista del UML, captura y presentacion (19 diapositivas) al dia | |
 
 Verificacion actual: ./scripts/test.sh da 65 y 20 pasados mas tres escenarios de consola; java --class-path out scripts/SwingIntegrationTests.java pasa el recorrido completo y el tablero de 10x10. El UML sigue pendiente.
+
+## Despues del 26/10: multiplataforma y normas de la catedra
+
+Rama `fix/catedra-multiplataforma` (sale de `feat/login-separado`, con `main` unido). El detalle esta en la seccion 8 de `docs/cambios-tecnicos.md` y las decisiones en las secciones 12 a 17 de `docs/justificacion.md`.
+
+| Cambio | Pruebas |
+|---|---|
+| Paquetes en ingles (`core`, `ports`, `adapters`, `network`, `accounts`) y puertos de cuentas y skins en su modulo | todas, sin cambios de comportamiento |
+| Icono en todos los tamanos con `setIconImages` y en el Dock de macOS con `Taskbar` | integracion Swing |
+| Recursos por classpath; `build.sh` copia los assets y compila con `--release 21` | integracion Swing y prueba desde otra carpeta |
+| Tablero en `BoardView`, que sigue el tamano de la ventana | integracion Swing (80 -> 117 px al agrandar) |
+| LAN sin el puerto 5000: puerto libre para la partida, avisos en 47123 configurable, `SO_REUSEPORT` | 13 de LAN |
+| `LanLobby` separado de la pantalla; `GameBuilder.overLan` y `IGameView` | 13 de LAN e integracion Swing |
+| Validacion de lo que llega por la red | 13 de LAN |
+| Skins sin marcas de terceros | 10 de skins |
+| `normativa-catedra.md`, `gobernanza-y-calidad.md`, justificacion, README y lista del UML al dia | |
+
+Verificacion: `./scripts/test.sh` da 65, 20, 13 y 10 pasados mas cuatro escenarios de consola; `java --class-path out scripts/SwingIntegrationTests.java` pasa los cinco recorridos. Probado en Windows 11 con JDK 26 compilando con `--release 21`. Falta probar en una Mac real (ver `.planning/AUDIT.md`). La presentacion y `justificacion.docx` hay que regenerarlas (`node scripts/build_deck.js` y `scripts/md_to_docx.py`), y el UML sigue pendiente.
