@@ -38,23 +38,38 @@ public class LanConnection {
 
     // Quien crea la partida: espera hasta que alguien se una. Se cancela cerrando el server.
     public static LanConnection waitForRival(ServerSocket server) throws IOException {
-        return new LanConnection(server.accept());
+        return open(server.accept());
     }
 
     // Quien se une: se conecta a la PC que anunció la partida.
     public static LanConnection connect(InetAddress address, int port) throws IOException {
         Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(address, port), CONNECT_TIMEOUT_MS);
-        return new LanConnection(socket);
+        try {
+            socket.connect(new InetSocketAddress(address, port), CONNECT_TIMEOUT_MS);
+        } catch (IOException e) {
+            socket.close(); // no queda un socket abierto por cada intento fallido
+            throw e;
+        }
+        return open(socket);
+    }
+
+    // Arma la conexión sobre un socket ya conectado; si no se puede, lo cierra.
+    private static LanConnection open(Socket socket) throws IOException {
+        try {
+            return new LanConnection(socket);
+        } catch (IOException e) {
+            socket.close();
+            throw e;
+        }
     }
 
     // Saludo al conectarse: cada uno manda "HOLA;su nombre" y lee el del otro. Devuelve el
     // nombre del rival ya limpio (ver LanNames), o null si lo que llegó no es del juego o no
-    // llegó a tiempo. Después del saludo la espera de jugadas no tiene límite: el rival piensa.
+    // llegó a tiempo. El plazo es para el saludo entero, no por cada lectura: alguien que manda
+    // un byte por vez no retiene la espera. Después del saludo, esperar jugadas no tiene límite.
     public String greet(String ownName) throws IOException {
         send(HELLO + ";" + LanNames.clean(ownName));
-        socket.setSoTimeout(GREETING_TIMEOUT_MS);
-        String line = receive();
+        String line = readLine(System.currentTimeMillis() + GREETING_TIMEOUT_MS);
         socket.setSoTimeout(0);
         if (line == null || !line.startsWith(HELLO + ";")) return null;
         return LanNames.clean(line.substring(HELLO.length() + 1));
@@ -68,9 +83,21 @@ public class LanConnection {
     // salió de la partida o se cortó la red) o si manda una línea más larga de lo que el juego
     // usa: lo que llega de la otra PC no es confiable y no se guarda sin límite en memoria.
     public String receive() {
+        return readLine(0);
+    }
+
+    // Lee una línea; con deadline > 0, devuelve null si no termina de llegar antes de ese momento.
+    private String readLine(long deadline) {
         try {
             StringBuilder line = new StringBuilder();
-            for (int c = in.read(); c != '\n'; c = in.read()) {
+            while (true) {
+                if (deadline > 0) {
+                    long left = deadline - System.currentTimeMillis();
+                    if (left <= 0) return null;
+                    socket.setSoTimeout((int) left);
+                }
+                int c = in.read();
+                if (c == '\n') break;
                 if (c == -1) return null;
                 if (c == '\r') continue;
                 if (line.length() == MAX_LINE) return null;

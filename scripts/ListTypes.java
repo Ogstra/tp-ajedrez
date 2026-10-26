@@ -44,7 +44,8 @@ public class ListTypes {
 
     public static void main(String[] args) throws IOException {
         // Conserva la sección manual de patrones al regenerar el inventario.
-        String previous = Files.exists(OUT) ? Files.readString(OUT, StandardCharsets.UTF_8) : "";
+        String previous = Files.exists(OUT)
+            ? Files.readString(OUT, StandardCharsets.UTF_8).replace("\r\n", "\n") : "";
         String manual = previous.contains(MARKER) ? previous.substring(previous.indexOf(MARKER)).strip() : "";
 
         List<Path> files;

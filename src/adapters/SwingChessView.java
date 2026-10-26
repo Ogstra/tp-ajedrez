@@ -197,6 +197,8 @@ public class SwingChessView extends JFrame implements IGameView {
         // La skin es de quien entró, en cualquier modo.
         boardView.setup(board, flipped, skins.selected(user), startSquareSize(board));
         fitWindow(boardView.getSquareSize(), board.getRows(), board.getColumns());
+        // Si la persona ya había agrandado la ventana, fitWindow no la cambia: el tablero ocupa el lugar que hay.
+        if (boardHolder.getWidth() > 0) boardView.fitTo(boardHolder.getSize());
         boardView.render(board);
         showCard(GAME);
         playOpponentIfNeeded();

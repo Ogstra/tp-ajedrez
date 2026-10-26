@@ -27,11 +27,11 @@ Al arrancar (en consola y en ventana) se inicia sesión, se registra un usuario 
 
 Cuando una partida contra la IA termina se acredita el resultado: 3 puntos por victoria, 1 por empate, 0 por derrota. Si se deshace la jugada final, el resultado se revierte, y si se rehace vuelve a sumarse. El ranking se ordena por puntos, después por victorias y después por nombre. En la consola se ve con el comando `ranking` (y se muestra solo al terminar una partida con usuario) y en la ventana con el botón Ranking.
 
-Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra carpeta: `java -Dajedrez.data=otra_carpeta -cp out Main`. Los cambios técnicos están explicados en `docs/cambios-usuarios-y-ranking.md`.
+Los datos quedan en `data/usuarios.csv` (no se sube al repo). Ojo: `data/` es relativo a la carpeta desde la que se corre el juego (a diferencia de los recursos, que salen del classpath); conviene correrlo siempre desde la raíz del repo, o fijar la carpeta. Para usar otra carpeta: `java -Dajedrez.data=otra_carpeta -cp out Main`. Los cambios técnicos están explicados en `docs/cambios-usuarios-y-ranking.md`.
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, 13 del juego por LAN (incluidas las de datos inválidos que llegan por la red), 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana y una partida por LAN entre dos ventanas):
+`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, 15 del juego por LAN (incluidas las de datos inválidos que llegan por la red y la cancelación al unirse), 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana y una partida por LAN entre dos ventanas):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java

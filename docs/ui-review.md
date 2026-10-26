@@ -5,7 +5,7 @@
 **Capturas:** renderizadas fuera de pantalla con Java (menú, partida y ranking); no se guardan en el repo
 **Alcance:** `MenuPanel`, `SwingChessView` (partida) y `RankingPanel`
 
-El proyecto no usa el flujo por fases de GSD (no hay `.planning/` ni SUMMARY), así que la auditoría se hizo sobre el código y las capturas, y el resultado queda acá. Los comandos de búsqueda del auditor son de Tailwind y no aplican a Swing: se reemplazaron por búsquedas de `Color`, `Font`, `Insets`, `setText` y `setEnabled`.
+Cuando se hizo esta revisión el proyecto no usaba el flujo por fases de GSD (desde el 26/10 el contexto está en `.planning/`), así que la auditoría se hizo sobre el código y las capturas, y el resultado queda acá. Los comandos de búsqueda del auditor son de Tailwind y no aplican a Swing: se reemplazaron por búsquedas de `Color`, `Font`, `Insets`, `setText` y `setEnabled`.
 
 ---
 

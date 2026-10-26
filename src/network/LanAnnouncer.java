@@ -22,9 +22,15 @@ public class LanAnnouncer {
     // coincidir en algo para encontrarse; el de la partida lo elige el sistema (ver LanLobby).
     // No se usa 5000 ni 7000: en macOS los ocupa el receptor de AirPlay. Si en alguna red está
     // ocupado, se cambia al arrancar con -Dajedrez.lan.port=otro (igual en las dos PCs).
-    public static final int DISCOVERY_PORT = Integer.getInteger("ajedrez.lan.port", 47123);
+    public static final int DISCOVERY_PORT = discoveryPort();
     public static final String PREFIX = "AJEDREZ";    // para ignorar paquetes que no son del juego
     private static final int INTERVAL_MS = 1000;
+
+    // El puerto pedido con -Dajedrez.lan.port, si es válido (1025 a 65535); si no, el de siempre.
+    private static int discoveryPort() {
+        Integer requested = Integer.getInteger("ajedrez.lan.port");
+        return requested != null && requested > 1024 && requested <= 65535 ? requested : 47123;
+    }
 
     private final byte[] message;
     private volatile boolean running = false;

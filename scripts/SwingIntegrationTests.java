@@ -273,6 +273,13 @@ public class SwingIntegrationTests {
                 require(sizes[2] > sizes[0] && corner.getWidth() == corner.getHeight(),
                     "al agrandar la ventana las casillas crecen y siguen cuadradas: " + sizes[0] + " -> " + corner.getWidth() + "x" + corner.getHeight());
                 require(sizes[3] > sizes[1], "las piezas se rehacen al tamaño nuevo: " + sizes[1] + " -> " + sizes[3]);
+                // Una partida nueva en la ventana ya agrandada también ocupa todo el lugar.
+                button(view.getContentPane(), "Menú").doClick();
+                button(view.getContentPane(), "Jugar").doClick();
+                inspect(view.getContentPane());
+                JButton again = (JButton) boardPanel.getComponent(0);
+                require(again.getWidth() == sizes[2],
+                    "la partida nueva tiene que usar la ventana agrandada: " + again.getWidth() + " en vez de " + sizes[2]);
             });
             System.out.println("[OK]   Swing: icono en todos los tamanos y tablero que crece con la ventana ("
                 + sizes[0] + " -> " + sizes[2] + " px)");

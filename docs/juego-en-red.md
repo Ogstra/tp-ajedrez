@@ -16,8 +16,9 @@ Crear partida
                                                      arma la lista: "Partida de Ana"
                                                    toca "Partida de Ana"
                              <---- conexión TCP --   LanConnection.connect(IP de Ana, 52817)
-  deja de anunciar
   "HOLA;Ana"                 <------------------>   "HOLA;Beto"
+  deja de anunciar (si lo que se conectó no saluda
+  como el juego, lo descarta y sigue esperando)
   juega e2 e4  "e2 e4"       ------------------->   la aplica con tryMove
                "e7 e5"       <-------------------   juega e7 e5
   ...
@@ -51,7 +52,8 @@ Es la misma idea del ejemplo de la cátedra con la IA (Unidad 5): el otro lado p
 - Una línea de más de 128 caracteres se trata como desconexión: no se guarda sin límite en memoria.
 - Una jugada mal formada, o que no está entre las legales de la partida, cierra la conexión y la ventana lo muestra como desconexión. El juego no se traba esperando una jugada que nunca va a ser válida.
 - Un aviso con un puerto fuera de rango o con otra forma se ignora, y la lista no pasa de 20 partidas.
-- Quien se conecta y no saluda en 5 segundos no deja trabada la espera.
+- Quien se conecta y no termina el saludo en 5 segundos (en total, aunque mande de a un byte) no deja trabada la espera: se descarta y se sigue esperando rival.
+- Si la persona cancela (Volver) o toca dos veces una partida mientras se conecta, el lobby descarta los intentos viejos: no arranca una partida cancelada ni dos a la vez.
 
 ## Por qué UDP para la lista y TCP para la partida
 
@@ -82,6 +84,7 @@ Cada PC acredita a su propio usuario en su propio `data/usuarios.csv`, con el `S
 
 - Sin Deshacer ni Rehacer: habría que pedirle permiso al rival.
 - Si el rival se va (cierra el juego, sale de la partida o se corta la red), se muestra "<nombre> se desconectó." y se vuelve con Menú. No hay reconexión.
+- En macOS y Linux, con dos ventanas en la misma PC, el aviso a la propia máquina (127.0.0.1) le llega a una sola de las dos por `SO_REUSEPORT`; la otra lo recibe por el broadcast de la placa de red. Sin ninguna red conectada, solo una ventana ve la partida.
 - Solo en la misma red local. Por internet haría falta abrir puertos en el router.
 - La primera vez Windows (o el firewall de macOS) pregunta si deja que Java use la red: hay que permitirlo en las dos PCs (redes privadas).
 - Algunas redes (wifi de facultad, redes de invitados) no dejan que dos PCs se hablen: ahí la lista queda vacía.
@@ -89,5 +92,5 @@ Cada PC acredita a su propio usuario en su propio `data/usuarios.csv`, con el `S
 
 ## Pruebas
 
-- `src/LanTests.java` (corre en `./scripts/test.sh`): conexión y saludo, el mate del loco por la red con los dos tableros iguales, coronación a caballo y enroque viajando por la red, desconexión, un aviso que aparece en la lista, el puerto de avisos que no es de AirPlay, una partida creada con el lobby en un puerto libre y unida desde la lista, y los datos inválidos: línea que no es jugada, jugada ilegal, línea demasiado larga y nombre con HTML. Las dos "PCs" son dos partidas en el mismo programa, conectadas por `localhost`.
+- `src/LanTests.java` (corre en `./scripts/test.sh`): conexión y saludo, el mate del loco por la red con los dos tableros iguales, coronación a caballo y enroque viajando por la red, desconexión, un aviso que aparece en la lista, el puerto de avisos que no es de AirPlay, una partida creada con el lobby en un puerto libre y unida desde la lista, y los datos inválidos: línea que no es jugada, jugada ilegal, línea demasiado larga, nombre con HTML o caracteres invisibles, saludo que nunca termina, y unirse dos veces o cancelar sin que arranque una partida. Las dos "PCs" son dos partidas en el mismo programa, conectadas por `localhost`.
 - `scripts/SwingIntegrationTests.java`: dos ventanas reales; una crea la partida, la otra la elige de la lista, juegan el mate del loco con clicks y a Ana le suma la victoria.

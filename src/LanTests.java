@@ -54,6 +54,8 @@ public class LanTests {
         testLongLineIsRejected();
         testRivalNameIsCleaned();
         testNamesCleaning();
+        testJoinCancelledOrRepeatedDoesNotStartAGame();
+        testSlowGreetingDoesNotHoldTheHost();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -298,7 +300,7 @@ public class LanTests {
 
     // Registra lo que avisa el lobby (un mock simple) y deja esperar a que avise.
     private static class RecordingLobbyListener implements LanLobby.Listener {
-        private final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
         volatile LanConnection connection;
         volatile Color color;
         volatile String rival;
@@ -400,7 +402,70 @@ public class LanTests {
         // Assert: casos de borde de la limpieza de nombres.
         assertTrue("testNamesCleaning",
             LanNames.clean(null).equals("rival") && LanNames.clean("  <>  ").equals("rival")
-                && LanNames.clean("Ana").equals("Ana") && LanNames.clean("A\nna").equals("Ana"),
-            "nulo o vacío queda como 'rival' y se sacan los caracteres de control");
+                && LanNames.clean("Ana").equals("Ana") && LanNames.clean("A\nna").equals("Ana")
+                && LanNames.clean("Ana‮olleh").equals("Anaolleh") && LanNames.clean("Beto😀").equals("Beto"),
+            "nulo o vacío queda como 'rival' y se sacan los caracteres de control, de formato y los emojis");
+    }
+
+    private static void testJoinCancelledOrRepeatedDoesNotStartAGame() throws Exception {
+        // Arrange: Ana crea la partida y Beto la ve en la lista.
+        LanLobby hostLobby = new LanLobby();
+        LanLobby guestLobby = new LanLobby();
+        RecordingLobbyListener hostSide = new RecordingLobbyListener();
+        RecordingLobbyListener guestSide = new RecordingLobbyListener();
+        guestLobby.startBrowsing();
+        hostLobby.host("Ana", hostSide);
+        LanGame found = null;
+        for (int i = 0; i < 30 && found == null; i++) {
+            Thread.sleep(100);
+            for (LanGame game : guestLobby.games()) {
+                if (game.getHostName().equals("Ana")) found = game;
+            }
+        }
+
+        // Act: Beto toca la partida dos veces (doble click) y enseguida Volver.
+        boolean first = found != null && guestLobby.join(found, "Beto", guestSide);
+        boolean second = found != null && guestLobby.join(found, "Beto", guestSide);
+        guestLobby.close();
+        boolean guestNotified = guestSide.done.await(2, java.util.concurrent.TimeUnit.SECONDS);
+
+        // Assert: el segundo click no abre otra conexión y, cancelado, a Beto no le arranca ninguna partida.
+        assertTrue("testJoinCancelledOrRepeatedDoesNotStartAGame", first && !second && !guestNotified,
+            "unirse dos veces o cancelar no debería empezar una partida: " + first + " " + second + " " + guestNotified);
+        hostLobby.close();
+        if (hostSide.connection != null) hostSide.connection.close();
+    }
+
+    private static void testSlowGreetingDoesNotHoldTheHost() throws Exception {
+        // Arrange: del otro lado alguien manda un byte por segundo, sin terminar nunca el saludo.
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try (ServerSocket server = new ServerSocket(0);
+             java.net.Socket slow = new java.net.Socket(InetAddress.getLoopbackAddress(), server.getLocalPort())) {
+            LanConnection host = LanConnection.waitForRival(server);
+            Future<?> drip = executor.submit(() -> {
+                try {
+                    for (int i = 0; i < 20; i++) {
+                        slow.getOutputStream().write('H');
+                        Thread.sleep(1000);
+                    }
+                } catch (Exception e) {
+                    // se cortó la conexión
+                }
+                return null;
+            });
+
+            // Act
+            long start = System.currentTimeMillis();
+            String rival = host.greet("Ana");
+            long elapsed = System.currentTimeMillis() - start;
+
+            // Assert: el plazo es para el saludo entero (5 s), no por cada byte.
+            assertTrue("testSlowGreetingDoesNotHoldTheHost", rival == null && elapsed < 7000,
+                "un saludo que no termina se corta a los 5 segundos: " + elapsed + " ms");
+            host.close();
+            drip.cancel(true);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

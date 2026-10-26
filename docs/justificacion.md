@@ -136,7 +136,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Qué.** `BoardView` dibuja las casillas, las coordenadas y las piezas; `SwingChessView` maneja las pantallas y el turno. Cuando la ventana cambia de tamaño, `BoardView.fitTo` calcula el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño, con imágenes de varias resoluciones (`SmoothImage`) para que se vean nítidas con la pantalla escalada (125 %, 150 %, Retina).
 
-**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento) y se guardan por tamaño (caching).
+**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento) y se guardan mientras no cambie el tamaño de las casillas (caching).
 
 **Cuándo se rompería.** Si la ventana tuviera un tamaño fijo, recalcular las casillas sería trabajo de más.
 

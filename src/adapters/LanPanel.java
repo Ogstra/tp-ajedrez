@@ -44,12 +44,20 @@ public class LanPanel extends JPanel {
     private final LanLobby.Listener lobbyListener = new LanLobby.Listener() {
         @Override
         public void connected(LanConnection connection, Color localColor, String rivalName) {
-            SwingUtilities.invokeLater(() -> start(connection, localColor, rivalName));
+            SwingUtilities.invokeLater(() -> {
+                // Entre el aviso y este momento la persona pudo tocar Volver: ahí la conexión sobra.
+                if (!active) {
+                    connection.close();
+                    return;
+                }
+                start(connection, localColor, rivalName);
+            });
         }
 
         @Override
         public void failed(String text) {
             SwingUtilities.invokeLater(() -> {
+                if (!active) return;
                 open(ownName);
                 message.setText(text);
             });
@@ -58,6 +66,7 @@ public class LanPanel extends JPanel {
     private List<String> shownIds = new ArrayList<>();
     private String ownName;
     private boolean waiting = false;
+    private boolean active = false; // la pantalla está abierta (entre open y close)
 
     public LanPanel(LanLobby lobby, Listener listener, Runnable onBack) {
         this.lobby = lobby;
@@ -111,7 +120,9 @@ public class LanPanel extends JPanel {
     // Muestra la lista y empieza a buscar partidas. ownName es el nombre que verá el rival.
     public void open(String ownName) {
         this.ownName = ownName;
+        active = true;
         waiting = false;
+        message.setForeground(Palette.ERROR);
         message.setText(" ");
         shownIds = new ArrayList<>();
         ((CardLayout) views.getLayout()).show(views, LIST);
@@ -123,6 +134,7 @@ public class LanPanel extends JPanel {
 
     // Deja de buscar y de esperar rival (al volver al menú o al empezar la partida).
     public void close() {
+        active = false;
         refresh.stop();
         lobby.close();
     }
@@ -140,10 +152,13 @@ public class LanPanel extends JPanel {
         updateDefaultButton();
     }
 
-    // Unirse: el lobby se conecta en otro hilo a la PC que anunció la partida.
+    // Unirse: el lobby se conecta en otro hilo a la PC que anunció la partida. Mientras tanto se
+    // avisa "Conectando..."; un segundo click no abre otra conexión (el lobby lo rechaza).
     private void join(LanGame game) {
-        message.setText(" ");
-        lobby.join(game, ownName, lobbyListener);
+        if (lobby.join(game, ownName, lobbyListener)) {
+            message.setForeground(Palette.MUTED);
+            message.setText("Conectando con la partida de " + game.getHostName() + "...");
+        }
     }
 
     private void start(LanConnection connection, Color localColor, String rival) {
