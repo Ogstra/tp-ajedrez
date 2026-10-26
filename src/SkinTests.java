@@ -1,8 +1,8 @@
 import adapters.Assets;
 import adapters.SkinCatalogReader;
 import adapters.FileSkinStore;
-import ports.IAccountStore;
-import ports.ISkinStore;
+import accounts.IAccountStore;
+import skins.ISkinStore;
 import skins.Skin;
 import skins.SkinService;
 import accounts.AccountService;

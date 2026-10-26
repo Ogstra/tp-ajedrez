@@ -1,6 +1,6 @@
 package adapters;
 
-import ports.ISkinStore;
+import skins.ISkinStore;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

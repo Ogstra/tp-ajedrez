@@ -1,4 +1,4 @@
-package ports;
+package skins;
 
 // Puerto de salida (Clase 2): dónde se guarda qué skin eligió cada usuario. Igual que
 // IAccountStore, las skins no saben si es un archivo o una lista en memoria (como en los tests).

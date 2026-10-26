@@ -1,6 +1,6 @@
 package adapters;
 
-import ports.IAccountStore;
+import accounts.IAccountStore;
 import accounts.Score;
 import accounts.User;
 

@@ -1,6 +1,4 @@
-package ports;
-
-import accounts.Score;
+package accounts;
 
 import java.util.List;
 

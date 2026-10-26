@@ -16,7 +16,7 @@ import core.special.PromotionMove;
 import core.draw.FiftyMoveRule;
 import core.draw.InsufficientMaterialRule;
 import core.draw.ThreefoldRepetitionRule;
-import ports.IAccountStore;
+import accounts.IAccountStore;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 import ports.IPromotionChooser;
