@@ -34,7 +34,7 @@ public class RankingPanel extends JPanel {
     private final RowsPanel rows = new RowsPanel();
     private final JScrollPane scroll = new JScrollPane(rows);
     private final RoundedPanel card = new RoundedPanel();
-    private final JLabel empty = new JLabel("Todavía no hay usuarios. Se crean desde el menú.", SwingConstants.CENTER);
+    private final JLabel empty = new JLabel("Todavía no hay usuarios.", SwingConstants.CENTER);
 
     public RankingPanel(Runnable onBack) {
         JLabel title = new JLabel("Ranking", SwingConstants.CENTER);
@@ -43,9 +43,6 @@ public class RankingPanel extends JPanel {
         JPanel strip = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         strip.setOpaque(false);
         strip.add(new BoardStrip());
-        JLabel legend = new JLabel("PJ jugadas, G ganadas, E empatadas, P perdidas, Pts puntos", SwingConstants.CENTER);
-        legend.setForeground(Palette.MUTED);
-        legend.setFont(legend.getFont().deriveFont(12.5f));
         empty.setForeground(Palette.MUTED);
 
         // La tabla: encabezado fijo y las filas debajo, dentro del recuadro blanco.
@@ -69,8 +66,7 @@ public class RankingPanel extends JPanel {
         put(content, Box.createHorizontalStrut(COLUMN_WIDTH), 0);
         put(content, title, 0);
         put(content, strip, 8);
-        put(content, legend, 14);
-        put(content, card, 16);
+        put(content, card, 20);
         put(content, empty, 16);
         put(content, bottom, 20);
 

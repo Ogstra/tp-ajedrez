@@ -6,11 +6,11 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 1. El núcleo no conoce a los adaptadores
 
-**Qué.** Las reglas del ajedrez viven en el paquete `core`, que no importa nada de `adapters` ni de `ai`. La consola, la ventana y la IA son piezas externas que dependen del núcleo, nunca al revés.
+**Qué.** Las reglas del ajedrez viven en el paquete `core`, que no importa nada de `adapters`, `accounts`, `skins` ni `ai`. La consola, la ventana, los usuarios y la IA son piezas externas que dependen del núcleo, nunca al revés.
 
 **Por qué.** La prueba es una sola pregunta: si cambia la tecnología, ¿esto cambia? Las reglas no cambian si pasamos de consola a ventana, por eso son núcleo. Gracias a esto la ventana Swing se agregó después sin tocar `ChessGame`, y el núcleo se prueba sin levantar ninguna infraestructura.
 
-**Cuándo se rompería.** Si el sistema fuera un prototipo descartable de pocos días, separar en paquetes sería sobre-ingeniería. Acá el sistema tiene que crecer (más reglas, otras interfaces) y se defiende oralmente, así que la frontera paga.
+**Cuándo se rompería.** Si el TP fuera solo la consola, sin ventana ni IA, `ChessGame` podría imprimir directo y los puertos serían de más. La frontera pagó cuando agregamos la ventana, la IA y los usuarios sin tocar `ChessGame`.
 
 ## 2. Un puerto de entrada y puertos de salida chicos
 
@@ -22,7 +22,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 3. Inyección de dependencias por constructor
 
-**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores. En la ventana, cada vez que se aprieta Jugar la partida la arma un `GameBuilder` que implementa `MainSwing`: devuelve el juego, el que acredita los puntos y, si corresponde, la IA. La vista no crea ninguno de esos colaboradores con `new`.
+**Qué.** `ChessGame` recibe el tablero, los listeners, las reglas especiales y las reglas de tablas ya armadas, por constructor. `Main` y `MainSwing` crean y conectan las partidas de juego; `SearchGames` arma la copia de búsqueda y los tests arman sus propios colaboradores. En la ventana, cada partida la arma un `GameBuilder` que implementa `MainSwing`, con un método: `local` (1 contra 1 o contra la IA). Devuelve el juego, el que acredita los puntos y, si corresponde, la IA. `GameBuilder` recibe un `IGameView` (lo que la partida necesita de una pantalla), no la ventana concreta. La vista no crea ninguno de esos colaboradores con `new`.
 
 **Por qué.** Es el nivel 4 de inyección. Permite probar el núcleo con dobles de prueba (un stub que siempre corona a reina, un mock que registra los avisos) y cambiar el comportamiento sin editar `ChessGame`. El tablero y las cuatro listas son colaboradores distintos; el constructor deja esas dependencias explícitas.
 
@@ -64,17 +64,17 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Qué.** El enroque, la captura al paso y la coronación implementan `ISpecialMove`. `ChessGame` las recibe por constructor y no sabe cuáles son: cada una declara qué destinos extra habilita y qué comando arma.
 
-**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en `StandardRules`, la fábrica que arma las reglas de siempre para la consola, la ventana y la búsqueda de la IA (Open/Closed). `ChessGame` sigue sin saber cuáles son.
+**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en `StandardRules`, que arma las reglas de siempre para la consola, la ventana y la búsqueda de la IA (Open/Closed).
 
 **Cuándo se rompería.** Con una sola excepción a las reglas, un `if` sería más directo. Con tres y la posibilidad de más, la estrategia compensa.
 
 ## 9. State con estados terminales
 
-**Qué.** El turno es un estado (`WhiteTurnState`, `BlackTurnState`) y el fin de la partida también (`CheckmateState`, `StalemateState`, `DrawState`). No hay un booleano `gameOver`.
+**Qué.** El turno es un estado (`WhiteTurnState`, `BlackTurnState`) y el fin de la partida también (`CheckmateState`, `StalemateState`, `DrawState`). Cada estado dice de quién es el turno y si la partida terminó. Las transiciones a mate, ahogado o tablas no las deciden los estados: las decide `ChessGame` después de cada jugada, porque es el único que conoce el tablero y las reglas.
 
-**Por qué.** Antes el patrón era dos estados triviales y un booleano aparte, es decir, el patrón usado a medias. Con los estados terminales el patrón resuelve un problema real: de un estado terminal no se sale jugando, y deshacer vuelve al estado anterior sin trucos.
+**Por qué.** No hay un booleano `gameOver` suelto: el historial guarda el estado de antes y el de después de cada jugada, y deshacer o rehacer vuelve a ese estado sin recalcular nada.
 
-**Cuándo se rompería.** Con solo dos estados estables un enum y un `switch` serían más claros. Se justifica por los estados terminales, que cambian el comportamiento de las jugadas.
+**Cuándo se rompería.** Es un State a medio camino, y lo decimos así: si aparecieran más fases (abandono, tiempo agotado, tablas por acuerdo), convendría que cada estado decida su transición, porque si no hay que tocar `ChessGame` por cada una. Si el grupo prefiere lo más simple, con el color al turno y un resultado alcanzaría.
 
 ## 9 bis. Dónde vive la validación de jugadas
 
@@ -102,21 +102,45 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 11 bis. Usuarios y ranking también viven afuera del núcleo
 
-**Qué.** El paquete `accounts` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
+**Qué.** El paquete `accounts` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`, en el mismo paquete `accounts`: es el puerto que necesitan las cuentas, no el núcleo) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
 
 **Por qué.** Quién juega y cuántas partidas ganó no es una regla del ajedrez. Como `ScoreRecorder` implementa los mismos `IMoveListener` e `IGameStatusListener` que ya usaban la consola y la ventana, no se tocó ninguna clase del núcleo. Cambiar el CSV por otra forma de guardar es escribir otro adaptador de `IAccountStore`. Deshacer la jugada final revierte el resultado y rehacerla lo vuelve a sumar, para que una misma partida no cuente dos veces.
 
 **Cuándo se rompería.** Con usuarios reales haría falta contraseña, y el CSV no soporta bien dos procesos escribiendo a la vez; ahí convendría una base de datos detrás del mismo puerto.
 
-## 12. Tests del núcleo con un runner propio
+## 15. El tablero de la ventana es su propio componente y sigue a la ventana
 
-**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías.
+**Qué.** `BoardView` dibuja las casillas, las coordenadas y las piezas; `SwingChessView` maneja las pantallas y el turno. Cuando la ventana cambia de tamaño, `BoardView.fitTo` calcula el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño, con imágenes de varias resoluciones (`SmoothImage`) para que se vean nítidas con la pantalla escalada (125 %, 150 %, Retina).
+
+**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento). Es una decisión de experiencia de uso: no se midió con un profiler.
+
+**Cuándo se rompería.** Si la ventana tuviera un tamaño fijo, recalcular las casillas sería trabajo de más.
+
+## 16. Los recursos se leen del classpath
+
+**Qué.** El ícono, las piezas y el catálogo de skins se leen del classpath (`Assets`), no de `src/assets/...`. El ícono va con `setIconImages` y, en macOS, con `Taskbar`.
+
+**Por qué.** Con la ruta relativa el juego dependía de la carpeta desde la que se ejecutaba, y el ícono solo aparecía en Windows. Es un requisito no funcional: tiene que andar igual en las PCs del grupo.
+
+**Cuándo se rompería.** Si los recursos tuvieran que poder cambiarse sin recompilar (por ejemplo, skins que agrega el usuario), habría que leerlos de una carpeta configurable además del classpath.
+
+## 17. Las skins son datos, y sin derechos de terceros
+
+**Qué.** El catálogo de skins es un archivo (`assets/skins/skins.csv`) más una carpeta con las 12 piezas. `SkinService` decide cuáles están desbloqueadas por los puntos del ranking y la elegida se guarda por el puerto `ISkinStore`. Solo se incluyen imágenes con licencia que lo permita y con autor citado.
+
+**Por qué.** Una skin nueva no toca código (Open/Closed llevado a datos). Y la Unidad 5 pide respetar la propiedad intelectual: por eso "Age of Empires" pasó a llamarse "Medieval" (era una marca) y se sacó la skin de Minecraft, que usaba personajes y texturas de Mojang sin una licencia que cubra este uso. `SkinTests` revisa que ninguna skin del catálogo use esas marcas.
+
+**Cuándo se rompería.** Si las skins necesitaran comportamiento propio (animaciones, sonidos), un archivo de datos no alcanzaría y cada una sería una clase.
+
+## 18. Tests del núcleo con un runner propio
+
+**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías. Afuera del núcleo hay tests de integración de los adaptadores: `SkinTests` y `scripts/SwingIntegrationTests.java`, que maneja la ventana real (pirámide de testing: muchos unitarios, menos de integración y uno de sistema).
 
 **Por qué.** Corren solo con `javac`, sin infraestructura, que es lo que pide la consigna, y no hay nada para instalar ni explicar en la defensa.
 
 **Cuándo se rompería.** En un proyecto real con un equipo grande convendría JUnit, por el reporte, los filtros y la integración con las herramientas.
 
-## 13. Simplificaciones declaradas
+## 19. Simplificaciones declaradas
 
 - La repetición de posición ignora los derechos de enroque y de captura al paso.
 - La simulación de captura al paso no retira el peón capturado: puede permitir un jaque descubierto horizontal y también rechazar una captura que eliminaría al peón que da jaque.

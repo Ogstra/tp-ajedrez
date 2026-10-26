@@ -1,5 +1,7 @@
 import adapters.*;
 import core.*;
+import core.special.*;
+import core.draw.*;
 import ports.*;
 import accounts.*;
 import javax.swing.*;
@@ -9,7 +11,7 @@ import java.nio.file.*;
 import java.util.Arrays;
 
 // Genera la captura del README y de la presentación: una partida a medias entre dos usuarios,
-// con el caballo elegido y sus destinos marcados. Uso: java --class-path out scripts/CaptureScreenshot.java docs/captura.png
+// (1 contra 1, como invitado) con el caballo elegido y sus destinos marcados. Uso: java --class-path out scripts/CaptureScreenshot.java docs/captura.png
 public class CaptureScreenshot {
     static SwingChessView view;
     public static void main(String[] a) throws Exception {
@@ -17,18 +19,21 @@ public class CaptureScreenshot {
         SwingUtilities.invokeAndWait(() -> {
             AccountService acc = new AccountService(new FileAccountStore(data.resolve("u.csv")));
             acc.register("Ana"); acc.register("Beto");
-            GameBuilder b = (v, w, bl, level, aiColor) -> {
-                PieceFactory p = PieceFactory.standard();
-                ScoreRecorder r = new ScoreRecorder(acc, w, bl);
-                IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),
-                    StandardRules.specialMoves(p, v),
-                    StandardRules.drawRules());
-                return new Match(g, null);
+            GameBuilder b = new GameBuilder() {
+                @Override
+                public Match local(IGameView v, User w, User bl, ai.OpponentLevel level, core.Color aiColor) {
+                    PieceFactory p = PieceFactory.standard();
+                    ScoreRecorder r = new ScoreRecorder(acc, w, bl);
+                    IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),
+                        StandardRules.specialMoves(p, v),
+                        StandardRules.drawRules());
+                    return new Match(g, null);
+                }
+
             };
-            view = new SwingChessView(acc, b);
+            view = new SwingChessView(acc, new skins.SkinService(adapters.SkinCatalogReader.bundled(), acc, new adapters.FileSkinStore(data.resolve("s.csv"))), b);
             view.setVisible(true);
-            ((JComboBox<?>) named(view.getContentPane(), "white")).setSelectedIndex(2);
-            ((JComboBox<?>) named(view.getContentPane(), "black")).setSelectedIndex(3);
+            btn("Entrar como invitado").doClick();
             btn("Jugar").doClick();
             String[] moves = {"e2", "e4", "e7", "e5", "g1", "f3", "b8", "c6", "f1", "c4", "g8", "f6"};
             for (int i = 0; i < moves.length; i++) sq(moves[i]).doClick();

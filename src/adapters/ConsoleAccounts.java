@@ -7,17 +7,17 @@ import accounts.User;
 import java.util.List;
 import java.util.Scanner;
 
-// Adaptador de entrada y salida (Clase 2) de las cuentas, por consola: pregunta quién
-// juega (iniciar sesión, registrarse o seguir sin usuario) y muestra el ranking.
+// Adaptador de entrada y salida (Clase 2) de las cuentas, por consola: el login (iniciar
+// sesión, registrarse o entrar como invitado) y el ranking.
 // La lógica de las cuentas vive en AccountService; acá solo se lee y se imprime.
 public final class ConsoleAccounts {
 
     private ConsoleAccounts() { }
 
-    // Devuelve el usuario que entró, o null si se juega sin usuario (o se terminó la entrada).
-    public static User askUser(Scanner scanner, AccountService accounts, String role) {
+    // Devuelve el usuario que entró, o null si entró como invitado (o se terminó la entrada).
+    public static User askUser(Scanner scanner, AccountService accounts) {
         while (true) {
-            System.out.print("Jugador " + role + ": 1 = iniciar sesión, 2 = registrarse, 3 = sin usuario > ");
+            System.out.print("Login: 1 = iniciar sesión, 2 = registrarse, 3 = invitado > ");
             if (!scanner.hasNextLine()) return null;
             String answer = scanner.nextLine().trim();
             if (answer.equals("3") || answer.isEmpty()) return null;

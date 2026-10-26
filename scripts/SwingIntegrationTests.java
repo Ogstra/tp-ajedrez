@@ -1,24 +1,32 @@
 import adapters.ChoiceControl;
 import adapters.FileAccountStore;
+import adapters.SkinCatalogReader;
+import adapters.FileSkinStore;
 import adapters.FlatComboBox;
 import adapters.GameBuilder;
+import adapters.IGameView;
 import adapters.Match;
 import adapters.SwingChessView;
 import core.*;
+import core.special.*;
+import core.draw.*;
 import ports.*;
-import ai.AutoPromotionChooser;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
+import skins.SkinService;
 import accounts.AccountService;
 import accounts.ScoreRecorder;
+import accounts.User;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-// Prueba de integracion de la ventana real (menu, partida y ranking en una sola ventana),
+// Prueba de integracion de la ventana real (menu, usuario, partida y ranking en una sola ventana),
 // sin reflection ni librerias de tests.
 public class SwingIntegrationTests {
     private static SwingChessView view;
@@ -27,39 +35,68 @@ public class SwingIntegrationTests {
     private static JButton menuButton;
     private static Board before;
     private static Board after;
+    private static AccountService accounts;
+    private static User lastWhite;   // los usuarios con que el builder armo la ultima partida
+    private static User lastBlack;
 
     public static void main(String[] args) throws Exception {
         Path data = Files.createTempDirectory("ajedrez-swing");
         SwingUtilities.invokeAndWait(SwingIntegrationTests::checkFocusedComboShowsText);
         try {
             SwingUtilities.invokeAndWait(() -> {
-                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 8));
+                accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
+                view = new SwingChessView(accounts, skins(accounts, data), builder(accounts, 8));
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
-                // Menu: el campo de usuario nuevo solo aparece al elegir "Nuevo usuario..." en un lado.
-                JComboBox<?> white = (JComboBox<?>) named(root, "white");
-                JComboBox<?> black = (JComboBox<?>) named(root, "black");
-                require(!named(root, "newUser").isShowing(), "el campo de usuario nuevo empieza oculto");
-                white.setSelectedIndex(1);
-                require("Nuevo usuario...".equals(white.getSelectedItem()), "Nuevo usuario va justo abajo de Sin usuario");
-                require(named(root, "newUser").isShowing(), "al elegir Nuevo usuario debe aparecer el campo");
-                ((JTextField) named(root, "newUser")).setText("Ana");
-                button(root, "Registrar").doClick();
-                require(white.getItemCount() == 3 && "Ana".equals(white.getSelectedItem()),
-                    "al registrar a Ana debe quedar elegida para las blancas");
-                require(!named(root, "newUser").isShowing(), "al registrar, el campo vuelve a ocultarse");
+                // La ventana arranca en el login: un usuario inexistente se rechaza.
+                require(named(root, "loginName").isShowing() && !button(root, "Jugar").isShowing(),
+                    "la primera pantalla es el login");
+                require(view.getRootPane().getDefaultButton() == button(root, "Entrar"),
+                    "en el login, Enter debe apretar Entrar");
+                ((JTextField) named(root, "loginName")).setText("Nadie");
+                button(root, "Entrar").doClick();
+                require(named(root, "loginName").isShowing(), "un usuario inexistente no entra");
+                // Registrarse lleva a la vista de registro; Volver regresa al login.
+                button(root, "Registrarse").doClick();
+                require(named(root, "registerName").isShowing() && !named(root, "loginName").isShowing(),
+                    "Registrarse muestra la vista de registro");
+                require(view.getRootPane().getDefaultButton() == button(root, "Crear usuario"),
+                    "en el registro, Enter debe apretar Crear usuario");
+                button(root, "Volver").doClick();
+                require(named(root, "loginName").isShowing(), "Volver regresa al login");
+                require(view.getRootPane().getDefaultButton() == button(root, "Entrar"),
+                    "al volver, Enter aprieta Entrar otra vez");
+                // Crear a Ana entra directo al menu.
+                button(root, "Registrarse").doClick();
+                ((JTextField) named(root, "registerName")).setText("Ana");
+                button(root, "Crear usuario").doClick();
                 require(accounts.ranking().size() == 1, "el registro debe guardarse");
-
+                require(button(root, "Jugar").isShowing(), "al registrarse se entra al menu");
                 require(view.getRootPane().getDefaultButton() == button(root, "Jugar"),
                     "en el menu, Enter debe apretar Jugar");
+                // Cerrar sesion vuelve al login; se entra de nuevo con el nombre.
+                button(root, "Cerrar sesión").doClick();
+                require(named(root, "loginName").isShowing(), "Cerrar sesion vuelve al login");
+                ((JTextField) named(root, "loginName")).setText("ana");
+                button(root, "Entrar").doClick();
+                require(button(root, "Jugar").isShowing(), "Ana entra con su nombre");
+                // Skins: con 0 puntos solo se usa la de siempre; las otras muestran los puntos que piden.
+                visibleButton(root, "Skins").doClick();
+                require(visibleLabel(root, "Tus puntos: 0") != null && named(root, "skin-clasico").isShowing(),
+                    "la pantalla de skins muestra los puntos y el catalogo");
+                require(label((Container) named(root, "skin-clasico"), "En uso") != null && named(root, "use-staunton") == null
+                        && label((Container) named(root, "skin-staunton"), "6 puntos") != null,
+                    "la de siempre esta en uso y Staunton esta bloqueada hasta los 6 puntos");
+                visibleButton(root, "Volver").doClick();
+                require(button(root, "Jugar").isShowing(), "Volver de skins lleva al menu");
 
                 // 1 contra 1: la dificultad y el color no se muestran.
                 require(!named(root, "level").isShowing() && !named(root, "color").isShowing(),
                     "en 1 contra 1 no se elige dificultad ni color");
                 button(root, "Jugar").doClick();
                 inspect(root);
+                require(lastWhite == null && lastBlack == null, "en 1 contra 1 se juega sin usuarios");
                 require(boardPanel.getComponentCount() == 64, "debe armarse el tablero de 64 casillas");
                 require(view.getRootPane().getDefaultButton() == null, "en la partida no hay boton por defecto");
                 require(label(root, "a") != null && label(root, "h") != null && label(root, "1") != null && label(root, "8") != null,
@@ -98,9 +135,9 @@ public class SwingIntegrationTests {
                 require(named(root, "level").isShowing() && named(root, "color").isShowing(),
                     "contra la IA se eligen dificultad y color");
                 ((ChoiceControl) named(root, "level")).setSelectedIndex(1);
-                require(!black.isShowing() && named(root, "blackAi").isShowing() && !named(root, "whiteAi").isShowing(),
-                    "contra la IA con blancas, el lado de las negras dice IA");
                 button(root, "Jugar").doClick();
+                require(lastWhite != null && "Ana".equals(lastWhite.getName()) && lastBlack == null,
+                    "contra la IA con blancas, Ana juega con blancas y la IA no tiene usuario");
                 square("e2", false).doClick();
                 square("e4", false).doClick();
                 require(!menuButton().isEnabled(), "el boton Menu debe bloquearse mientras piensa la IA");
@@ -140,8 +177,9 @@ public class SwingIntegrationTests {
                 button(root, "Menú").doClick();
                 require(button(root, "Jugar").isShowing(), "debe verse el menu despues de confirmar la salida");
                 ((ChoiceControl) named(root, "color")).setSelectedIndex(1);
-                require(named(root, "whiteAi").isShowing(), "jugando con negras, el lado de las blancas dice IA");
                 button(root, "Jugar").doClick();
+                require(lastWhite == null && lastBlack != null && "Ana".equals(lastBlack.getName()),
+                    "jugando con negras, Ana va en negras y la IA (blancas) no tiene usuario");
                 require(((JButton) boardPanel.getComponent(0)).getIcon() != null
                         && boardPanel.getComponent(0) == square("h1", true),
                     "con negras el tablero se gira: la primera casilla de la grilla es h1");
@@ -154,6 +192,26 @@ public class SwingIntegrationTests {
             });
             awaitReply(core.Color.BLACK);
 
+            // Un 1 contra 1 que termina en mate no le suma partidas a Ana.
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                clickLater("Salir al menú");
+                button(root, "Menú").doClick();
+                ((ChoiceControl) named(root, "mode")).setSelectedIndex(0);
+                button(root, "Jugar").doClick();
+                square("f2", false).doClick();
+                square("f3", false).doClick();
+                square("e7", false).doClick();
+                square("e5", false).doClick();
+                square("g2", false).doClick();
+                square("g4", false).doClick();
+                square("d8", false).doClick();
+                square("h4", false).doClick();
+                require(game.isGameOver(), "el mate del loco debe terminar la partida");
+                require(accounts.ranking().size() == 1 && accounts.ranking().get(0).getGames() == 0,
+                    "un 1 contra 1 no debe sumar partidas a Ana");
+            });
+
             // Ranking dentro de la misma ventana.
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
@@ -162,15 +220,16 @@ public class SwingIntegrationTests {
                     "el ranking debe mostrar una fila por usuario registrado");
                 button(root, "Volver").doClick();
             });
-            System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
+            System.out.println("[OK]   Swing: login, menu, 1 contra 1 sin ranking, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
 
             // Otro tamaño de tablero (lo que puede pedirse en la defensa): la ventana se adapta sola.
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
-                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 10));
+                AccountService otherAccounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
+                view = new SwingChessView(otherAccounts, skins(otherAccounts, data), builder(otherAccounts, 10));
                 view.setVisible(true);
                 Container root = view.getContentPane();
+                button(root, "Entrar como invitado").doClick();
                 button(root, "Jugar").doClick();
                 inspect(root);
                 require(boardPanel.getComponentCount() == 100, "un tablero de 10x10 debe tener 100 casillas");
@@ -183,27 +242,44 @@ public class SwingIntegrationTests {
             });
             System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
 
-            // Al agrandar la ventana, las casillas crecen (y siguen cuadradas).
-            int[] sizes = new int[2];
+            // El ícono se carga del classpath en todos sus tamaños, y el tablero sigue a la ventana:
+            // al agrandarla las casillas crecen y las piezas se rehacen a ese tamaño.
+            SwingUtilities.invokeAndWait(() -> view.dispose());
+            int[] sizes = new int[4]; // casilla e ícono antes y después de agrandar
             SwingUtilities.invokeAndWait(() -> {
-                view.dispose();
-                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("crece.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 8));
+                AccountService resizeAccounts = new AccountService(new FileAccountStore(data.resolve("resize.csv")));
+                view = new SwingChessView(resizeAccounts, skins(resizeAccounts, data), builder(resizeAccounts, 8));
                 view.setVisible(true);
-                button(view.getContentPane(), "Jugar").doClick();
-                inspect(view.getContentPane());
-                sizes[0] = boardPanel.getComponent(0).getWidth();
-                view.setSize(view.getWidth() + 320, view.getHeight() + 320);
+                require(view.getIconImages().size() == 7, "el ícono debe cargarse en sus 7 tamaños: " + view.getIconImages().size());
+                Container root = view.getContentPane();
+                button(root, "Entrar como invitado").doClick();
+                button(root, "Jugar").doClick();
+                inspect(root);
+                JButton corner = (JButton) boardPanel.getComponent(0);
+                sizes[0] = corner.getWidth();
+                sizes[1] = corner.getIcon().getIconWidth();
+                view.setSize(view.getWidth() + 300, view.getHeight() + 300);
                 view.validate();
             });
             Thread.sleep(600); // las piezas se rehacen cuando se deja de cambiar el tamaño
             SwingUtilities.invokeAndWait(() -> {
                 JButton corner = (JButton) boardPanel.getComponent(0);
-                sizes[1] = corner.getWidth();
-                require(sizes[1] > sizes[0] && corner.getWidth() == corner.getHeight(),
-                    "al agrandar la ventana las casillas deben crecer y seguir cuadradas: " + sizes[0] + " -> " + sizes[1]);
+                sizes[2] = corner.getWidth();
+                sizes[3] = corner.getIcon().getIconWidth();
+                require(sizes[2] > sizes[0] && corner.getWidth() == corner.getHeight(),
+                    "al agrandar la ventana las casillas crecen y siguen cuadradas: " + sizes[0] + " -> " + corner.getWidth() + "x" + corner.getHeight());
+                require(sizes[3] > sizes[1], "las piezas se rehacen al tamaño nuevo: " + sizes[1] + " -> " + sizes[3]);
+                // Una partida nueva en la ventana ya agrandada también ocupa todo el lugar.
+                button(view.getContentPane(), "Menú").doClick();
+                button(view.getContentPane(), "Jugar").doClick();
+                inspect(view.getContentPane());
+                JButton again = (JButton) boardPanel.getComponent(0);
+                require(again.getWidth() == sizes[2],
+                    "la partida nueva tiene que usar la ventana agrandada: " + again.getWidth() + " en vez de " + sizes[2]);
             });
-            System.out.println("[OK]   Swing: el tablero crece con la ventana (" + sizes[0] + " -> " + sizes[1] + " px)");
+            System.out.println("[OK]   Swing: icono en todos los tamanos y tablero que crece con la ventana ("
+                + sizes[0] + " -> " + sizes[2] + " px)");
+
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
@@ -275,21 +351,58 @@ public class SwingIntegrationTests {
         System.out.println("[OK]   Swing: el desplegable enfocado muestra el usuario elegido");
     }
 
-    // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.
+    // Las skins del catálogo real, con la elección de cada usuario en la carpeta temporal.
+    private static SkinService skins(AccountService accounts, Path data) {
+        return new SkinService(SkinCatalogReader.bundled(),
+            accounts, new FileSkinStore(data.resolve("skins-" + System.identityHashCode(accounts) + ".csv")));
+    }
+
+    // Mismo armado que MainSwing, con tablero estándar o de otro tamaño.
     private static GameBuilder builder(AccountService accounts, int size) {
-        return (v, white, black, level, aiColor) -> {
-            PieceFactory pieces = PieceFactory.standard();
-            Board board = size == 8 ? BoardSetup.standard(pieces) : BoardSetup.custom(size, size, backRow(size), pieces);
-            before = board.cloneBoard();
-            ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
-            game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
-                Arrays.<IGameStatusListener>asList(v, recorder),
-                StandardRules.specialMoves(pieces, level == OpponentLevel.NONE ? v : new AutoPromotionChooser(aiColor, v)),
-                StandardRules.drawRules());
-            OpponentController opponent = level == OpponentLevel.NONE
-                ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
-            return new Match(game, opponent);
+        return new GameBuilder() {
+            @Override
+            public Match local(IGameView v, User white, User black, OpponentLevel level, core.Color aiColor) {
+                lastWhite = white;
+                lastBlack = black;
+                ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+                game = newGame(v, recorder, level == OpponentLevel.NONE ? v : new ai.AutoPromotionChooser(aiColor, v), size);
+                OpponentController opponent = level == OpponentLevel.NONE
+                    ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
+                return new Match(game, opponent);
+            }
+
+            private IChessGame newGame(IGameView v, ScoreRecorder recorder, IPromotionChooser chooser,
+                                       int boardSize) {
+                PieceFactory pieces = PieceFactory.standard();
+                Board board = boardSize == 8 ? BoardSetup.standard(pieces)
+                    : BoardSetup.custom(boardSize, boardSize, backRow(boardSize), pieces);
+                before = board.cloneBoard();
+                List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(v, recorder));
+                IChessGame created = new ChessGame(board, moveListeners,
+                    Arrays.<IGameStatusListener>asList(v, recorder),
+                    StandardRules.specialMoves(pieces, chooser),
+                    StandardRules.drawRules());
+                return created;
+            }
         };
+    }
+
+    private static JButton visibleButton(Container container, String text) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof JButton && text.equals(((JButton) component).getText()) && component.isShowing()) {
+                return (JButton) component;
+            }
+            if (component instanceof Container) {
+                JButton found = visibleButton((Container) component, text);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private static JLabel visibleLabel(Container container, String text) {
+        JLabel found = label(container, text);
+        return found != null && found.isShowing() ? found : null;
     }
 
     // Fila trasera de cualquier ancho: la estándar y, si sobran columnas, torres.

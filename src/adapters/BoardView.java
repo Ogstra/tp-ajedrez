@@ -6,8 +6,8 @@ import core.Move;
 import core.Piece;
 import core.PieceType;
 import core.Position;
+import skins.Skin;
 
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.Icon;
@@ -21,21 +21,20 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-// El tablero de la ventana: las casillas, las coordenadas, las piezas y las marcas de la pieza
-// elegida. Antes vivía adentro de SwingChessView, que además maneja las pantallas, la IA y los
-// textos; separado, cada clase tiene una sola razón para cambiar (SRP).
+// El tablero de la ventana: las casillas, las coordenadas y las piezas de la skin. Antes vivía
+// adentro de SwingChessView, que también manejaba las pantallas, la IA y los textos;
+// separado, cada clase tiene una sola razón para cambiar (SRP) y el tablero se puede achicar o
+// agrandar sin tocar el resto.
 //
 // Las casillas se adaptan al espacio que hay: cuando la ventana cambia de tamaño, fitTo() calcula
-// el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño. Rehacer las imágenes
-// cuesta, así que se espera a que se deje de arrastrar el borde (un Timer que se reinicia).
+// el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño (con SmoothImage, que
+// trae variantes para la pantalla escalada). Rehacer los íconos cuesta, así que se espera a que
+// el usuario deje de arrastrar el borde (un Timer que se reinicia con cada cambio).
 public class BoardView extends JPanel {
 
     static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
@@ -65,10 +64,6 @@ public class BoardView extends JPanel {
         define(PieceType.PAWN, "P", "♙", "♟");
     }
 
-    // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0. Se cargan una
-    // sola vez desde assets/piezas/. Si falta alguna, esa pieza se muestra con su símbolo.
-    private static final Map<String, Image> IMAGES = loadImages();
-
     private static void define(PieceType type, String letter, String white, String black) {
         LETTERS.put(type, letter);
         WHITE_SYMBOLS.put(type, white);
@@ -83,6 +78,7 @@ public class BoardView extends JPanel {
     private final Timer rescale = new Timer(150, e -> refreshIcons());
     private JButton[][] squares = new JButton[0][0];
     private Board board;
+    private Skin skin;
     private int squareSize = MIN_SQUARE;
 
     public BoardView(Consumer<Position> onSquareClicked) {
@@ -101,8 +97,9 @@ public class BoardView extends JPanel {
     }
 
     // Arma las casillas para este tablero. Si la persona juega con negras se gira, para verlas abajo.
-    public void setup(Board board, boolean flipped, int squareSize) {
+    public void setup(Board board, boolean flipped, Skin skin, int squareSize) {
         this.board = board;
+        this.skin = skin;
         int rows = board.getRows();
         int columns = board.getColumns();
         squares = new JButton[rows][columns];
@@ -150,14 +147,13 @@ public class BoardView extends JPanel {
             for (int col = 0; col < squares[row].length; col++) {
                 JButton button = squares[row][col];
                 applyIcon(button, board.pieceAt(new Position(row, col)));
-                button.setBackground((row + col) % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT);
+                button.setBackground(squareColor(row, col));
                 button.setBorderPainted(false); // quita el marco de una selección anterior
             }
         }
     }
 
-    // Marca la pieza elegida y sus destinos, usando las jugadas legales que ofrece el puerto de
-    // entrada: amarillo la pieza, ámbar los destinos libres y rojizo los destinos donde captura.
+    // Marca la pieza elegida y sus destinos: ámbar los libres y rojizo las capturas.
     public void highlight(Position selected, List<Move> legalMoves) {
         render(board);
         mark(selected, SELECTED, FRAME);
@@ -166,31 +162,6 @@ public class BoardView extends JPanel {
             boolean captures = board.pieceAt(move.getTo()) != null;
             mark(move.getTo(), captures ? CAPTURE : LEGAL, captures ? CAPTURE_FRAME : FRAME);
         }
-    }
-
-    // El menú usa las mismas imágenes para mostrar el color de cada lado.
-    static Image pieceImage(String key) {
-        return IMAGES.get(key);
-    }
-
-    // Una imagen de assets/, leída del classpath y no de una ruta en disco como "src/assets/...":
-    // así se encuentra igual en Windows, macOS y Linux, desde IntelliJ o desde la terminal, y
-    // aunque el juego se corra desde otra carpeta. build.sh copia src/assets junto a las clases.
-    // Devuelve null si falta el archivo.
-    static BufferedImage asset(String path) {
-        try (InputStream in = BoardView.class.getResourceAsStream("/assets/" + path)) {
-            return in == null ? null : ImageIO.read(in);
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    private static Map<String, Image> loadImages() {
-        Map<String, Image> map = new HashMap<>();
-        for (String key : new String[]{"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"}) {
-            map.put(key, asset("piezas/" + key + ".png"));
-        }
-        return map;
     }
 
     private void resize(int size) {
@@ -237,21 +208,21 @@ public class BoardView extends JPanel {
         button.setBorderPainted(true);
     }
 
+    private java.awt.Color squareColor(int row, int col) {
+        return SkinImages.color((row + col) % 2 == 0 ? skin.getDarkSquare() : skin.getLightSquare());
+    }
+
     private void applyIcon(JButton button, Piece piece) {
         String key = piece == null ? null : imageKey(piece);
-        Image image = key == null ? null : IMAGES.get(key);
+        Image image = key == null ? null : SkinImages.piece(skin, key);
         if (image == null) {
             button.setIcon(null);
-            button.setText(piece == null ? "" : symbol(piece)); // imagen faltante o pieza desconocida: texto
+            button.setText(piece == null ? "" : symbol(piece)); // asset faltante o pieza desconocida: texto
             return;
         }
         button.setText("");
-        Icon icon = pieceIcons.get(key);
-        if (icon == null) {
-            icon = new ImageIcon(SmoothImage.of(image, squareSize * ICON_PERCENT / 100));
-            pieceIcons.put(key, icon);
-        }
-        button.setIcon(icon);
+        button.setIcon(pieceIcons.computeIfAbsent(key,
+            k -> new ImageIcon(SmoothImage.of(image, squareSize * ICON_PERCENT / 100))));
     }
 
     private static String imageKey(Piece piece) {

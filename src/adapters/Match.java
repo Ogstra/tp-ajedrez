@@ -3,7 +3,7 @@ package adapters;
 import ai.OpponentController;
 import core.IChessGame;
 
-// Lo que devuelve GameBuilder: la partida y, si juega la IA, quien la controla (null si no).
+// La partida y su controlador de IA (null cuando juegan dos personas).
 public final class Match {
     private final IChessGame game;
     private final OpponentController opponent;

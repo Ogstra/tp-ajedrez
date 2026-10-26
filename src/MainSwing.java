@@ -1,6 +1,12 @@
+import accounts.AccountService;
+import accounts.ScoreRecorder;
+import accounts.User;
 import adapters.FileAccountStore;
+import adapters.FileSkinStore;
 import adapters.GameBuilder;
+import adapters.IGameView;
 import adapters.Match;
+import adapters.SkinCatalogReader;
 import adapters.SwingChessView;
 import ai.AutoPromotionChooser;
 import ai.OpponentController;
@@ -8,18 +14,21 @@ import ai.OpponentLevel;
 import ai.Opponents;
 import core.BoardSetup;
 import core.ChessGame;
+import core.Color;
 import core.IChessGame;
+import core.IDrawRule;
+import core.ISpecialMove;
 import core.PieceFactory;
 import core.StandardRules;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 import ports.IPromotionChooser;
-import accounts.AccountService;
-import accounts.ScoreRecorder;
+import skins.SkinService;
 
 import javax.swing.SwingUtilities;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 // Composition root de la variante gráfica. Mismo esquema que Main.java: se crea el
@@ -36,28 +45,50 @@ public class MainSwing {
             // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
+            // Skins: el catálogo viene con el juego (assets/skins/skins.csv) y la elegida por cada
+            // usuario se guarda en data/skins.csv.
+            SkinService skins = new SkinService(SkinCatalogReader.bundled(),
+                accounts, new FileSkinStore(dataDir.resolve("skins.csv")));
 
-            // La ventana pide una partida nueva cada vez que se aprieta Jugar: acá se arma con sus
-            // reglas, el que acredita los puntos y, si corresponde, la IA.
-            Random random = new Random();
-            GameBuilder builder = (view, white, black, level, aiColor) -> {
-                PieceFactory pieces = PieceFactory.standard();
-                // Contra la IA, la pieza a la que corona ella la elige el Decorator (siempre reina),
-                // igual que en la consola; la de la persona la pregunta la ventana.
-                IPromotionChooser chooser = level == OpponentLevel.NONE ? view : new AutoPromotionChooser(aiColor, view);
-                ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
-                IChessGame game = new ChessGame(BoardSetup.standard(pieces),
-                    Arrays.<IMoveListener>asList(view, recorder),
-                    Arrays.<IGameStatusListener>asList(view, recorder),
-                    StandardRules.specialMoves(pieces, chooser),
-                    StandardRules.drawRules());
-                OpponentController opponent = level == OpponentLevel.NONE
-                    ? null
-                    : new OpponentController(game, Opponents.create(level, random), aiColor);
-                return new Match(game, opponent);
-            };
-
-            new SwingChessView(accounts, builder).setVisible(true);
+            new SwingChessView(accounts, skins, new StandardGames(accounts, new Random()))
+                .setVisible(true);
         });
+    }
+
+    // La ventana pide una partida nueva cada vez que empieza una: acá se arma con sus reglas, el
+    // que acredita los puntos y, si corresponde, la IA.
+    private static final class StandardGames implements GameBuilder {
+        private final AccountService accounts;
+        private final Random random;
+
+        StandardGames(AccountService accounts, Random random) {
+            this.accounts = accounts;
+            this.random = random;
+        }
+
+        @Override
+        public Match local(IGameView view, User whiteUser, User blackUser, OpponentLevel level, Color aiColor) {
+            ScoreRecorder recorder = new ScoreRecorder(accounts, whiteUser, blackUser);
+            // Contra la IA, la coronación de la IA es siempre reina (Decorator, igual que en la consola).
+            IPromotionChooser chooser = level == OpponentLevel.NONE ? view : new AutoPromotionChooser(aiColor, view);
+            IChessGame game = newGame(view, recorder, chooser);
+            OpponentController opponent = level == OpponentLevel.NONE
+                ? null : new OpponentController(game, Opponents.create(level, random), aiColor);
+            return new Match(game, opponent);
+        }
+
+        // La partida estándar: tablero de 8x8, todas las reglas especiales y las de tablas.
+        private IChessGame newGame(IGameView view, ScoreRecorder recorder, IPromotionChooser chooser) {
+            PieceFactory pieces = PieceFactory.standard();
+            List<ISpecialMove> specialMoves = StandardRules.specialMoves(pieces, chooser);
+            List<IDrawRule> drawRules = StandardRules.drawRules();
+            List<IMoveListener> moveListeners = Arrays.<IMoveListener>asList(view, recorder);
+            IChessGame game = new ChessGame(BoardSetup.standard(pieces),
+                moveListeners,
+                Arrays.<IGameStatusListener>asList(view, recorder),
+                specialMoves,
+                drawRules);
+            return game;
+        }
     }
 }

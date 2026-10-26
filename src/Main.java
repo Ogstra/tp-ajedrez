@@ -11,6 +11,8 @@ import core.BoardSetup;
 import core.ChessGame;
 import core.Color;
 import core.IChessGame;
+import core.IDrawRule;
+import core.ISpecialMove;
 import core.MoveOutcome;
 import core.PieceFactory;
 import core.StandardRules;
@@ -25,6 +27,7 @@ import accounts.User;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -36,13 +39,15 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        OpponentLevel level = askLevel(scanner);
 
         // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
         Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
         AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
-        User white = ConsoleAccounts.askUser(scanner, accounts, "blancas");
-        User black = level == OpponentLevel.NONE ? ConsoleAccounts.askUser(scanner, accounts, "negras") : null;
+        // Primero el login y después el modo. El usuario solo se usa contra la IA: el 1 contra 1
+        // en la misma máquina no suma al ranking.
+        User user = ConsoleAccounts.askUser(scanner, accounts);
+        OpponentLevel level = askLevel(scanner);
+        User player = level == OpponentLevel.NONE ? null : user;
 
         PieceFactory pieces = PieceFactory.standard();
         Board board = BoardSetup.standard(pieces);
@@ -53,12 +58,15 @@ public class Main {
             ? human
             : new AutoPromotionChooser(Color.BLACK, human);
 
-        ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+        List<ISpecialMove> specialMoves = StandardRules.specialMoves(pieces, chooser);
+        List<IDrawRule> drawRules = StandardRules.drawRules();
+
+        ScoreRecorder recorder = new ScoreRecorder(accounts, player, null);
         IChessGame game = new ChessGame(board,
             Arrays.<IMoveListener>asList(renderer, recorder),
             Arrays.<IGameStatusListener>asList(renderer, recorder),
-            StandardRules.specialMoves(pieces, chooser),
-            StandardRules.drawRules());
+            specialMoves,
+            drawRules);
 
         // La IA juega con negras; el humano con blancas.
         OpponentController opponent = level == OpponentLevel.NONE
@@ -67,8 +75,9 @@ public class Main {
 
         renderer.render(board);
         System.out.println("Ajedrez");
-        System.out.println("Blancas: " + (white == null ? "sin usuario" : white)
-            + " | Negras: " + (level != OpponentLevel.NONE ? "la IA" : black == null ? "sin usuario" : black));
+        System.out.println(level == OpponentLevel.NONE
+            ? "1 contra 1"
+            : "Blancas: " + (player == null ? "invitado" : player) + " | Negras: la IA");
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");
 
         while (true) {
@@ -110,7 +119,7 @@ public class Main {
                     renderer.render(board);
                 }
                 // Al terminar la partida, el ranking ya incluye el resultado.
-                if (game.isGameOver() && (white != null || black != null)) {
+                if (game.isGameOver() && player != null) {
                     ConsoleAccounts.printRanking(accounts);
                 }
             }

@@ -499,7 +499,7 @@ function callout(slide, head, text, x, y, w) {
   const s = content("Tests", "Núcleo probado sin ninguna infraestructura",
     "Los tests corren solo con javac, sin librerías: ./scripts/test.sh compila y corre todo. Usan Arrange, Act, Assert, un stub y un mock. Los marcados TDD se escribieron antes que el código. Además hay pruebas de integración de la ventana Swing.");
   s.addText(TEST_COUNT, { x: 0.7, y: 1.7, w: 5.2, h: 2.2, margin: 0, valign: "middle", fontFace: HEAD, fontSize: 130, bold: true, color: ACCENT });
-  label(s, "tests del núcleo y 19 de usuarios, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
+  label(s, "tests del núcleo y 20 de usuarios, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
   code(s, "./scripts/test.sh", 0.7, 4.7, 4.2, 0.75, 17);
   rows(s, [
     "Arrange, Act, Assert en cada uno",
@@ -583,7 +583,7 @@ function callout(slide, head, text, x, y, w) {
   label(s, "DEMOSTRACIÓN", 0.8, 0.9, 6.5, { size: 13, bold: true, color: "A9C79B", spacing: 3 });
   label(s, "Probémoslo", 0.8, 1.3, 6.5, { head: true, size: 44, bold: true, color: WHITE, h: 0.9 });
   const steps = [
-    "Menú: usuarios, 1 contra 1 o contra la IA",
+    "Login y menú: 1 contra 1 o contra la IA",
     "Enroque, coronación y captura al paso",
     "Deshacer, rehacer y ranking",
     "Contra la IA con negras: el tablero se gira",

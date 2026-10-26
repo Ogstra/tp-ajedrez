@@ -1,19 +1,16 @@
 # Lista para dibujar el UML
 
-Generada con `python3 scripts/list_types.py` a partir del código. Si el código cambia, se vuelve a generar y el UML se revisa contra esta lista.
+Generada con `java scripts/ListTypes.java` a partir del código. Si el código cambia, se vuelve a generar y el UML se revisa contra esta lista.
 
 Cómo leerla: **Implementa** es una flecha de realización (línea punteada con triángulo vacío); **Extiende** es herencia; **Tiene** son las asociaciones por campo (el diamante o la flecha simple, según si es parte de o solo referencia); **Usa** son dependencias (flecha punteada).
 
 ## Paquete `(raíz, sin paquete)`
 
-### AccountTests (class)
-- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
-
 ### Main (class)
-- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, FileAccountStore, IChessGame, IGameStatusListener, IMoveListener, IPromotionChooser, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, ScoreRecorder, StandardRules, User
+- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, ScoreRecorder, StandardRules, User
 
 ### MainSwing (class)
-- Usa: AccountService, AutoPromotionChooser, BoardSetup, ChessGame, FileAccountStore, GameBuilder, IChessGame, IGameStatusListener, IMoveListener, IPromotionChooser, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, ScoreRecorder, StandardRules, SwingChessView
+- Usa: AccountService, AutoPromotionChooser, BoardSetup, ChessGame, Color, FileAccountStore, FileSkinStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IGameView, IMoveListener, IPromotionChooser, ISpecialMove, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, ScoreRecorder, SkinCatalogReader, SkinService, StandardRules, SwingChessView, User
 
 ## Paquete `accounts`
 
@@ -33,11 +30,13 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### ScoreRecorder (class)
 - Implementa: IGameStatusListener, IMoveListener
 - Tiene: AccountService, User
-- Usa: Color, Piece, PieceType, Position, Result
+- Usa: Color, Result
 
 ### User (class)
 
 ## Paquete `adapters`
+
+### Assets (class)
 
 ### BoardStrip (class)
 - Extiende: JComponent
@@ -45,8 +44,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### BoardView (class)
 - Extiende: JPanel
-- Tiene: Board, PieceType, Position
-- Usa: Color, Move, Palette, Piece, SmoothImage
+- Tiene: Board, PieceType, Position, Skin
+- Usa: Color, Move, Palette, Piece, SkinImages, SmoothImage
 
 ### ChoiceControl (class)
 - Extiende: JComponent
@@ -68,6 +67,9 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: IAccountStore
 - Usa: Score, User
 
+### FileSkinStore (class)
+- Implementa: ISkinStore
+
 ### FlatButton (class)
 - Extiende: JButton
 - Usa: Color, FlatComboBox, Palette, RoundedBorder
@@ -77,15 +79,23 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: Palette, RoundedBorder
 
 ### GameBuilder (interface)
-- Usa: Color, Match, OpponentLevel, SwingChessView, User
+- Usa: Color, IGameView, Match, OpponentLevel, User
+
+### IGameView (interface)
+- Extiende: IMoveListener, IGameStatusListener, IPromotionChooser
+
+### LoginPanel (class)
+- Extiende: JPanel
+- Tiene: AccountService, FlatButton, User
+- Usa: BoardStrip, FlatComboBox, MenuPanel, Palette, RoundedBorder
 
 ### Match (class)
 - Tiene: IChessGame, OpponentController
 
 ### MenuPanel (class)
 - Extiende: JPanel
-- Tiene: AccountService, ChoiceControl, FlatButton, User
-- Usa: BoardStrip, BoardView, Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, RoundedPanel, Score, SmoothImage
+- Tiene: ChoiceControl, FlatButton
+- Usa: BoardStrip, Color, OpponentLevel, Palette, SwingChessView
 
 ### Palette (class)
 - Tiene: Color
@@ -103,13 +113,24 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Extiende: JPanel
 - Usa: Palette, RoundedBorder
 
+### SkinCatalogReader (class)
+- Usa: Assets, Skin
+
+### SkinImages (class)
+- Usa: Assets, Color, Skin
+
+### SkinsPanel (class)
+- Extiende: JPanel
+- Tiene: SkinService, User
+- Usa: BoardStrip, Color, FlatButton, MenuPanel, Palette, RoundedPanel, Skin, SkinImages, SmoothImage
+
 ### SmoothImage (class)
 
 ### SwingChessView (class)
 - Extiende: JFrame
-- Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, Board, BoardView, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
-- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, User
+- Implementa: IGameView
+- Tiene: AccountService, Board, BoardView, GameBuilder, IChessGame, LoginPanel, MenuPanel, OpponentController, PieceType, Position, RankingPanel, SkinService, SkinsPanel, User
+- Usa: Assets, Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, SkinImages
 
 ## Paquete `ai`
 
@@ -154,7 +175,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IChessGame, Move
 
 ### SearchGames (class)
-- Usa: ChessGame, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, PieceFactory, PieceType, StandardRules
+- Usa: ChessGame, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, StandardRules
 
 ## Paquete `core`
 
@@ -330,27 +351,39 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### IPromotionChooser (interface)
 - Usa: Color, PieceType
 
+## Paquete `skins`
+
+### ISkinStore (interface)
+
+### Skin (class)
+
+### SkinService (class)
+- Tiene: AccountService, ISkinStore, Skin
+- Usa: User
+
 ## Dependencias entre paquetes
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `core.draw`, `core.special`, `ports` |
+| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `ports`, `skins` |
 | `accounts` | `core`, `ports` |
-| `adapters` | `accounts`, `ai`, `core`, `ports` |
+| `adapters` | `accounts`, `ai`, `core`, `ports`, `skins` |
 | `ai` | `core`, `ports` |
 | `core` | `core.draw`, `core.movement`, `core.special`, `ports` |
 | `core.draw` | `core` |
 | `core.movement` | `core` |
 | `core.special` | `core`, `ports` |
 | `ports` | `core` |
+| `skins` | `accounts` |
 
 ## Dónde está cada patrón (para marcarlo en el diagrama)
 
 - Strategy: `IMovementStrategy` y sus seis implementaciones; `ISpecialMove` (`CastlingMove`, `EnPassantMove`, `PromotionMove`); `IDrawRule` (`InsufficientMaterialRule`, `FiftyMoveRule`, `ThreefoldRepetitionRule`); `IOpponent` (`RandomOpponent`, `GreedyOpponent`, `MinimaxOpponent`).
-- Factory: `PieceFactory`, `BoardSetup`, `StandardRules`, `Opponents` y `GameBuilder` (lo implementa `MainSwing` y devuelve un `Match`).
-- Decorator: `AutoPromotionChooser` envuelve al `IPromotionChooser` de la persona y corona a reina cuando juega la IA.
+- Factory: `PieceFactory`, `BoardSetup`, `Opponents` y `GameBuilder` (lo implementa `MainSwing.StandardGames`; `local` devuelve un `Match`).
 - Command: `ICommand`, `IMoveCommand`, `MoveCommand`, `CastlingCommand`, `PromotionCommand`, `EnPassantCommand`.
 - State: `IGameState`, `WhiteTurnState`, `BlackTurnState`, `CheckmateState`, `StalemateState`, `DrawState`.
-- Observer: `IMoveListener` e `IGameStatusListener`, implementadas por `ConsoleRenderer`, `SwingChessView` y `ScoreRecorder`. `SwingChessView` delega el dibujo del tablero en `BoardView`.
-- Puertos: de entrada `IChessGame`; de salida `IMoveListener`, `IGameStatusListener`, `IPromotionChooser` e `IAccountStore` (en `accounts`, lo implementa `FileAccountStore`).
+- Observer: `IMoveListener` e `IGameStatusListener`, implementadas por `ConsoleRenderer`, `SwingChessView` (a través de `IGameView`), `ScoreRecorder`.
+- Puertos del núcleo: de entrada `IChessGame`; de salida `IMoveListener`, `IGameStatusListener` e `IPromotionChooser` (paquete `ports`). Puertos de los otros módulos: `IAccountStore` en `accounts` (lo implementa `FileAccountStore`) e `ISkinStore` en `skins` (lo implementa `FileSkinStore`).
+- Separación de responsabilidades en la ventana: `SwingChessView` (pantallas y turno), `BoardView` (tablero).
+- El ciclo `core` <-> `ports` de la tabla de dependencias es esperable: los puertos son parte del hexágono del núcleo (hablan en sus términos: `Color`, `Position`, `Piece`). Ningún paquete de afuera es importado por `core` ni por `ports`.
 - Composition roots: `Main` y `MainSwing`.

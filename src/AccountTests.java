@@ -63,6 +63,7 @@ public class AccountTests {
         testUndoRevertsTheResult();
         testRedoReappliesTheResult();
         testRedoOfAnEarlierMoveDoesNotReapply();
+        testNoWhiteUserCreditsOnlyBlack();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -499,5 +500,22 @@ public class AccountTests {
         assertTrue("testRedoOfAnEarlierMoveDoesNotReapply",
             scoreOf(service, ana).getGames() == 0 && scoreOf(service, beto).getGames() == 0 && !game.isGameOver(),
             "la partida sigue en juego, así que no hay resultado que acreditar");
+    }
+
+    // TDD: contra la IA jugando con negras, el lado blanco es la IA y no tiene usuario: solo se acredita a la persona.
+    private static void testNoWhiteUserCreditsOnlyBlack() {
+        // Arrange
+        AccountService service = newService();
+        User ana = service.register("Ana");
+        ChessGame game = newGame(BoardSetup.standard(PieceFactory.standard()), new ScoreRecorder(service, null, ana));
+
+        // Act
+        foolsCheckmate(game);
+
+        // Assert
+        Score score = scoreOf(service, ana);
+        assertTrue("testNoWhiteUserCreditsOnlyBlack",
+            score.getWins() == 1 && score.getPoints() == 3 && service.ranking().size() == 1,
+            "solo Ana debería figurar, con una victoria y 3 puntos");
     }
 }
