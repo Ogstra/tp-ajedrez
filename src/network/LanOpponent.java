@@ -48,14 +48,26 @@ public class LanOpponent implements IOpponent, IMoveListener, IPromotionChooser 
     }
 
     // IOpponent: espera la jugada del rival. Devuelve null si el rival se desconectó.
+    // Lo que llega por la red no es confiable (Unidad 5: "la IA asesora, no arbitra"; acá es el
+    // rival el que propone): si la línea no tiene la forma de una jugada, o la jugada no es legal
+    // en esta partida, se corta la conexión y se trata como desconexión. Así una PC con otra
+    // versión, o alguien que mande cualquier cosa al puerto, no traba ni rompe la partida.
     @Override
     public Move chooseMove(IChessGame game) {
         String line = connection.receive();
         if (line == null) return null;
         String[] parts = line.trim().split(" ");
-        if (parts.length < 2) return null;
+        boolean wellFormed = (parts.length == 2 || parts.length == 3)
+            && (parts.length == 2 || parts[2].matches("[QRBN]"));
+        Position from = wellFormed ? Position.fromAlgebraic(parts[0]) : null;
+        Position to = wellFormed ? Position.fromAlgebraic(parts[1]) : null;
+        Move move = from == null || to == null ? null : new Move(from, to);
+        if (move == null || !game.legalMoves().contains(move)) {
+            connection.close();
+            return null;
+        }
         rivalPromotion = parts.length == 3 ? pieceFor(parts[2]) : PieceType.QUEEN;
-        return new Move(Position.fromAlgebraic(parts[0]), Position.fromAlgebraic(parts[1]));
+        return move;
     }
 
     // IPromotionChooser: si corona el rival, la pieza que vino en su mensaje; si corona la

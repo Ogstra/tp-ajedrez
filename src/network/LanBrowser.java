@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
+import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class LanBrowser {
 
     private static final long FORGET_AFTER_MS = 3000;
+    private static final int MAX_GAMES = 20;
 
     private final Map<String, LanGame> games = new LinkedHashMap<>();
     private final Map<String, Long> lastSeen = new LinkedHashMap<>();
@@ -28,8 +30,13 @@ public class LanBrowser {
     public boolean start() {
         try {
             socket = new DatagramSocket(null);
-            socket.setReuseAddress(true); // así pueden buscar dos ventanas en la misma PC
-            socket.bind(new InetSocketAddress(LanAnnouncer.PORT));
+            // Así pueden buscar dos ventanas en la misma PC. En Windows alcanza con SO_REUSEADDR;
+            // en macOS y Linux además hace falta SO_REUSEPORT (Windows no lo tiene).
+            socket.setReuseAddress(true);
+            if (socket.supportedOptions().contains(StandardSocketOptions.SO_REUSEPORT)) {
+                socket.setOption(StandardSocketOptions.SO_REUSEPORT, true);
+            }
+            socket.bind(new InetSocketAddress(LanAnnouncer.DISCOVERY_PORT));
             socket.setSoTimeout(500);     // cada medio segundo se revisa si hay que dejar de escuchar
         } catch (IOException e) {
             return false;
@@ -74,18 +81,23 @@ public class LanBrowser {
         }
     }
 
-    // "AJEDREZ;4821;Ana;5000" -> la partida 4821 de Ana, en la IP que mandó el paquete, puerto 5000.
+    // "AJEDREZ;4821;Ana;52817" -> la partida 4821 de Ana, en la IP que mandó el paquete, puerto 52817.
+    // Cualquier PC de la red puede mandar un paquete a este puerto, así que se descarta lo que no
+    // tenga la forma esperada y el nombre se limpia antes de mostrarlo.
     private static LanGame parse(String text, DatagramPacket packet) {
         String[] parts = text.split(";");
-        if (parts.length != 4 || !parts[0].equals(LanAnnouncer.PREFIX)) return null;
+        if (parts.length != 4 || !parts[0].equals(LanAnnouncer.PREFIX) || parts[1].length() > 10) return null;
         try {
-            return new LanGame(parts[1], parts[2], packet.getAddress(), Integer.parseInt(parts[3]));
+            int port = Integer.parseInt(parts[3]);
+            if (port < 1 || port > 65535) return null;
+            return new LanGame(parts[1], LanNames.clean(parts[2]), packet.getAddress(), port);
         } catch (NumberFormatException e) {
             return null;
         }
     }
 
     private synchronized void seen(LanGame game) {
+        if (!games.containsKey(game.getId()) && games.size() >= MAX_GAMES) return; // la lista no crece sin fin
         games.putIfAbsent(game.getId(), game); // la primera dirección por la que llegó es la que se usa
         lastSeen.put(game.getId(), System.currentTimeMillis());
     }

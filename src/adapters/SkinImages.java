@@ -2,17 +2,15 @@ package adapters;
 
 import skins.Skin;
 
-import javax.imageio.ImageIO;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-// Las imágenes de las piezas de cada skin, leídas una sola vez desde su carpeta en src/assets.
-// Si a una skin le falta alguna imagen, se usa la del set de siempre (src/assets/piezas); si
+// Las imágenes de las piezas de cada skin, leídas una sola vez desde su carpeta en assets (por
+// el classpath, ver Assets). Si a una skin le falta alguna imagen, se usa la del set de siempre
+// (assets/piezas); si
 // también falta, la ventana muestra un símbolo de texto.
 //
 // Muchos sets traen las piezas con mucho margen transparente alrededor. Para que llenen la casilla,
@@ -41,14 +39,8 @@ final class SkinImages {
     private static Map<String, Image> loadFolder(String folder) {
         Map<String, BufferedImage> raw = new HashMap<>();
         for (String key : KEYS) {
-            String path = "src" + File.separator + "assets" + File.separator + folder.replace("/", File.separator)
-                + File.separator + key + ".png";
-            try {
-                BufferedImage image = ImageIO.read(new File(path));
-                if (image != null) raw.put(key, image);
-            } catch (IOException e) {
-                // falta el archivo: esa pieza queda sin imagen
-            }
+            BufferedImage image = Assets.image(folder + "/" + key + ".png"); // null si falta el archivo
+            if (image != null) raw.put(key, image);
         }
         Rectangle box = null;
         for (BufferedImage image : raw.values()) {

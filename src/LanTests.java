@@ -19,6 +19,8 @@ import network.LanAnnouncer;
 import network.LanBrowser;
 import network.LanConnection;
 import network.LanGame;
+import network.LanLobby;
+import network.LanNames;
 import network.LanOpponent;
 
 import java.io.IOException;
@@ -45,6 +47,13 @@ public class LanTests {
         testCastlingTravelsAsAKingMove();
         testLeavingIsSeenAsADisconnection();
         testAnnouncedGameShowsUpInTheList();
+        testDiscoveryPortIsNotAirPlay();
+        testHostedGameUsesAFreePortAndConnects();
+        testMalformedLineIsTreatedAsDisconnection();
+        testIllegalMoveIsTreatedAsDisconnection();
+        testLongLineIsRejected();
+        testRivalNameIsCleaned();
+        testNamesCleaning();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -222,23 +231,176 @@ public class LanTests {
         // Arrange
         LanBrowser browser = new LanBrowser();
         boolean listening = browser.start();
-        LanAnnouncer announcer = new LanAnnouncer("Ana", LanConnection.PORT);
+        LanAnnouncer announcer = new LanAnnouncer("Ana", 52817);
 
         // Act: se anuncia la partida y se espera hasta 3 segundos a que aparezca.
         announcer.start();
-        LanGame found = null;
-        for (int i = 0; i < 30 && found == null; i++) {
-            Thread.sleep(100);
-            for (LanGame game : browser.games()) {
-                if (game.getHostName().equals("Ana")) found = game;
-            }
-        }
+        LanGame found = waitForGame(browser, "Ana");
         announcer.stop();
         browser.stop();
 
         // Assert
         assertTrue("testAnnouncedGameShowsUpInTheList",
-            listening && found != null && found.getPort() == LanConnection.PORT,
+            listening && found != null && found.getPort() == 52817,
             "la partida de Ana debería aparecer en la lista con su puerto");
+    }
+
+    // Espera hasta 3 segundos a que aparezca en la lista la partida de ese nombre.
+    private static LanGame waitForGame(LanBrowser browser, String hostName) throws InterruptedException {
+        for (int i = 0; i < 30; i++) {
+            Thread.sleep(100);
+            for (LanGame game : browser.games()) {
+                if (game.getHostName().equals(hostName)) return game;
+            }
+        }
+        return null;
+    }
+
+    private static void testDiscoveryPortIsNotAirPlay() {
+        // Assert: en macOS el receptor de AirPlay ocupa el 5000 y el 7000.
+        int port = LanAnnouncer.DISCOVERY_PORT;
+        assertTrue("testDiscoveryPortIsNotAirPlay", port != 5000 && port != 7000 && port > 1024,
+            "el puerto de los avisos no puede ser uno de AirPlay ni uno reservado: " + port);
+    }
+
+    private static void testHostedGameUsesAFreePortAndConnects() throws Exception {
+        // Arrange: Ana crea la partida con el lobby; Beto la busca en la lista.
+        LanLobby hostLobby = new LanLobby();
+        LanLobby guestLobby = new LanLobby();
+        RecordingLobbyListener hostSide = new RecordingLobbyListener();
+        RecordingLobbyListener guestSide = new RecordingLobbyListener();
+        guestLobby.startBrowsing();
+
+        // Act
+        boolean hosting = hostLobby.host("Ana", hostSide);
+        LanGame found = null;
+        for (int i = 0; i < 30 && found == null; i++) {
+            Thread.sleep(100);
+            for (LanGame game : guestLobby.games()) {
+                if (game.getHostName().equals("Ana")) found = game;
+            }
+        }
+        if (found != null) guestLobby.join(found, "Beto", guestSide);
+        boolean connected = hostSide.await() && guestSide.await();
+
+        // Assert: el puerto lo eligió el sistema (no es el 5000 de AirPlay), y cada uno quedó
+        // con su color y el nombre del otro.
+        assertTrue("testHostedGameUsesAFreePortAndConnects",
+            hosting && found != null && found.getPort() != 5000 && connected
+                && hostSide.color == Color.WHITE && "Beto".equals(hostSide.rival)
+                && guestSide.color == Color.BLACK && "Ana".equals(guestSide.rival),
+            "la partida debería encontrarse y conectarse: " + found + " " + hostSide.rival + " / " + guestSide.rival);
+        hostLobby.close();
+        guestLobby.close();
+        if (hostSide.connection != null) hostSide.connection.close();
+        if (guestSide.connection != null) guestSide.connection.close();
+    }
+
+    // Registra lo que avisa el lobby (un mock simple) y deja esperar a que avise.
+    private static class RecordingLobbyListener implements LanLobby.Listener {
+        private final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        volatile LanConnection connection;
+        volatile Color color;
+        volatile String rival;
+
+        @Override
+        public void connected(LanConnection connection, Color localColor, String rivalName) {
+            this.connection = connection;
+            this.color = localColor;
+            this.rival = rivalName;
+            done.countDown();
+        }
+
+        @Override
+        public void failed(String message) {
+            done.countDown();
+        }
+
+        boolean await() throws InterruptedException {
+            return done.await(5, java.util.concurrent.TimeUnit.SECONDS) && connection != null;
+        }
+    }
+
+    private static void testMalformedLineIsTreatedAsDisconnection() throws Exception {
+        // Arrange
+        LanConnection[] pair = connectedPair();
+        PieceFactory pieces = PieceFactory.standard();
+        LanOpponent hostLan = new LanOpponent(pair[0], Color.WHITE, "Beto", color -> PieceType.QUEEN);
+        IChessGame host = newGame(BoardSetup.standard(pieces), hostLan, pieces);
+        host.tryMove(at("e2"), at("e4"));
+        pair[1].receive(); // la jugada de Ana llega a la otra punta
+
+        // Act: del otro lado llega algo que no es una jugada.
+        pair[1].send("<html><img src=x>");
+        Move move = hostLan.chooseMove(host);
+
+        // Assert
+        assertTrue("testMalformedLineIsTreatedAsDisconnection", move == null && pair[1].receive() == null,
+            "una línea que no es una jugada corta la conexión en vez de romper la partida");
+        pair[1].close();
+    }
+
+    private static void testIllegalMoveIsTreatedAsDisconnection() throws Exception {
+        // Arrange
+        LanConnection[] pair = connectedPair();
+        PieceFactory pieces = PieceFactory.standard();
+        LanOpponent hostLan = new LanOpponent(pair[0], Color.WHITE, "Beto", color -> PieceType.QUEEN);
+        IChessGame host = newGame(BoardSetup.standard(pieces), hostLan, pieces);
+        host.tryMove(at("e2"), at("e4"));
+        pair[1].receive();
+
+        // Act: el rival "mueve" el rey negro de e8 a e1, que no es una jugada legal.
+        pair[1].send("e8 e1");
+        Move move = hostLan.chooseMove(host);
+
+        // Assert: el núcleo decide qué es legal; la red solo propone.
+        assertTrue("testIllegalMoveIsTreatedAsDisconnection",
+            move == null && host.getBoard().pieceAt(at("e8")) != null,
+            "una jugada ilegal que llega por la red no se aplica y corta la conexión");
+        pair[1].close();
+    }
+
+    private static void testLongLineIsRejected() throws Exception {
+        // Arrange
+        LanConnection[] pair = connectedPair();
+        StringBuilder huge = new StringBuilder();
+        for (int i = 0; i < 10_000; i++) huge.append('x');
+
+        // Act
+        pair[1].send(huge.toString());
+        String received = pair[0].receive();
+
+        // Assert
+        assertTrue("testLongLineIsRejected", received == null,
+            "una línea más larga de lo que usa el juego no se guarda en memoria");
+        pair[0].close();
+        pair[1].close();
+    }
+
+    private static void testRivalNameIsCleaned() throws Exception {
+        // Arrange
+        LanConnection[] pair = connectedPair();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        // Act: el rival manda un nombre con etiquetas HTML, saltos de línea y demasiado largo.
+        Future<String> hostSees = executor.submit(() -> pair[0].greet("Ana"));
+        pair[1].greet("<html><b>Beto</b>;con un nombre larguísimo");
+
+        // Assert
+        String name = hostSees.get();
+        assertTrue("testRivalNameIsCleaned",
+            name != null && !name.contains("<") && !name.contains(">") && !name.contains(";") && name.length() <= 20,
+            "el nombre que llega por la red se limpia antes de mostrarlo: " + name);
+        executor.shutdown();
+        pair[0].close();
+        pair[1].close();
+    }
+
+    private static void testNamesCleaning() {
+        // Assert: casos de borde de la limpieza de nombres.
+        assertTrue("testNamesCleaning",
+            LanNames.clean(null).equals("rival") && LanNames.clean("  <>  ").equals("rival")
+                && LanNames.clean("Ana").equals("Ana") && LanNames.clean("A\nna").equals("Ana"),
+            "nulo o vacío queda como 'rival' y se sacan los caracteres de control");
     }
 }

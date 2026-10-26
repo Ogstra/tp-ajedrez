@@ -1,10 +1,9 @@
 package adapters;
 
 import core.Color;
-import network.LanAnnouncer;
-import network.LanBrowser;
 import network.LanConnection;
 import network.LanGame;
+import network.LanLobby;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -17,14 +16,13 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
 // Pantalla "Jugar por LAN", con dos vistas: la lista (crear una partida o unirse a una de las
-// que hay en la red) y la espera de rival. Las tareas de red van en otros hilos para no
-// congelar la ventana; cuando las dos PCs se conectan, le pasa la conexión a SwingChessView.
+// que hay en la red) y la espera de rival. Solo muestra y reacciona a los botones: los sockets y
+// los hilos están en LanLobby, que entra por constructor. Lo que el lobby avisa desde sus hilos
+// se pasa al hilo de la interfaz con invokeLater; cuando hay rival, se le da la conexión a la ventana.
 public class LanPanel extends JPanel {
 
     // Lo que hace la ventana cuando hay rival: arma la partida con esta conexión.
@@ -35,6 +33,7 @@ public class LanPanel extends JPanel {
     private static final String LIST = "list";
     private static final String WAITING = "waiting";
 
+    private final LanLobby lobby;
     private final Listener listener;
     private final JPanel views = new JPanel(new CardLayout());
     private final JPanel gamesBox = new JPanel(new GridBagLayout());
@@ -42,14 +41,26 @@ public class LanPanel extends JPanel {
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final FlatButton createButton = new FlatButton("Crear partida", FlatButton.Style.PRIMARY);
     private final Timer refresh = new Timer(1000, e -> showGames()); // la lista se actualiza cada segundo
+    private final LanLobby.Listener lobbyListener = new LanLobby.Listener() {
+        @Override
+        public void connected(LanConnection connection, Color localColor, String rivalName) {
+            SwingUtilities.invokeLater(() -> start(connection, localColor, rivalName));
+        }
+
+        @Override
+        public void failed(String text) {
+            SwingUtilities.invokeLater(() -> {
+                open(ownName);
+                message.setText(text);
+            });
+        }
+    };
     private List<String> shownIds = new ArrayList<>();
     private String ownName;
-    private LanBrowser browser;
-    private LanAnnouncer announcer;
-    private ServerSocket server;
     private boolean waiting = false;
 
-    public LanPanel(Listener listener, Runnable onBack) {
+    public LanPanel(LanLobby lobby, Listener listener, Runnable onBack) {
+        this.lobby = lobby;
         this.listener = listener;
         message.setForeground(Palette.ERROR);
         gamesBox.setOpaque(false);
@@ -63,7 +74,7 @@ public class LanPanel extends JPanel {
         });
         FlatButton cancelButton = new FlatButton("Cancelar", FlatButton.Style.LINK);
         cancelButton.addActionListener(e -> {
-            stopHosting();
+            lobby.stopHosting();
             open(ownName);
         });
 
@@ -104,8 +115,7 @@ public class LanPanel extends JPanel {
         message.setText(" ");
         shownIds = new ArrayList<>();
         ((CardLayout) views.getLayout()).show(views, LIST);
-        browser = new LanBrowser();
-        if (!browser.start()) message.setText("No se pudo buscar partidas en la red.");
+        if (!lobby.startBrowsing()) message.setText("No se pudo buscar partidas en la red.");
         showGames();
         refresh.start();
         updateDefaultButton();
@@ -114,80 +124,36 @@ public class LanPanel extends JPanel {
     // Deja de buscar y de esperar rival (al volver al menú o al empezar la partida).
     public void close() {
         refresh.stop();
-        if (browser != null) browser.stop();
-        stopHosting();
+        lobby.close();
     }
 
-    // Crear partida: se abre el puerto, se avisa a la red y se espera en otro hilo a que alguien se una.
+    // Crear partida: el lobby abre un puerto libre, lo anuncia y espera a que alguien se una.
     private void create() {
-        try {
-            server = new ServerSocket(LanConnection.PORT);
-        } catch (IOException e) {
+        refresh.stop();
+        if (!lobby.host(ownName, lobbyListener)) {
+            open(ownName);
             message.setText("No se pudo crear la partida.");
             return;
         }
-        refresh.stop();
-        browser.stop();
         waiting = true;
         ((CardLayout) views.getLayout()).show(views, WAITING);
         updateDefaultButton();
-        announcer = new LanAnnouncer(ownName, LanConnection.PORT);
-        announcer.start();
-
-        ServerSocket current = server;
-        new Thread(() -> {
-            try {
-                LanConnection connection = LanConnection.waitForRival(current);
-                String rival = connection.greet(ownName);
-                SwingUtilities.invokeLater(() -> start(connection, Color.WHITE, rival));
-            } catch (IOException e) {
-                // se canceló: el server se cerró mientras esperaba
-            }
-        }, "espera-lan").start();
     }
 
-    // Unirse: se conecta en otro hilo a la PC que anunció la partida. Quien se une juega con negras.
+    // Unirse: el lobby se conecta en otro hilo a la PC que anunció la partida.
     private void join(LanGame game) {
         message.setText(" ");
-        new Thread(() -> {
-            try {
-                LanConnection connection = LanConnection.connect(game.getAddress(), game.getPort());
-                String rival = connection.greet(ownName);
-                SwingUtilities.invokeLater(() -> start(connection, Color.BLACK, rival));
-            } catch (IOException e) {
-                SwingUtilities.invokeLater(() -> message.setText("No se pudo conectar con esa partida."));
-            }
-        }, "union-lan").start();
+        lobby.join(game, ownName, lobbyListener);
     }
 
     private void start(LanConnection connection, Color localColor, String rival) {
         close();
-        if (rival == null) { // del otro lado no respondió el juego
-            connection.close();
-            open(ownName);
-            message.setText("No se pudo conectar con esa partida.");
-            return;
-        }
         listener.connected(connection, localColor, rival);
-    }
-
-    private void stopHosting() {
-        if (announcer != null) announcer.stop();
-        announcer = null;
-        if (server != null) {
-            try {
-                server.close();
-            } catch (IOException e) {
-                // ya estaba cerrado
-            }
-        }
-        server = null;
     }
 
     // Un botón por partida ("Partida de Ana"). Solo se rearma si cambió la lista.
     private void showGames() {
-        if (browser == null) return;
-        List<LanGame> games = browser.games();
+        List<LanGame> games = lobby.games();
         List<String> ids = new ArrayList<>();
         for (LanGame game : games) ids.add(game.getId());
         if (ids.equals(shownIds)) return;

@@ -1,5 +1,7 @@
 package adapters;
 
+import accounts.AccountService;
+import accounts.User;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import core.Board;
@@ -9,27 +11,17 @@ import core.Move;
 import core.Piece;
 import core.PieceType;
 import core.Position;
-import ports.IGameStatusListener;
-import ports.IMoveListener;
-import ports.IPromotionChooser;
 import network.LanConnection;
+import network.LanLobby;
 import network.LanOpponent;
-import skins.Skin;
 import skins.SkinService;
-import accounts.AccountService;
-import accounts.User;
 
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -38,13 +30,12 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Taskbar;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,42 +46,28 @@ import java.util.Map;
 // implementa IPromotionChooser con un diálogo, y además traduce clicks del
 // mouse en llamadas a IChessGame.tryMove(): el mismo rol que cumple Main.java
 // con el teclado, pero con Swing. El núcleo no cambió para que esto funcione.
-public class SwingChessView extends JFrame implements IMoveListener, IGameStatusListener, IPromotionChooser {
+//
+// Esta clase maneja las pantallas y el turno; el dibujo del tablero está en BoardView, la red
+// en LanLobby (a través de LanPanel) y el armado de cada partida en el GameBuilder que recibe.
+public class SwingChessView extends JFrame implements IGameView {
 
-    private static final java.awt.Color SELECTED = new java.awt.Color(0xF6, 0xF6, 0x69);
-    private static final java.awt.Color LEGAL = new java.awt.Color(0xF2, 0xC9, 0x6B);   // destino libre
-    private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B); // destino con captura
-    private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);         // marco de las casillas marcadas
-    private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E);  // marco de las capturas
-    private static final int MAX_SQUARE = 80;    // casillas de 80 px salvo que el tablero no entre en la pantalla
-    private static final int MIN_SQUARE = 32;
+    private static final int MAX_START_SQUARE = 80; // al empezar, casillas de 80 px si el tablero entra en la pantalla
     private static final Dimension MIN_CONTENT = new Dimension(460, 690); // lo que necesita el menú
     private static final int TOP_BAR_HEIGHT = 52;  // botón de 36 más el margen
-    private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
+    // Tamaños estándar del ícono (como los de un .ico). setIconImages le da la lista a Java y cada
+    // sistema usa el que le conviene según dónde lo muestre: 16 en el título, 32 o 48 en la barra
+    // de tareas, más grande con la pantalla escalada. No hace falta achicar nada a mano.
+    private static final int[] ICON_SIZES = {16, 24, 32, 48, 64, 128, 256};
 
-    // Las piezas y los colores del tablero salen de la skin elegida (ver SkinImages). La de
-    // siempre usa el set "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0, de
-    // src/assets/piezas/. Si falta algún archivo, o la pieza es de un tipo que este adaptador
-    // no conoce, se cae a un símbolo de texto.
-    private static final Map<PieceType, String> LETTERS = new HashMap<>();
-    private static final Map<PieceType, String> WHITE_SYMBOLS = new HashMap<>();
-    private static final Map<PieceType, String> BLACK_SYMBOLS = new HashMap<>();
     private static final Map<PieceType, String> NAMES = new HashMap<>();
 
     static {
-        define(PieceType.KING, "K", "♔", "♚", "Rey");
-        define(PieceType.QUEEN, "Q", "♕", "♛", "Reina");
-        define(PieceType.ROOK, "R", "♖", "♜", "Torre");
-        define(PieceType.BISHOP, "B", "♗", "♝", "Alfil");
-        define(PieceType.KNIGHT, "N", "♘", "♞", "Caballo");
-        define(PieceType.PAWN, "P", "♙", "♟", "Peón");
-    }
-
-    private static void define(PieceType type, String letter, String white, String black, String name) {
-        LETTERS.put(type, letter);
-        WHITE_SYMBOLS.put(type, white);
-        BLACK_SYMBOLS.put(type, black);
-        NAMES.put(type, name);
+        NAMES.put(PieceType.KING, "Rey");
+        NAMES.put(PieceType.QUEEN, "Reina");
+        NAMES.put(PieceType.ROOK, "Torre");
+        NAMES.put(PieceType.BISHOP, "Alfil");
+        NAMES.put(PieceType.KNIGHT, "Caballo");
+        NAMES.put(PieceType.PAWN, "Peón");
     }
 
     private static final String MENU = "menu";
@@ -103,9 +80,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final AccountService accounts;
     private final SkinService skins;
     private final GameBuilder builder;
-    private final JPanel boardPanel = new JPanel();
-    private final JPanel rankLabels = new JPanel();
-    private final JPanel fileLabels = new JPanel();
+    private final BoardView boardView = new BoardView(this::onSquareClicked);
+    private final JPanel boardHolder = new JPanel(new GridBagLayout());
     private final JLabel status = new JLabel("Turno de Blancas");
     private final JLabel players = new JLabel(" ");
     private final JButton menuButton = new FlatButton("Menú", FlatButton.Style.SECONDARY);
@@ -117,34 +93,29 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final SkinsPanel skinsPanel;
     private final RankingPanel ranking;
 
-    private JButton[][] squares;
     private IChessGame game;
     private OpponentController opponent; // null mientras juegan dos personas en la misma PC
     private LanOpponent lan;             // el rival de la otra PC; null si no es una partida por LAN
     private boolean disconnected = false; // el rival por LAN se fue
-    private Skin skin;                    // la skin con la que se dibuja la partida
     private User user;                  // el que entró en el login; null si entró como invitado
     private User human;                 // el usuario de la persona contra la IA; null en 1 contra 1 o invitado
     private Position selection = null;
     private boolean thinking = false;
-    private int squareSize = MAX_SQUARE;
-    private final Map<String, Icon> pieceIcons = new HashMap<>(); // "wK" -> ícono al tamaño actual de las casillas
     private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
 
     // Una sola ventana con seis pantallas (login, menú, LAN, skins, partida y ranking) que se cambian
-    // con un CardLayout. Cada vez que se aprieta Jugar se arma una partida nueva con el GameBuilder.
-    public SwingChessView(AccountService accounts, SkinService skins, GameBuilder builder) {
+    // con un CardLayout. Cada partida nueva la arma el GameBuilder; la red de LAN la maneja el lobby.
+    public SwingChessView(AccountService accounts, SkinService skins, GameBuilder builder, LanLobby lobby) {
         super("Ajedrez");
         this.accounts = accounts;
         this.skins = skins;
         this.builder = builder;
-        this.skin = skins.defaultSkin();
         this.menu = new MenuPanel(this::play, this::showRanking, this::showSkins, this::logout);
         this.skinsPanel = new SkinsPanel(skins, this::showMenu);
         this.login = new LoginPanel(accounts, this::loggedIn);
-        this.lanPanel = new LanPanel(this::startLanGame, this::showMenu);
+        this.lanPanel = new LanPanel(lobby, this::startLanGame, this::showMenu);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
         loadIcon();
@@ -172,18 +143,22 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }
     }
 
-    // Ícono de la aplicación: Windows y Linux usan el de la ventana; macOS no, el del Dock va
-    // aparte con Taskbar. Sin el archivo queda el ícono de Java.
+    // Ícono de la aplicación, igual en todos los sistemas:
+    // - Windows y Linux usan el de la ventana: se le pasan todos los tamaños con setIconImages.
+    // - macOS no usa el de la ventana, sino el del Dock, que se pone con Taskbar (Java 9+). En
+    //   Windows Taskbar existe pero no admite ICON_IMAGE, por eso se pregunta antes de usarlo.
+    // Las imágenes salen del classpath (Assets), así se encuentran desde cualquier carpeta.
+    // Sin los archivos queda el ícono de Java.
     private void loadIcon() {
-        try {
-            Image icon = ImageIO.read(new File("src/assets/icono.png"));
-            if (icon == null) return;
-            setIconImage(icon);
-            if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
-                Taskbar.getTaskbar().setIconImage(icon);
-            }
-        } catch (IOException e) {
-            // sin ícono propio
+        List<Image> icons = new ArrayList<>();
+        for (int size : ICON_SIZES) {
+            Image icon = Assets.image("icono/icono-" + size + ".png");
+            if (icon != null) icons.add(icon);
+        }
+        if (icons.isEmpty()) return;
+        setIconImages(icons);
+        if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
+            Taskbar.getTaskbar().setIconImage(icons.get(icons.size() - 1)); // el Dock usa el más grande
         }
     }
 
@@ -192,25 +167,21 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         OpponentLevel level = menu.versusAi() ? menu.level() : OpponentLevel.NONE;
         // Solo contra la IA y por LAN se usa el usuario: el 1 contra 1 en la misma PC no suma al ranking.
         human = menu.versusAi() ? user : null;
-        lan = null;
         User white = menu.humanColor() == Color.WHITE ? human : null;
         User black = menu.humanColor() == Color.BLACK ? human : null;
-        begin(builder.build(this, white, black, level, menu.aiColor(), null), menu.humanColor() == Color.BLACK);
+        begin(builder.local(this, white, black, level, menu.aiColor()), menu.humanColor() == Color.BLACK);
     }
 
     // Por LAN: ya hay conexión con la otra PC. El usuario de esta PC suma en su propio ranking.
     private void startLanGame(LanConnection connection, Color localColor, String rivalName) {
         human = user;
-        lan = new LanOpponent(connection, localColor, rivalName, this);
-        User white = localColor == Color.WHITE ? human : null;
-        User black = localColor == Color.BLACK ? human : null;
-        begin(builder.build(this, white, black, OpponentLevel.NONE, lan.getRivalColor(), lan), localColor == Color.BLACK);
+        begin(builder.overLan(this, user, localColor, connection, rivalName), localColor == Color.BLACK);
     }
 
     private void begin(Match match, boolean flipped) {
-        skin = skins.selected(user); // la skin es de quien entró, en cualquier modo
         game = match.getGame();
         opponent = match.getOpponent();
+        lan = match.getLan();
         selection = null;
         thinking = false;
         disconnected = false;
@@ -222,10 +193,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         players.setText(opponent == null ? "1 contra 1"
             : "Blancas: " + playerName(Color.WHITE) + "   |   Negras: " + playerName(Color.BLACK));
         showStatus("Turno de Blancas");
-        squareSize = squareSizeFor(game.getBoard());
-        buildBoard(game.getBoard(), flipped);
-        fitWindow(game.getBoard().getRows(), game.getBoard().getColumns());
-        render(game.getBoard());
+        Board board = game.getBoard();
+        // La skin es de quien entró, en cualquier modo.
+        boardView.setup(board, flipped, skins.selected(user), startSquareSize(board));
+        fitWindow(boardView.getSquareSize(), board.getRows(), board.getColumns());
+        boardView.render(board);
         showCard(GAME);
         playOpponentIfNeeded();
     }
@@ -277,8 +249,14 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             }
             text += "...";
         }
-        status.setText(fits ? text : "<html>" + text + "</html>");
+        // Para usar las dos filas el texto va como HTML. Puede traer el nombre del rival por LAN,
+        // que viene de otra PC: se escapa para que Swing no lo interprete como etiquetas.
+        status.setText(fits ? text : "<html>" + escapeHtml(text) + "</html>");
         players.setVisible(fits);
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private void showMenu() {
@@ -312,13 +290,13 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             if (thinking) return;
             // Contra la IA se deshacen las dos: la respuesta de ella y la jugada propia.
             if (game.undo() && opponent != null && opponent.isItsTurn()) game.undo();
-            render(game.getBoard());
+            boardView.render(game.getBoard());
             playOpponentIfNeeded(); // si la IA abre la partida y se deshizo su primera jugada, vuelve a jugarla
         });
         redoButton.addActionListener(e -> {
             if (thinking) return;
             if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
-            render(game.getBoard());
+            boardView.render(game.getBoard());
             playOpponentIfNeeded();
         });
 
@@ -332,14 +310,12 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         text.setPreferredSize(new Dimension(0, 36)); // siempre dos filas como máximo
         text.add(status, BorderLayout.CENTER);
         text.add(players, BorderLayout.SOUTH);
-        // Los botones de la barra no toman el foco: así no queda marcado Menú al empezar la partida.
+        // En la partida se juega con el mouse: los botones no toman el foco, así no aparecen marcados al empezar.
         for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
         buttons.add(rankingButton);
-        // En la partida se juega con el mouse: los botones no toman el foco, así no aparecen marcados al empezar.
-        for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel top = new JPanel(new BorderLayout(12, 0));
         top.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         top.add(menuButton, BorderLayout.WEST);
@@ -348,26 +324,21 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         JPanel gamePanel = new JPanel(new BorderLayout());
         gamePanel.add(top, BorderLayout.NORTH);
-        // El tablero con las coordenadas: números a la izquierda y letras abajo.
-        JPanel boardArea = new JPanel(new BorderLayout());
-        JPanel fileRow = new JPanel(new BorderLayout());
-        fileRow.add(Box.createHorizontalStrut(COORDINATE_SIZE), BorderLayout.WEST);
-        fileRow.add(fileLabels, BorderLayout.CENTER);
-        boardArea.add(boardPanel, BorderLayout.CENTER);
-        boardArea.add(rankLabels, BorderLayout.WEST);
-        boardArea.add(fileRow, BorderLayout.SOUTH);
         // El tablero va centrado a su tamaño, así las casillas siempre son cuadradas aunque la
-        // ventana sea más grande (por ejemplo, un tablero chico con el alto mínimo del menú).
-        boardPanel.setName("board");
-        JPanel boardHolder = new JPanel(new GridBagLayout());
-        boardHolder.add(boardArea);
+        // ventana no tenga la misma proporción que el tablero. Cuando la ventana cambia de tamaño,
+        // el tablero se ajusta al lugar que queda.
+        boardHolder.add(boardView);
+        boardHolder.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                boardView.fitTo(boardHolder.getSize());
+            }
+        });
         gamePanel.add(boardHolder, BorderLayout.CENTER);
 
         // Fondo crema en toda la ventana (los paneles de adentro son transparentes).
         getContentPane().setBackground(Palette.BACKGROUND);
-        for (JPanel panel : new JPanel[]{top, text, buttons, gamePanel, boardHolder, boardArea, fileRow, rankLabels, fileLabels}) {
-            panel.setOpaque(false);
-        }
+        for (JPanel panel : new JPanel[]{top, text, buttons, boardHolder}) panel.setOpaque(false);
         gamePanel.setOpaque(true);
         gamePanel.setBackground(Palette.BACKGROUND);
         add(login, LOGIN);
@@ -376,82 +347,33 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         add(skinsPanel, SKINS);
         add(gamePanel, GAME);
         add(ranking, RANKING);
-        fitWindow(8, 8); // tamaño inicial; cada partida lo ajusta a su tablero
+        fitWindow(MAX_START_SQUARE, 8, 8); // tamaño inicial; cada partida lo ajusta a su tablero
 
         setLocationRelativeTo(null);
     }
 
-    // Arma las casillas del tablero. Si la persona juega con negras se gira, para verlas abajo.
-    private void buildBoard(Board board, boolean flipped) {
-        int rows = board.getRows();
-        int columns = board.getColumns();
-        squares = new JButton[rows][columns];
-        boardPanel.removeAll();
-        boardPanel.setLayout(new GridLayout(rows, columns));
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                final Position pos = new Position(flipped ? i : rows - 1 - i, flipped ? columns - 1 - j : j);
-                JButton button = new JButton();
-                button.setOpaque(true);
-                button.setBorderPainted(false);
-                button.setFocusable(false); // se juega con el mouse: sin el aro de foco sobre una casilla
-                button.addActionListener(e -> onSquareClicked(pos));
-                squares[pos.getRow()][pos.getColumn()] = button;
-                boardPanel.add(button);
-            }
-        }
-        boardPanel.setPreferredSize(new Dimension(columns * squareSize, rows * squareSize));
-        pieceIcons.clear(); // el tamaño de las casillas pudo cambiar
-        boardPanel.revalidate();
-        buildCoordinates(rows, columns, flipped);
-    }
-
-    // Números (filas) y letras (columnas) en el mismo orden en que se ven las casillas.
-    private void buildCoordinates(int rows, int columns, boolean flipped) {
-        rankLabels.removeAll();
-        rankLabels.setLayout(new GridLayout(rows, 1));
-        rankLabels.setPreferredSize(new Dimension(COORDINATE_SIZE, 0));
-        for (int i = 0; i < rows; i++) {
-            rankLabels.add(coordinate(String.valueOf(flipped ? i + 1 : rows - i)));
-        }
-        fileLabels.removeAll();
-        fileLabels.setLayout(new GridLayout(1, columns));
-        fileLabels.setPreferredSize(new Dimension(0, COORDINATE_SIZE));
-        for (int j = 0; j < columns; j++) {
-            fileLabels.add(coordinate(String.valueOf((char) ('a' + (flipped ? columns - 1 - j : j)))));
-        }
-        rankLabels.revalidate();
-        fileLabels.revalidate();
-    }
-
-    // Casillas de 80 px; si el tablero tiene muchas filas o columnas y no entra en la pantalla,
-    // se achican. Así un tablero de otro tamaño se juega sin cambiar nada más.
-    private int squareSizeFor(Board board) {
+    // Al empezar: casillas de 80 px, o más chicas si el tablero no entra en la pantalla. Así un
+    // tablero de otro tamaño se juega sin cambiar nada más. Después la ventana se puede agrandar.
+    private int startSquareSize(Board board) {
         Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        int byHeight = (screen.height - 60 - TOP_BAR_HEIGHT - COORDINATE_SIZE) / board.getRows(); // 60: barra de título
-        int byWidth = (screen.width - COORDINATE_SIZE) / board.getColumns();
-        return Math.max(MIN_SQUARE, Math.min(MAX_SQUARE, Math.min(byHeight, byWidth)));
+        Dimension available = new Dimension(screen.width, screen.height - 60 - TOP_BAR_HEIGHT); // 60: barra de título
+        return Math.min(MAX_START_SQUARE, BoardView.squareSizeFor(available, board.getRows(), board.getColumns()));
     }
 
     // La ventana mide el tablero más la columna de números, la barra de arriba y la fila de
-    // letras, y nunca menos de lo que necesita el menú.
-    private void fitWindow(int rows, int columns) {
+    // letras, y nunca menos de lo que necesita el menú. Se puede agrandar y achicar, pero no
+    // por debajo de lo que necesita el menú.
+    private void fitWindow(int squareSize, int rows, int columns) {
         Dimension size = new Dimension(
-            Math.max(MIN_CONTENT.width, columns * squareSize + COORDINATE_SIZE),
-            Math.max(MIN_CONTENT.height, rows * squareSize + TOP_BAR_HEIGHT + COORDINATE_SIZE));
-        if (size.equals(getContentPane().getPreferredSize()) && isDisplayable()) return;
-        getContentPane().setPreferredSize(size);
-        pack();
-    }
-
-    private static JLabel coordinate(String text) {
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setForeground(Palette.MUTED);
-        return label;
-    }
-
-    private java.awt.Color squareColor(int row, int col) {
-        return SkinImages.color((row + col) % 2 == 0 ? skin.getDarkSquare() : skin.getLightSquare());
+            Math.max(MIN_CONTENT.width, columns * squareSize + BoardView.COORDINATE_SIZE),
+            Math.max(MIN_CONTENT.height, rows * squareSize + TOP_BAR_HEIGHT + BoardView.COORDINATE_SIZE));
+        if (!size.equals(getContentPane().getPreferredSize()) || !isDisplayable()) {
+            getContentPane().setPreferredSize(size);
+            pack();
+        }
+        Insets frame = getInsets();
+        setMinimumSize(new Dimension(MIN_CONTENT.width + frame.left + frame.right,
+            MIN_CONTENT.height + frame.top + frame.bottom));
     }
 
     private void onSquareClicked(Position pos) {
@@ -471,37 +393,20 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         Position origin = selection;
         selection = null;
-        render(game.getBoard()); // limpia el resaltado de la selección
+        boardView.render(game.getBoard()); // limpia el resaltado de la selección
 
         if (origin.equals(pos)) return; // clickear la misma casilla = deseleccionar
 
         game.tryMove(origin, pos);
-        render(game.getBoard());
+        boardView.render(game.getBoard());
         playOpponentIfNeeded();
     }
 
     // Selecciona la pieza de "pos" y marca adónde puede ir, usando las jugadas legales
-    // que ofrece el puerto de entrada: amarillo la pieza, ámbar los destinos libres
-    // y rojizo los destinos donde captura.
+    // que ofrece el puerto de entrada.
     private void select(Position pos) {
-        render(game.getBoard()); // limpia lo que hubiera marcado de una selección anterior
         selection = pos;
-        mark(pos, SELECTED, FRAME);
-        for (Move move : game.legalMoves()) {
-            if (!move.getFrom().equals(pos)) continue;
-            Position target = move.getTo();
-            boolean captures = game.getBoard().pieceAt(target) != null;
-            mark(target, captures ? CAPTURE : LEGAL, captures ? CAPTURE_FRAME : FRAME);
-        }
-    }
-
-    // Pinta la casilla y le pone un marco, así dos casillas marcadas pegadas
-    // no se funden en una sola mancha.
-    private void mark(Position pos, java.awt.Color fill, java.awt.Color frame) {
-        JButton button = squares[pos.getRow()][pos.getColumn()];
-        button.setBackground(fill);
-        button.setBorder(BorderFactory.createLineBorder(frame, 3));
-        button.setBorderPainted(true);
+        boardView.highlight(pos, game.legalMoves());
     }
 
     // La IA piensa en otro hilo para no congelar la ventana, y la jugada se
@@ -518,7 +423,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             Move move = controller.chooseMove();
             SwingUtilities.invokeLater(() -> {
                 if (controller != opponent) return; // se salió de la partida mientras se esperaba
-                if (move == null) {                 // el rival por LAN se fue
+                if (move == null) {                 // el rival por LAN se fue (o mandó algo que no es una jugada)
                     thinking = false;
                     disconnected = true;
                     menuButton.setEnabled(true);
@@ -526,11 +431,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                     return;
                 }
                 controller.play(move);
-                render(game.getBoard());
+                boardView.render(game.getBoard());
                 thinking = false;
                 menuButton.setEnabled(true);
             });
-        }).start();
+        }, "oponente").start();
     }
 
     // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón.
@@ -554,50 +459,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // los listeners: si render() también lo tocara, pisaría el mensaje que
     // onInvalidMove/onMoveMade acaban de poner.
     public void render(Board board) {
-        for (int row = 0; row < squares.length; row++) {
-            for (int col = 0; col < squares[row].length; col++) {
-                applyIcon(squares[row][col], board.pieceAt(new Position(row, col)));
-                squares[row][col].setBackground(squareColor(row, col));
-                squares[row][col].setBorderPainted(false); // quita el marco de una selección anterior
-            }
-        }
-    }
-
-    private void applyIcon(JButton button, Piece piece) {
-        if (piece == null) {
-            button.setIcon(null);
-            button.setText("");
-            return;
-        }
-        String key = imageKey(piece);
-        Image image = key == null ? null : SkinImages.piece(skin, key);
-        if (image == null) {
-            button.setIcon(null);
-            button.setText(symbol(piece)); // asset faltante o pieza desconocida: texto
-            return;
-        }
-        button.setText("");
-        Icon icon = pieceIcons.get(key);
-        if (icon == null) {
-            icon = new ImageIcon(SmoothImage.of(image, squareSize * 85 / 100));
-            pieceIcons.put(key, icon);
-        }
-        button.setIcon(icon);
-    }
-
-    private String imageKey(Piece piece) {
-        String letter = LETTERS.get(piece.getType());
-        if (letter == null) return null;
-        return (piece.getColor() == Color.WHITE ? "w" : "b") + letter;
-    }
-
-    // Símbolo de texto: respaldo si falta un PNG o la pieza no tiene imagen.
-    private String symbol(Piece piece) {
-        boolean isWhite = piece.getColor() == Color.WHITE;
-        String symbol = (isWhite ? WHITE_SYMBOLS : BLACK_SYMBOLS).get(piece.getType());
-        if (symbol != null) return symbol;
-        String initial = piece.getType().getName().substring(0, 1);
-        return isWhite ? initial.toUpperCase() : initial.toLowerCase();
+        boardView.render(board);
     }
 
     private String name(PieceType type) {

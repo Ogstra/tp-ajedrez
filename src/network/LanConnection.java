@@ -14,10 +14,15 @@ import java.nio.charset.StandardCharsets;
 // El canal entre las dos PCs durante la partida (TCP). TCP garantiza que lo que se manda llega
 // completo y en orden, así que alcanza con mandar líneas de texto: una jugada por línea.
 // Quien crea la partida espera con waitForRival(); quien se une llama a connect().
+//
+// No hay puerto fijo: quien crea la partida abre el ServerSocket en el puerto 0 (el sistema elige
+// uno libre) y lo anuncia por UDP. Así no se choca con otro programa, como el receptor de AirPlay
+// de macOS, que ocupa el 5000.
 public class LanConnection {
 
-    public static final int PORT = 5000;           // puerto de la partida
     private static final int CONNECT_TIMEOUT_MS = 3000;
+    private static final int GREETING_TIMEOUT_MS = 5000; // quien se conecta y no saluda, no traba la espera
+    private static final int MAX_LINE = 128;             // una jugada o un saludo entran de sobra
     private static final String HELLO = "HOLA";
     private static final String BYE = "CHAU";
 
@@ -44,12 +49,15 @@ public class LanConnection {
     }
 
     // Saludo al conectarse: cada uno manda "HOLA;su nombre" y lee el del otro. Devuelve el
-    // nombre del rival, o null si lo que llegó no es del juego.
+    // nombre del rival ya limpio (ver LanNames), o null si lo que llegó no es del juego o no
+    // llegó a tiempo. Después del saludo la espera de jugadas no tiene límite: el rival piensa.
     public String greet(String ownName) throws IOException {
-        send(HELLO + ";" + ownName);
+        send(HELLO + ";" + LanNames.clean(ownName));
+        socket.setSoTimeout(GREETING_TIMEOUT_MS);
         String line = receive();
+        socket.setSoTimeout(0);
         if (line == null || !line.startsWith(HELLO + ";")) return null;
-        return line.substring(HELLO.length() + 1);
+        return LanNames.clean(line.substring(HELLO.length() + 1));
     }
 
     public void send(String line) {
@@ -57,11 +65,18 @@ public class LanConnection {
     }
 
     // Espera la próxima línea del rival. Devuelve null si el rival se fue (cerró el juego,
-    // salió de la partida o se cortó la red).
+    // salió de la partida o se cortó la red) o si manda una línea más larga de lo que el juego
+    // usa: lo que llega de la otra PC no es confiable y no se guarda sin límite en memoria.
     public String receive() {
         try {
-            String line = in.readLine();
-            return line == null || line.equals(BYE) ? null : line;
+            StringBuilder line = new StringBuilder();
+            for (int c = in.read(); c != '\n'; c = in.read()) {
+                if (c == -1) return null;
+                if (c == '\r') continue;
+                if (line.length() == MAX_LINE) return null;
+                line.append((char) c);
+            }
+            return line.toString().equals(BYE) ? null : line.toString();
         } catch (IOException e) {
             return null;
         }

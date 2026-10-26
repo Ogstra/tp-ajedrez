@@ -1,9 +1,10 @@
 import adapters.ChoiceControl;
 import adapters.FileAccountStore;
-import adapters.FileSkinCatalog;
+import adapters.SkinCatalogReader;
 import adapters.FileSkinStore;
 import adapters.FlatComboBox;
 import adapters.GameBuilder;
+import adapters.IGameView;
 import adapters.Match;
 import adapters.SwingChessView;
 import core.*;
@@ -13,6 +14,8 @@ import ports.*;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
+import network.LanConnection;
+import network.LanLobby;
 import network.LanOpponent;
 import skins.SkinService;
 import accounts.AccountService;
@@ -46,7 +49,7 @@ public class SwingIntegrationTests {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
-                view = new SwingChessView(accounts, skins(accounts, data), builder(accounts, 8));
+                view = new SwingChessView(accounts, skins(accounts, data), builder(accounts, 8), new LanLobby());
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
@@ -227,7 +230,7 @@ public class SwingIntegrationTests {
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
                 AccountService otherAccounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
-                view = new SwingChessView(otherAccounts, skins(otherAccounts, data), builder(otherAccounts, 10));
+                view = new SwingChessView(otherAccounts, skins(otherAccounts, data), builder(otherAccounts, 10), new LanLobby());
                 view.setVisible(true);
                 Container root = view.getContentPane();
                 button(root, "Entrar como invitado").doClick();
@@ -243,6 +246,37 @@ public class SwingIntegrationTests {
             });
             System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
 
+            // El ícono se carga del classpath en todos sus tamaños, y el tablero sigue a la ventana:
+            // al agrandarla las casillas crecen y las piezas se rehacen a ese tamaño.
+            SwingUtilities.invokeAndWait(() -> view.dispose());
+            int[] sizes = new int[4]; // casilla e ícono antes y después de agrandar
+            SwingUtilities.invokeAndWait(() -> {
+                AccountService resizeAccounts = new AccountService(new FileAccountStore(data.resolve("resize.csv")));
+                view = new SwingChessView(resizeAccounts, skins(resizeAccounts, data), builder(resizeAccounts, 8), new LanLobby());
+                view.setVisible(true);
+                require(view.getIconImages().size() == 7, "el ícono debe cargarse en sus 7 tamaños: " + view.getIconImages().size());
+                Container root = view.getContentPane();
+                button(root, "Entrar como invitado").doClick();
+                button(root, "Jugar").doClick();
+                inspect(root);
+                JButton corner = (JButton) boardPanel.getComponent(0);
+                sizes[0] = corner.getWidth();
+                sizes[1] = corner.getIcon().getIconWidth();
+                view.setSize(view.getWidth() + 300, view.getHeight() + 300);
+                view.validate();
+            });
+            Thread.sleep(600); // las piezas se rehacen cuando se deja de cambiar el tamaño
+            SwingUtilities.invokeAndWait(() -> {
+                JButton corner = (JButton) boardPanel.getComponent(0);
+                sizes[2] = corner.getWidth();
+                sizes[3] = corner.getIcon().getIconWidth();
+                require(sizes[2] > sizes[0] && corner.getWidth() == corner.getHeight(),
+                    "al agrandar la ventana las casillas crecen y siguen cuadradas: " + sizes[0] + " -> " + corner.getWidth() + "x" + corner.getHeight());
+                require(sizes[3] > sizes[1], "las piezas se rehacen al tamaño nuevo: " + sizes[1] + " -> " + sizes[3]);
+            });
+            System.out.println("[OK]   Swing: icono en todos los tamanos y tablero que crece con la ventana ("
+                + sizes[0] + " -> " + sizes[2] + " px)");
+
             // Por LAN: dos ventanas en esta misma PC. Una crea la partida (invitado, blancas) y la
             // otra (Ana, negras) la elige de la lista. Juegan el mate del loco y a Ana le suma la victoria.
             SwingUtilities.invokeAndWait(() -> view.dispose());
@@ -253,8 +287,8 @@ public class SwingIntegrationTests {
             SwingChessView[] lanViews = new SwingChessView[2];
             try {
                 SwingUtilities.invokeAndWait(() -> {
-                    lanViews[0] = new SwingChessView(hostAccounts, skins(hostAccounts, data), lanBuilder(hostAccounts, lanGames, 0));
-                    lanViews[1] = new SwingChessView(guestAccounts, skins(guestAccounts, data), lanBuilder(guestAccounts, lanGames, 1));
+                    lanViews[0] = new SwingChessView(hostAccounts, skins(hostAccounts, data), lanBuilder(hostAccounts, lanGames, 0), new LanLobby());
+                    lanViews[1] = new SwingChessView(guestAccounts, skins(guestAccounts, data), lanBuilder(guestAccounts, lanGames, 1), new LanLobby());
                     lanViews[0].setVisible(true);
                     lanViews[1].setVisible(true);
                     Container host = lanViews[0].getContentPane();
@@ -373,50 +407,59 @@ public class SwingIntegrationTests {
 
     // Las skins del catálogo real, con la elección de cada usuario en la carpeta temporal.
     private static SkinService skins(AccountService accounts, Path data) {
-        return new SkinService(FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")),
+        return new SkinService(SkinCatalogReader.bundled(),
             accounts, new FileSkinStore(data.resolve("skins-" + System.identityHashCode(accounts) + ".csv")));
     }
 
-    // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.
+    // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño. Las partidas por LAN
+    // se guardan en lanGames[lanIndex] (si se pasa el arreglo) para poder mirarlas desde el test.
     private static GameBuilder builder(AccountService accounts, int size) {
-        return (v, white, black, level, aiColor, lan) -> {
-            PieceFactory pieces = PieceFactory.standard();
-            Board board = size == 8 ? BoardSetup.standard(pieces) : BoardSetup.custom(size, size, backRow(size), pieces);
-            before = board.cloneBoard();
-            lastWhite = white;
-            lastBlack = black;
-            ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
-            game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
-                Arrays.<IGameStatusListener>asList(v, recorder),
-                Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, v)),
-                Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-            recorder.attachGame(game);
-            OpponentController opponent = level == OpponentLevel.NONE
-                ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
-            return new Match(game, opponent);
-        };
+        return builder(accounts, size, null, 0);
     }
 
-    // El armado de MainSwing para una partida por LAN; guarda cada partida en games[index].
     private static GameBuilder lanBuilder(AccountService accounts, IChessGame[] games, int index) {
-        return (v, white, black, level, aiColor, lan) -> {
-            PieceFactory pieces = PieceFactory.standard();
-            ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
-            List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(v, recorder));
-            if (lan != null) moveListeners.add(lan);
-            IChessGame lanGame = new ChessGame(BoardSetup.standard(pieces), moveListeners,
-                Arrays.<IGameStatusListener>asList(v, recorder),
-                Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(),
-                    new PromotionMove(pieces, lan != null ? lan : v)),
-                Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-            recorder.attachGame(lanGame);
-            OpponentController opponent = null;
-            if (lan != null) {
-                lan.attachGame(lanGame);
-                opponent = new OpponentController(lanGame, lan, lan.getRivalColor());
+        return builder(accounts, 8, games, index);
+    }
+
+    private static GameBuilder builder(AccountService accounts, int size, IChessGame[] lanGames, int lanIndex) {
+        return new GameBuilder() {
+            @Override
+            public Match local(IGameView v, User white, User black, OpponentLevel level, core.Color aiColor) {
+                lastWhite = white;
+                lastBlack = black;
+                ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
+                game = newGame(v, recorder, v, null, size);
+                OpponentController opponent = level == OpponentLevel.NONE
+                    ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
+                return new Match(game, opponent);
             }
-            games[index] = lanGame;
-            return new Match(lanGame, opponent);
+
+            @Override
+            public Match overLan(IGameView v, User localUser, core.Color localColor, LanConnection connection, String rivalName) {
+                LanOpponent lan = new LanOpponent(connection, localColor, rivalName, v);
+                ScoreRecorder recorder = new ScoreRecorder(accounts,
+                    localColor == core.Color.WHITE ? localUser : null, localColor == core.Color.BLACK ? localUser : null);
+                IChessGame lanGame = newGame(v, recorder, lan, lan, 8);
+                lan.attachGame(lanGame);
+                if (lanGames != null) lanGames[lanIndex] = lanGame;
+                return new Match(lanGame, new OpponentController(lanGame, lan, lan.getRivalColor()), lan);
+            }
+
+            private IChessGame newGame(IGameView v, ScoreRecorder recorder, IPromotionChooser chooser,
+                                       IMoveListener extra, int boardSize) {
+                PieceFactory pieces = PieceFactory.standard();
+                Board board = boardSize == 8 ? BoardSetup.standard(pieces)
+                    : BoardSetup.custom(boardSize, boardSize, backRow(boardSize), pieces);
+                before = board.cloneBoard();
+                List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(v, recorder));
+                if (extra != null) moveListeners.add(extra);
+                IChessGame created = new ChessGame(board, moveListeners,
+                    Arrays.<IGameStatusListener>asList(v, recorder),
+                    Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, chooser)),
+                    Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+                recorder.attachGame(created);
+                return created;
+            }
         };
     }
 

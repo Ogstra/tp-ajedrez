@@ -1,4 +1,4 @@
-import adapters.FileSkinCatalog;
+import adapters.SkinCatalogReader;
 import adapters.FileSkinStore;
 import ports.IAccountStore;
 import ports.ISkinStore;
@@ -204,7 +204,7 @@ public class SkinTests {
             "madera;Madera;10;F0D9B5;B58863;skins/madera"), StandardCharsets.UTF_8);
 
         // Act
-        List<Skin> skins = FileSkinCatalog.load(file);
+        List<Skin> skins = SkinCatalogReader.fromFile(file);
 
         // Assert
         assertTrue("testCatalogFileIsRead",
@@ -215,7 +215,7 @@ public class SkinTests {
 
     private static void testCatalogWithoutFileHasTheClassicSkin() throws IOException {
         // Act
-        List<Skin> skins = FileSkinCatalog.load(Files.createTempDirectory("vacio").resolve("no-existe.csv"));
+        List<Skin> skins = SkinCatalogReader.fromFile(Files.createTempDirectory("vacio").resolve("no-existe.csv"));
 
         // Assert
         assertTrue("testCatalogWithoutFileHasTheClassicSkin",
