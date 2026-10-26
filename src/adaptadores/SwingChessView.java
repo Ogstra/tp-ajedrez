@@ -17,6 +17,8 @@ import usuarios.User;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -109,6 +111,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private Position selection = null;
     private boolean thinking = false;
     private int squareSize = MAX_SQUARE;
+    private final Map<String, Icon> pieceIcons = new HashMap<>(); // "wK" -> ícono al tamaño actual de las casillas
     private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
@@ -331,6 +334,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             }
         }
         boardPanel.setPreferredSize(new Dimension(columns * squareSize, rows * squareSize));
+        pieceIcons.clear(); // el tamaño de las casillas pudo cambiar
         boardPanel.revalidate();
         buildCoordinates(rows, columns, flipped);
     }
@@ -488,14 +492,20 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             button.setText("");
             return;
         }
-        Image image = IMAGES.get(imageKey(piece));
+        String key = imageKey(piece);
+        Image image = IMAGES.get(key);
         if (image == null) {
             button.setIcon(null);
             button.setText(symbol(piece)); // asset faltante o pieza desconocida: texto
             return;
         }
         button.setText("");
-        button.setIcon(SmoothImage.icon(image, squareSize * 85 / 100));
+        Icon icon = pieceIcons.get(key);
+        if (icon == null) {
+            icon = new ImageIcon(SmoothImage.of(image, squareSize * 85 / 100));
+            pieceIcons.put(key, icon);
+        }
+        button.setIcon(icon);
     }
 
     private String imageKey(Piece piece) {
