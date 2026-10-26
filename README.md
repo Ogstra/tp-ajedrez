@@ -43,13 +43,13 @@ Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahog
 
 ```
 src/
-  nucleo/        las reglas del ajedrez, sin nada de consola ni de Swing
-    especiales/    enroque, captura al paso y coronación
-    estrategias/   cómo se mueve cada pieza
-    tablas/        las condiciones de tablas
-  puertos/       interfaces con las que el núcleo pide cosas al exterior
-  adaptadores/   consola, Swing y archivo CSV, que implementan esos puertos
-  usuarios/      cuentas, puntajes y ranking, afuera del núcleo
+  core/          el núcleo: las reglas del ajedrez, sin nada de consola ni de Swing
+    special/       enroque, captura al paso y coronación
+    movement/      cómo se mueve cada pieza
+    draw/          las condiciones de tablas
+  ports/         interfaces con las que el núcleo avisa y pregunta al exterior
+  adapters/      consola, Swing y archivo CSV, que implementan los puertos
+  accounts/      cuentas, puntajes y ranking, con su propio puerto (IAccountStore), afuera del núcleo
   ai/            el oponente, afuera del núcleo
   Main.java      arma todo para jugar por consola
   MainSwing.java arma todo para jugar con ventana
@@ -57,7 +57,7 @@ src/
   AccountTests.java
 ```
 
-El núcleo no conoce a los adaptadores ni a la IA: son ellos los que dependen de él. Por eso la ventana y la IA se pudieron agregar sin tocar `ChessGame`.
+El núcleo (`core`) no conoce a los adaptadores ni a la IA: son ellos los que dependen de él. Los paquetes y los identificadores van en inglés, como pide la convención de la cátedra (comentarios en español, identificadores en inglés). Por eso la ventana y la IA se pudieron agregar sin tocar `ChessGame`.
 
 Lo que se ve en la materia está así:
 

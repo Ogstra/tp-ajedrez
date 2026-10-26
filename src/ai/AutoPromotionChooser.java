@@ -1,8 +1,8 @@
 package ai;
 
-import nucleo.Color;
-import nucleo.PieceType;
-import puertos.IPromotionChooser;
+import core.Color;
+import core.PieceType;
+import ports.IPromotionChooser;
 
 // Decorador del chooser humano: cuando corona el bando de la IA elige reina
 // sin preguntar; cuando corona el humano, le pregunta como siempre.

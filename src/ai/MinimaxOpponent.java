@@ -1,9 +1,9 @@
 package ai;
 
-import nucleo.Color;
-import nucleo.IChessGame;
-import nucleo.Move;
-import nucleo.MoveOutcome;
+import core.Color;
+import core.IChessGame;
+import core.Move;
+import core.MoveOutcome;
 
 import java.util.ArrayList;
 import java.util.List;

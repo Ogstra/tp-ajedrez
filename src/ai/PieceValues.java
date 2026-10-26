@@ -1,6 +1,6 @@
 package ai;
 
-import nucleo.PieceType;
+import core.PieceType;
 
 // Valor de material de cada pieza, el clásico del ajedrez. Una pieza que la IA
 // no conoce (una inventada) vale 0.

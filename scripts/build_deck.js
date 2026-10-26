@@ -223,9 +223,9 @@ function callout(slide, head, text, x, y, w) {
   arrow(s, 8.4, 3.72, 9.15, 3.72, ACCENT);
   panel(s, 0.7, 5.85, 11.9, 0.85, WHITE);
   s.addText([
-    { text: "nucleo", options: { fontFace: MONO, bold: true, color: ACCENT } },
+    { text: "core", options: { fontFace: MONO, bold: true, color: ACCENT } },
     { text: " no importa nada de ", options: { fontFace: BODY, color: INK } },
-    { text: "adaptadores", options: { fontFace: MONO, bold: true, color: ACCENT } },
+    { text: "adapters", options: { fontFace: MONO, bold: true, color: ACCENT } },
     { text: " ni de ", options: { fontFace: BODY, color: INK } },
     { text: "ai", options: { fontFace: MONO, bold: true, color: ACCENT } },
     { text: ". Por eso la ventana y la IA se agregaron sin tocar el núcleo.", options: { fontFace: BODY, color: INK } },
@@ -235,7 +235,7 @@ function callout(slide, head, text, x, y, w) {
 // ---------- 4. UML ----------
 {
   const s = content("Diagrama de clases", "El UML refleja el código real",
-    "Recorrer el diagrama por paquetes: nucleo, puertos, adaptadores y ai. Señalar la interfaz IChessGame como única entrada y las estrategias de movimiento.");
+    "Recorrer el diagrama por paquetes: core (el núcleo), ports, adapters, accounts y ai. Señalar la interfaz IChessGame como única entrada y las estrategias de movimiento.");
   label(s, "Qué mirar", 0.7, 1.95, 3.8, { head: true, size: 20, bold: true });
   rows(s, [
     "Una sola entrada: IChessGame",

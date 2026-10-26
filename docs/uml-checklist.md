@@ -15,7 +15,29 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### MainSwing (class)
 - Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, InsufficientMaterialRule, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule
 
-## Paquete `adaptadores`
+## Paquete `accounts`
+
+### AccountService (class)
+- Tiene: IAccountStore
+- Usa: Result, Score, User
+
+### IAccountStore (interface)
+- Usa: Score
+
+### Result (enum)
+
+### Score (class)
+- Tiene: User
+- Usa: Result
+
+### ScoreRecorder (class)
+- Implementa: IGameStatusListener, IMoveListener
+- Tiene: AccountService, IChessGame, User
+- Usa: Color, Piece, PieceType, Position, Result
+
+### User (class)
+
+## Paquete `adapters`
 
 ### BoardStrip (class)
 - Extiende: JComponent
@@ -129,7 +151,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### SearchGames (class)
 - Usa: CastlingMove, ChessGame, EnPassantMove, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, PromotionMove
 
-## Paquete `nucleo`
+## Paquete `core`
 
 ### BlackTurnState (class)
 - Implementa: IGameState
@@ -230,22 +252,21 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: IGameState
 - Usa: BlackTurnState, Color
 
-## Paquete `nucleo.especiales`
+## Paquete `core.draw`
 
-### CastlingMove (class)
-- Implementa: ISpecialMove
-- Usa: Board, CastlingCommand, Color, IGameContext, IMoveCommand, Piece, PieceType, Position
+### FiftyMoveRule (class)
+- Implementa: IDrawRule
+- Usa: IGameContext
 
-### EnPassantMove (class)
-- Implementa: ISpecialMove
-- Usa: Board, Color, EnPassantCommand, IGameContext, IMoveCommand, Move, Piece, PieceType, Position
+### InsufficientMaterialRule (class)
+- Implementa: IDrawRule
+- Usa: Board, Color, IGameContext, Piece, PieceType, Position
 
-### PromotionMove (class)
-- Implementa: ISpecialMove
-- Tiene: IPromotionChooser, PieceFactory
-- Usa: Board, Color, IGameContext, IMoveCommand, Piece, PieceType, Position, PromotionCommand
+### ThreefoldRepetitionRule (class)
+- Implementa: IDrawRule
+- Usa: IGameContext
 
-## Paquete `nucleo.estrategias`
+## Paquete `core.movement`
 
 ### BishopMovementStrategy (class)
 - Implementa: IMovementStrategy
@@ -275,24 +296,22 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### SlidingMovement (class)
 - Usa: Board, Color, Position
 
-## Paquete `nucleo.tablas`
+## Paquete `core.special`
 
-### FiftyMoveRule (class)
-- Implementa: IDrawRule
-- Usa: IGameContext
+### CastlingMove (class)
+- Implementa: ISpecialMove
+- Usa: Board, CastlingCommand, Color, IGameContext, IMoveCommand, Piece, PieceType, Position
 
-### InsufficientMaterialRule (class)
-- Implementa: IDrawRule
-- Usa: Board, Color, IGameContext, Piece, PieceType, Position
+### EnPassantMove (class)
+- Implementa: ISpecialMove
+- Usa: Board, Color, EnPassantCommand, IGameContext, IMoveCommand, Move, Piece, PieceType, Position
 
-### ThreefoldRepetitionRule (class)
-- Implementa: IDrawRule
-- Usa: IGameContext
+### PromotionMove (class)
+- Implementa: ISpecialMove
+- Tiene: IPromotionChooser, PieceFactory
+- Usa: Board, Color, IGameContext, IMoveCommand, Piece, PieceType, Position, PromotionCommand
 
-## Paquete `puertos`
-
-### IAccountStore (interface)
-- Usa: Score
+## Paquete `ports`
 
 ### IGameStatusListener (interface)
 - Usa: Color
@@ -303,38 +322,19 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### IPromotionChooser (interface)
 - Usa: Color, PieceType
 
-## Paquete `usuarios`
-
-### AccountService (class)
-- Tiene: IAccountStore
-- Usa: Result, Score, User
-
-### Result (enum)
-
-### Score (class)
-- Tiene: User
-- Usa: Result
-
-### ScoreRecorder (class)
-- Implementa: IGameStatusListener, IMoveListener
-- Tiene: AccountService, IChessGame, User
-- Usa: Color, Piece, PieceType, Position, Result
-
-### User (class)
-
 ## Dependencias entre paquetes
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `adaptadores`, `ai`, `nucleo`, `nucleo.especiales`, `nucleo.tablas`, `puertos`, `usuarios` |
-| `adaptadores` | `ai`, `nucleo`, `puertos`, `usuarios` |
-| `ai` | `nucleo`, `nucleo.especiales`, `puertos` |
-| `nucleo` | `nucleo.estrategias`, `puertos` |
-| `nucleo.especiales` | `nucleo`, `puertos` |
-| `nucleo.estrategias` | `nucleo` |
-| `nucleo.tablas` | `nucleo` |
-| `puertos` | `nucleo`, `usuarios` |
-| `usuarios` | `nucleo`, `puertos` |
+| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `core.draw`, `core.special`, `ports` |
+| `accounts` | `core`, `ports` |
+| `adapters` | `accounts`, `ai`, `core`, `ports` |
+| `ai` | `core`, `core.special`, `ports` |
+| `core` | `core.movement`, `ports` |
+| `core.draw` | `core` |
+| `core.movement` | `core` |
+| `core.special` | `core`, `ports` |
+| `ports` | `core` |
 
 ## Dónde está cada patrón (para marcarlo en el diagrama)
 

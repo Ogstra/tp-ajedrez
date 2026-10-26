@@ -1,8 +1,8 @@
 package ai;
 
-import nucleo.Color;
-import nucleo.PieceType;
-import puertos.IPromotionChooser;
+import core.Color;
+import core.PieceType;
+import ports.IPromotionChooser;
 
 // Puerto de salida (Clase 2) resuelto sin preguntar a nadie: siempre la misma pieza.
 // Lo usa la partida de búsqueda de la IA.

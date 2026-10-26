@@ -4,35 +4,35 @@ import ai.MinimaxOpponent;
 import ai.OpponentController;
 import ai.RandomOpponent;
 import java.util.Random;
-import nucleo.IGameContext;
-import nucleo.especiales.EnPassantMove;
-import nucleo.IDrawRule;
-import nucleo.tablas.FiftyMoveRule;
-import nucleo.tablas.InsufficientMaterialRule;
-import nucleo.tablas.ThreefoldRepetitionRule;
-import nucleo.IChessGame;
+import core.IGameContext;
+import core.special.EnPassantMove;
+import core.IDrawRule;
+import core.draw.FiftyMoveRule;
+import core.draw.InsufficientMaterialRule;
+import core.draw.ThreefoldRepetitionRule;
+import core.IChessGame;
 import java.util.Collections;
-import nucleo.CastlingCommand;
-import nucleo.Move;
-import nucleo.Board;
-import nucleo.BoardSetup;
-import nucleo.ChessGame;
-import nucleo.Color;
-import nucleo.IMovementStrategy;
-import nucleo.ISpecialMove;
-import nucleo.MoveCommand;
-import nucleo.MoveOutcome;
-import nucleo.Piece;
-import nucleo.PieceFactory;
-import nucleo.PieceType;
-import nucleo.Position;
-import nucleo.especiales.CastlingMove;
-import nucleo.especiales.PromotionMove;
-import nucleo.estrategias.KnightMovementStrategy;
-import nucleo.estrategias.RookMovementStrategy;
-import puertos.IGameStatusListener;
-import puertos.IMoveListener;
-import puertos.IPromotionChooser;
+import core.CastlingCommand;
+import core.Move;
+import core.Board;
+import core.BoardSetup;
+import core.ChessGame;
+import core.Color;
+import core.IMovementStrategy;
+import core.ISpecialMove;
+import core.MoveCommand;
+import core.MoveOutcome;
+import core.Piece;
+import core.PieceFactory;
+import core.PieceType;
+import core.Position;
+import core.special.CastlingMove;
+import core.special.PromotionMove;
+import core.movement.KnightMovementStrategy;
+import core.movement.RookMovementStrategy;
+import ports.IGameStatusListener;
+import ports.IMoveListener;
+import ports.IPromotionChooser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -485,7 +485,7 @@ public class ChessCoreTests {
     // ---------- extensibilidad (lo que pide la defensa individual) ----------
 
     // Una pieza que no existe en la materia: se mueve como torre y como caballo.
-    // Se define ACÁ, en el test, sin tocar ninguna clase de nucleo/.
+    // Se define ACÁ, en el test, sin tocar ninguna clase de core/.
     private static class ChancellorMovementStrategy implements IMovementStrategy {
         private final RookMovementStrategy asRook = new RookMovementStrategy();
         private final KnightMovementStrategy asKnight = new KnightMovementStrategy();

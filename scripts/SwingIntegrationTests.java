@@ -1,18 +1,18 @@
-import adaptadores.ChoiceControl;
-import adaptadores.FileAccountStore;
-import adaptadores.FlatComboBox;
-import adaptadores.GameBuilder;
-import adaptadores.Match;
-import adaptadores.SwingChessView;
-import nucleo.*;
-import nucleo.especiales.*;
-import nucleo.tablas.*;
-import puertos.*;
+import adapters.ChoiceControl;
+import adapters.FileAccountStore;
+import adapters.FlatComboBox;
+import adapters.GameBuilder;
+import adapters.Match;
+import adapters.SwingChessView;
+import core.*;
+import core.special.*;
+import core.draw.*;
+import ports.*;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
-import usuarios.AccountService;
-import usuarios.ScoreRecorder;
+import accounts.AccountService;
+import accounts.ScoreRecorder;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Files;
@@ -89,7 +89,7 @@ public class SwingIntegrationTests {
                 // Jugada, deshacer y volver al menu.
                 square("e2", false).doClick();
                 square("e4", false).doClick();
-                require(game.getTurn() == nucleo.Color.BLACK, "despues de e2 e4 le toca a las negras");
+                require(game.getTurn() == core.Color.BLACK, "despues de e2 e4 le toca a las negras");
                 button(root, "Deshacer").doClick();
                 require(before.equals(game.getBoard()), "deshacer en 1 contra 1 restaura el tablero");
                 button(root, "Menú").doClick();
@@ -106,7 +106,7 @@ public class SwingIntegrationTests {
                 square("e4", false).doClick();
                 require(!menuButton().isEnabled(), "el boton Menu debe bloquearse mientras piensa la IA");
             });
-            awaitReply(nucleo.Color.WHITE);
+            awaitReply(core.Color.WHITE);
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
                 require(menuButton().isEnabled(), "el boton Menu debe habilitarse al terminar la busqueda");
@@ -133,7 +133,7 @@ public class SwingIntegrationTests {
                 square("d4", false).doClick();
                 require(!menuButton().isEnabled(), "el nivel dificil tambien debe bloquear el boton Menu");
             });
-            awaitReply(nucleo.Color.WHITE);
+            awaitReply(core.Color.WHITE);
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
                 // Contra la IA jugando con negras: el tablero se gira y la IA abre la partida.
@@ -147,13 +147,13 @@ public class SwingIntegrationTests {
                         && boardPanel.getComponent(0) == square("h1", true),
                     "con negras el tablero se gira: la primera casilla de la grilla es h1");
             });
-            awaitReply(nucleo.Color.BLACK);
+            awaitReply(core.Color.BLACK);
             SwingUtilities.invokeAndWait(() -> {
                 Container root = view.getContentPane();
                 require(!before.equals(game.getBoard()), "la IA con blancas debe abrir la partida");
                 button(root, "Deshacer").doClick();
             });
-            awaitReply(nucleo.Color.BLACK);
+            awaitReply(core.Color.BLACK);
 
             // Ranking dentro de la misma ventana.
             SwingUtilities.invokeAndWait(() -> {
@@ -189,7 +189,7 @@ public class SwingIntegrationTests {
     }
 
     // Espera a que la IA termine de pensar y sea el turno de la persona (color indicado).
-    private static void awaitReply(nucleo.Color humanTurn) throws Exception {
+    private static void awaitReply(core.Color humanTurn) throws Exception {
         long deadline = System.currentTimeMillis() + 15000;
         boolean[] ready = {false};
         while (!ready[0] && System.currentTimeMillis() < deadline) {

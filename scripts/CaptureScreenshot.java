@@ -1,9 +1,9 @@
-import adaptadores.*;
-import nucleo.*;
-import nucleo.especiales.*;
-import nucleo.tablas.*;
-import puertos.*;
-import usuarios.*;
+import adapters.*;
+import core.*;
+import core.special.*;
+import core.draw.*;
+import ports.*;
+import accounts.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;

@@ -12,19 +12,19 @@ Este documento explica qué se agregó para tener un login básico (por nombre d
 
 ## 2. Dónde encaja en la arquitectura
 
-El núcleo no cambió: ninguna clase de `nucleo/` conoce a los usuarios. Todo se enchufa por los puertos que ya existían.
+El núcleo no cambió: ninguna clase de `core/` conoce a los usuarios. Todo se enchufa por los puertos que ya existían.
 
 | Pieza | Paquete | Rol |
 |---|---|---|
-| `User` | `usuarios` | Valor inmutable (id y nombre). Dos usuarios son iguales si tienen el mismo id. |
-| `Result` | `usuarios` | `WIN`, `DRAW`, `LOSS`. |
-| `Score` | `usuarios` | Valor inmutable con victorias, empates y derrotas. Calcula partidas y puntos. `plus` devuelve un puntaje nuevo. |
-| `IAccountStore` | `puertos` | Puerto de salida: `loadAll()` y `saveAll()`. Es lo único que el servicio sabe de la persistencia. |
-| `AccountService` | `usuarios` | Registrar, entrar, ranking, acreditar y revertir. Recibe el almacén por constructor (nivel 4 de DI). |
-| `ScoreRecorder` | `usuarios` | Observador de la partida. Implementa `IMoveListener` e `IGameStatusListener`. |
-| `FileAccountStore` | `adaptadores` | Adaptador de salida: guarda en CSV. |
-| `ConsoleAccounts` | `adaptadores` | Adaptador de entrada por consola: login, registro y tabla. |
-| `MenuPanel`, `RankingPanel` | `adaptadores` | Lo mismo para la ventana Swing: el menú elige modo, dificultad, color y usuarios, y registra; el ranking es una tabla. |
+| `User` | `accounts` | Valor inmutable (id y nombre). Dos usuarios son iguales si tienen el mismo id. |
+| `Result` | `accounts` | `WIN`, `DRAW`, `LOSS`. |
+| `Score` | `accounts` | Valor inmutable con victorias, empates y derrotas. Calcula partidas y puntos. `plus` devuelve un puntaje nuevo. |
+| `IAccountStore` | `accounts` | Puerto de salida, junto a las cuentas (así `ports` no depende de `accounts`): `loadAll()` y `saveAll()`. Es lo único que el servicio sabe de la persistencia. |
+| `AccountService` | `accounts` | Registrar, entrar, ranking, acreditar y revertir. Recibe el almacén por constructor (nivel 4 de DI). |
+| `ScoreRecorder` | `accounts` | Observador de la partida. Implementa `IMoveListener` e `IGameStatusListener`. |
+| `FileAccountStore` | `adapters` | Adaptador de salida: guarda en CSV. |
+| `ConsoleAccounts` | `adapters` | Adaptador de entrada por consola: login, registro y tabla. |
+| `MenuPanel`, `RankingPanel` | `adapters` | Lo mismo para la ventana Swing: el menú elige modo, dificultad, color y usuarios, y registra; el ranking es una tabla. |
 
 `Main` y `MainSwing` (los composition roots) crean el almacén, el servicio y el recorder, y pasan el recorder en las listas de listeners de `ChessGame`. Es la misma inyección por constructor que ya se usaba.
 

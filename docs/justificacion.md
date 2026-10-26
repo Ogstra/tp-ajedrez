@@ -6,7 +6,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 1. El núcleo no conoce a los adaptadores
 
-**Qué.** Las reglas del ajedrez viven en el paquete `nucleo`, que no importa nada de `adaptadores` ni de `ai`. La consola, la ventana y la IA son piezas externas que dependen del núcleo, nunca al revés.
+**Qué.** Las reglas del ajedrez viven en el paquete `core`, que no importa nada de `adapters` ni de `ai`. La consola, la ventana y la IA son piezas externas que dependen del núcleo, nunca al revés.
 
 **Por qué.** La prueba es una sola pregunta: si cambia la tecnología, ¿esto cambia? Las reglas no cambian si pasamos de consola a ventana, por eso son núcleo. Gracias a esto la ventana Swing se agregó después sin tocar `ChessGame`, y el núcleo se prueba sin levantar ninguna infraestructura.
 
@@ -102,7 +102,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 11 bis. Usuarios y ranking también viven afuera del núcleo
 
-**Qué.** El paquete `usuarios` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
+**Qué.** El paquete `accounts` tiene `User` y `Score` (valores inmutables), `AccountService` (registrar, entrar, armar el ranking) y `ScoreRecorder`, un observador que escucha la partida y acredita el resultado. Guardar los datos es un puerto de salida (`IAccountStore`) con un adaptador de archivo CSV (`FileAccountStore`). Se entra solo con el nombre de usuario, sin contraseña; el id lo asigna el sistema y es interno.
 
 **Por qué.** Quién juega y cuántas partidas ganó no es una regla del ajedrez. Como `ScoreRecorder` implementa los mismos `IMoveListener` e `IGameStatusListener` que ya usaban la consola y la ventana, no se tocó ninguna clase del núcleo. Cambiar el CSV por otra forma de guardar es escribir otro adaptador de `IAccountStore`. Deshacer la jugada final revierte el resultado y rehacerla lo vuelve a sumar, para que una misma partida no cuente dos veces.
 

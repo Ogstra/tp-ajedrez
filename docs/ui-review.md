@@ -98,8 +98,8 @@ Quedan pendientes los demás hallazgos del detalle (ranking vacío, resaltado de
 
 ## Archivos revisados
 
-- `src/adaptadores/MenuPanel.java`
-- `src/adaptadores/SwingChessView.java`
-- `src/adaptadores/RankingPanel.java`
-- `src/adaptadores/GameBuilder.java`
+- `src/adapters/MenuPanel.java`
+- `src/adapters/SwingChessView.java`
+- `src/adapters/RankingPanel.java`
+- `src/adapters/GameBuilder.java`
 - `scripts/SwingIntegrationTests.java`
