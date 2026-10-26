@@ -41,6 +41,9 @@ import java.util.Random;
 // import de Swing.
 public class MainSwing {
     public static void main(String[] args) {
+        // En macOS, el nombre que se ve en la barra de menú y en el Dock (si no, dice "MainSwing").
+        // Tiene que ir antes de crear cualquier ventana; en Windows y Linux no hace nada.
+        System.setProperty("apple.awt.application.name", "Ajedrez");
         SwingUtilities.invokeLater(() -> {
             // Cuentas: los datos se guardan en data/usuarios.csv (se cambia con -Dajedrez.data=carpeta).
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));

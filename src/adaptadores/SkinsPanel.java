@@ -125,10 +125,13 @@ public class SkinsPanel extends JPanel {
         private static final int SIZE = 40;
         private final Skin skin;
         private final boolean unlocked;
+        private final java.awt.Image king; // el rey ya preparado para la pantalla escalada
 
         Preview(Skin skin, boolean unlocked) {
             this.skin = skin;
             this.unlocked = unlocked;
+            java.awt.Image image = SkinImages.piece(skin, "wK");
+            this.king = image == null ? null : SmoothImage.of(image, SIZE - 8);
             setPreferredSize(new Dimension(SIZE, SIZE));
         }
 
@@ -143,8 +146,7 @@ public class SkinsPanel extends JPanel {
             g2.setColor(dark);
             g2.fillRect(half, 0, half, half);
             g2.fillRect(0, half, half, half);
-            java.awt.Image king = SkinImages.piece(skin, "wK");
-            if (king != null) SmoothImage.draw(g2, king, 4, 4, SIZE - 8);
+            if (king != null) g2.drawImage(king, 4, 4, null);
             if (!unlocked) { // las bloqueadas se ven apagadas
                 g2.setColor(new java.awt.Color(Palette.BACKGROUND.getRed(), Palette.BACKGROUND.getGreen(),
                     Palette.BACKGROUND.getBlue(), 140));

@@ -48,7 +48,11 @@ public class ChoiceControl extends JComponent {
 
     private ChoiceControl(String[] options, Image[] icons, int height) {
         this.options = options;
-        this.icons = icons;
+        // Los íconos se preparan una sola vez, con sus variantes para la pantalla escalada.
+        this.icons = icons == null ? null : new Image[icons.length];
+        for (int i = 0; icons != null && i < icons.length; i++) {
+            this.icons[i] = icons[i] == null ? null : SmoothImage.of(icons[i], ICON);
+        }
         setFont(new JLabel().getFont().deriveFont(14f));
         setPreferredSize(new Dimension(300, height));
         setFocusable(true);
@@ -151,7 +155,7 @@ public class ChoiceControl extends JComponent {
             FontMetrics fm = g2.getFontMetrics();
             int iconWidth = icons[i] != null ? ICON + 10 : 0;
             int start = x + (card - iconWidth - fm.stringWidth(options[i])) / 2;
-            if (icons[i] != null) SmoothImage.draw(g2, icons[i], start, (h - ICON) / 2, ICON);
+            if (icons[i] != null) g2.drawImage(icons[i], start, (h - ICON) / 2, null);
             g2.setColor(Palette.INK);
             g2.drawString(options[i], start + iconWidth, (h - fm.getHeight()) / 2 + fm.getAscent());
         }

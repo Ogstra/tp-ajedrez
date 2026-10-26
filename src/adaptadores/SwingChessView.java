@@ -21,6 +21,8 @@ import usuarios.User;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -37,6 +39,7 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Rectangle;
+import java.awt.Taskbar;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -125,6 +128,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private Position selection = null;
     private boolean thinking = false;
     private int squareSize = MAX_SQUARE;
+    private final Map<String, Icon> pieceIcons = new HashMap<>(); // "wK" -> ícono al tamaño actual de las casillas
     private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
     private String currentCard = MENU;
     private String cardBeforeRanking = MENU;
@@ -143,17 +147,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.lanPanel = new LanPanel(this::startLanGame, this::showMenu);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
-        // Ícono de la ventana, achicado de antemano a los tamaños que pide Windows (también con la
-        // pantalla escalada: 20, 30 y 40 px al 125%) para que no lo reescale y se vea borroso.
-        try {
-            BufferedImage icon = ImageIO.read(new File("src" + File.separator + "assets" + File.separator + "icono.png"));
-            List<Image> icons = new ArrayList<>();
-            for (int size : new int[]{16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 96, 128}) icons.add(SmoothImage.scaled(icon, size));
-            icons.add(icon);
-            setIconImages(icons);
-        } catch (IOException e) {
-            // sin el archivo queda el ícono de Java
-        }
+        loadIcon();
         showCard(LOGIN); // la primera pantalla es el login (y Enter aprieta Entrar)
     }
 
@@ -175,6 +169,21 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             showCard(LAN);
         } else {
             startGame();
+        }
+    }
+
+    // Ícono de la aplicación: Windows y Linux usan el de la ventana; macOS no, el del Dock va
+    // aparte con Taskbar. Sin el archivo queda el ícono de Java.
+    private void loadIcon() {
+        try {
+            Image icon = ImageIO.read(new File("src/assets/icono.png"));
+            if (icon == null) return;
+            setIconImage(icon);
+            if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
+                Taskbar.getTaskbar().setIconImage(icon);
+            }
+        } catch (IOException e) {
+            // sin ícono propio
         }
     }
 
@@ -323,6 +332,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         text.setPreferredSize(new Dimension(0, 36)); // siempre dos filas como máximo
         text.add(status, BorderLayout.CENTER);
         text.add(players, BorderLayout.SOUTH);
+        // Los botones de la barra no toman el foco: así no queda marcado Menú al empezar la partida.
+        for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
@@ -383,12 +394,14 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                 JButton button = new JButton();
                 button.setOpaque(true);
                 button.setBorderPainted(false);
+                button.setFocusable(false); // se juega con el mouse: sin el aro de foco sobre una casilla
                 button.addActionListener(e -> onSquareClicked(pos));
                 squares[pos.getRow()][pos.getColumn()] = button;
                 boardPanel.add(button);
             }
         }
         boardPanel.setPreferredSize(new Dimension(columns * squareSize, rows * squareSize));
+        pieceIcons.clear(); // el tamaño de las casillas pudo cambiar
         boardPanel.revalidate();
         buildCoordinates(rows, columns, flipped);
     }
@@ -564,7 +577,12 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             return;
         }
         button.setText("");
-        button.setIcon(SmoothImage.icon(image, squareSize * 85 / 100));
+        Icon icon = pieceIcons.get(key);
+        if (icon == null) {
+            icon = new ImageIcon(SmoothImage.of(image, squareSize * 85 / 100));
+            pieceIcons.put(key, icon);
+        }
+        button.setIcon(icon);
     }
 
     private String imageKey(Piece piece) {

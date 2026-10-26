@@ -2,6 +2,7 @@ import adaptadores.ChoiceControl;
 import adaptadores.FileAccountStore;
 import adaptadores.FileSkinCatalog;
 import adaptadores.FileSkinStore;
+import adaptadores.FlatComboBox;
 import adaptadores.GameBuilder;
 import adaptadores.Match;
 import adaptadores.SwingChessView;
@@ -41,6 +42,7 @@ public class SwingIntegrationTests {
 
     public static void main(String[] args) throws Exception {
         Path data = Files.createTempDirectory("ajedrez-swing");
+        SwingUtilities.invokeAndWait(SwingIntegrationTests::checkFocusedComboShowsText);
         try {
             SwingUtilities.invokeAndWait(() -> {
                 accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
@@ -342,6 +344,31 @@ public class SwingIntegrationTests {
 
     private static JButton menuButton() {
         return button(view.getContentPane(), "Menú");
+    }
+
+    // Un desplegable enfocado tiene que mostrar el usuario elegido. Antes se pintaba con el color
+    // de selección (blanco) sobre fondo blanco y no se veía. Se simula el foco para no depender de
+    // que la ventana lo reciba.
+    private static void checkFocusedComboShowsText() {
+        FlatComboBox combo = new FlatComboBox() {
+            @Override public boolean hasFocus() { return true; }
+        };
+        combo.addItem("Ana Beatriz");
+        combo.setSize(240, 36);
+        combo.doLayout();
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(240, 36, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        combo.paint(g);
+        g.dispose();
+        int dark = 0;
+        for (int x = 8; x < 150; x++) {
+            for (int y = 6; y < 30; y++) {
+                java.awt.Color c = new java.awt.Color(image.getRGB(x, y));
+                if (c.getRed() < 90 && c.getGreen() < 90 && c.getBlue() < 90) dark++;
+            }
+        }
+        require(dark > 30, "el desplegable enfocado debe mostrar el texto elegido en oscuro (pixeles oscuros: " + dark + ")");
+        System.out.println("[OK]   Swing: el desplegable enfocado muestra el usuario elegido");
     }
 
     // Las skins del catálogo real, con la elección de cada usuario en la carpeta temporal.
