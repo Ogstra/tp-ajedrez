@@ -110,7 +110,7 @@ En `docs/`:
 - `gobernanza-y-calidad.md`: registro de riesgos, política de uso de IA y KPIs del TPO.
 - `uml-checklist.md`: la lista de clases y relaciones para el UML, generada del código con `java scripts/ListTypes.java`.
 - `juego-en-red.md`, `skins.md`, `cambios-usuarios-y-ranking.md` y `cambios-tecnicos.md`: cómo funciona cada parte.
-- `presentacion.pptx` y los planes con los que se hizo el trabajo (`superpowers/`). El estado del trabajo y lo que falta está en `.planning/STATE.md`.
+- `presentacion.pptx`: la presentación para la exposición.
 
 Franco dibuja el UML con `docs/uml-checklist.md`. Cuando esté `docs/uml.png`, se regenera la presentación con `node scripts/build_deck.js` (hace falta `npm install pptxgenjs` una vez) para que aparezca en la diapositiva 4.
 

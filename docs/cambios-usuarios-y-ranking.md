@@ -90,7 +90,7 @@ Cada vez que se aprieta Jugar la ventana pide una partida nueva a un `GameBuilde
 
 Se eligió no cambiar la dificultad en medio de la partida: se vuelve al menú. El botón Menú se bloquea mientras la IA piensa, para que su jugada no caiga sobre una partida vieja.
 
-También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Entrar en el login, Crear usuario en el registro y Jugar en el menú, y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras). El detalle de la revisión está en `docs/ui-review.md`.
+También: el botón Menú pide confirmación si la partida sigue en juego, Enter aprieta Entrar en el login, Crear usuario en el registro y Jugar en el menú, y el tablero muestra las coordenadas a-h y 1-8 (invertidas si se juega con negras).
 
 ### Diseño de la ventana
 

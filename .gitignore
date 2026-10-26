@@ -12,3 +12,6 @@ data/
 # IntelliJ abierto con src/ como proyecto
 src/.idea/
 src/*.iml
+
+# Contexto de trabajo local (no se sube)
+.planning/

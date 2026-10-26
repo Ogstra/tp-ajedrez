@@ -29,7 +29,7 @@ Riesgo residual aceptado: por LAN cualquiera de la misma red puede anunciar una 
 
 **Quién revisa.** Todo cambio entra por un PR que revisa otro integrante. Quien entrega código generado por IA responde por él: tiene que poder explicarlo, haberlo probado y saber por qué se eligió así.
 
-**Cómo se declara.** Los commits hechos con ayuda de un asistente lo dicen (línea `Co-Authored-By`). La exposición y la justificación mencionan que se usó IA y para qué.
+**Cómo se declara.** La exposición y la justificación mencionan que se usó IA y para qué, si la cátedra lo pide.
 
 **Qué no se hace.** Tocar un test para que pase en vez de arreglar el código, entregar algo que nadie del grupo entiende, o incluir recursos con derechos de terceros que la IA haya sugerido.
 

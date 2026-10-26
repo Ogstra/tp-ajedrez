@@ -50,7 +50,7 @@ Fuentes, en orden de autoridad: el enunciado del TPO, el modelo de examen, los a
 
 Testing: pirámide (muchos unitarios del núcleo, algunos de integración de adaptadores y uno de sistema con la ventana real), Arrange-Act-Assert, stub (`AlwaysQueenChooser`), mock (`RecordingObserver`, `RecordingLobbyListener`), fake (almacenes en memoria de `AccountTests` y `SkinTests`) y tests marcados `// TDD:`.
 
-Metodología: walking skeleton y fases cortas con todo en verde al cerrar cada una (`docs/superpowers/plans/` y `.planning/`).
+Metodología: walking skeleton y fases cortas con todo en verde al cerrar cada una, una rama y un PR por cambio.
 
 ## 5. Unidad 3: BPO y SLA
 
@@ -76,9 +76,9 @@ No hay terceros contratados, pero la idea del SLA como interfaz aparece en el di
 
 ## 8. Unidad 6: auditoría, métricas e integridad
 
-- **Auditoría**: se compara contra un criterio, con evidencia. `.planning/AUDIT.md` revisa el TP contra este documento, con el comando o el archivo que respalda cada punto.
+- **Auditoría**: se compara contra un criterio, con evidencia. Antes de cada entrega se revisa el TP contra este documento, con el comando o el archivo que respalda cada punto (los tests, la tabla de dependencias de `docs/uml-checklist.md`).
 - **KPIs y KRI del TPO**, con la contramedida a la ley de Goodhart: `docs/gobernanza-y-calidad.md`.
-- **Integridad profesional**: no se tocan tests para que pasen; las simplificaciones están declaradas (sección 19 de la justificación); el uso de IA está declarado.
+- **Integridad profesional**: no se tocan tests para que pasen; las simplificaciones están declaradas (sección 19 de la justificación); el uso de IA se declara según la política de `docs/gobernanza-y-calidad.md`.
 - **Integridad técnica, proporcional a un TPO**: control de versiones con revisión por PR, sin dependencias externas (no hay cadena de suministro que fijar), compilación reproducible con `--release 21`.
 
 ## 9. Para la defensa individual
