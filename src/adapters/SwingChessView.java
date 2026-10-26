@@ -39,8 +39,8 @@ import java.awt.Taskbar;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +65,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
 
     // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0.
-    // Se cargan una sola vez desde src/assets/piezas/ y se escalan al tamaño
+    // Se cargan una sola vez desde assets/piezas/ y se escalan al tamaño
     // de casilla. Si falta algún archivo, o la pieza es de un tipo que este
     // adaptador no conoce, se cae a un símbolo de texto.
     private static final Map<String, Image> IMAGES = loadImages();
@@ -132,15 +132,11 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     // Ícono de la aplicación: Windows y Linux usan el de la ventana; macOS no, el del Dock va
     // aparte con Taskbar. Sin el archivo queda el ícono de Java.
     private void loadIcon() {
-        try {
-            Image icon = ImageIO.read(new File("src/assets/icono.png"));
-            if (icon == null) return;
-            setIconImage(icon);
-            if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
-                Taskbar.getTaskbar().setIconImage(icon);
-            }
-        } catch (IOException e) {
-            // sin ícono propio
+        Image icon = asset("icono.png");
+        if (icon == null) return;
+        setIconImage(icon);
+        if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
+            Taskbar.getTaskbar().setIconImage(icon);
         }
     }
 
@@ -225,16 +221,22 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     private static Map<String, Image> loadImages() {
         Map<String, Image> map = new HashMap<>();
-        String folder = "src" + File.separator + "assets" + File.separator + "piezas" + File.separator;
         for (String key : new String[]{"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"}) {
-            try {
-                BufferedImage image = ImageIO.read(new File(folder + key + ".png"));
-                map.put(key, image);
-            } catch (IOException e) {
-                map.put(key, null);
-            }
+            map.put(key, asset("piezas/" + key + ".png"));
         }
         return map;
+    }
+
+    // Una imagen de assets/, leída del classpath y no de una ruta en disco como "src/assets/...":
+    // así se encuentra igual en Windows, macOS y Linux, desde IntelliJ o desde la terminal, y
+    // aunque el juego se corra desde otra carpeta. build.sh copia src/assets junto a las clases.
+    // Devuelve null si falta el archivo.
+    static BufferedImage asset(String path) {
+        try (InputStream in = SwingChessView.class.getResourceAsStream("/assets/" + path)) {
+            return in == null ? null : ImageIO.read(in);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     private void buildInterface() {
