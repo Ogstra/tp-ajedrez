@@ -19,7 +19,6 @@ import java.util.Map;
 public class LanBrowser {
 
     private static final long FORGET_AFTER_MS = 3000;
-    private static final int MAX_GAMES = 20;
 
     private final Map<String, LanGame> games = new LinkedHashMap<>();
     private final Map<String, Long> lastSeen = new LinkedHashMap<>();
@@ -86,7 +85,7 @@ public class LanBrowser {
     // tenga la forma esperada y el nombre se limpia antes de mostrarlo.
     private static LanGame parse(String text, DatagramPacket packet) {
         String[] parts = text.split(";");
-        if (parts.length != 4 || !parts[0].equals(LanAnnouncer.PREFIX) || parts[1].length() > 10) return null;
+        if (parts.length != 4 || !parts[0].equals(LanAnnouncer.PREFIX)) return null;
         try {
             int port = Integer.parseInt(parts[3]);
             if (port < 1 || port > 65535) return null;
@@ -97,7 +96,6 @@ public class LanBrowser {
     }
 
     private synchronized void seen(LanGame game) {
-        if (!games.containsKey(game.getId()) && games.size() >= MAX_GAMES) return; // la lista no crece sin fin
         games.putIfAbsent(game.getId(), game); // la primera dirección por la que llegó es la que se usa
         lastSeen.put(game.getId(), System.currentTimeMillis());
     }

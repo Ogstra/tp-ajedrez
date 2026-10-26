@@ -25,9 +25,8 @@ public class CaptureScreenshot {
                     PieceFactory p = PieceFactory.standard();
                     ScoreRecorder r = new ScoreRecorder(acc, w, bl);
                     IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),
-                        Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(p, v)),
-                        Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-                    r.attachGame(g);
+                        StandardRules.specialMoves(p, v),
+                        StandardRules.drawRules());
                     return new Match(g, null);
                 }
 

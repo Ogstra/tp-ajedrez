@@ -46,7 +46,7 @@ public class CastlingCommand implements IMoveCommand {
     @Override
     public void announce(IMoveListener listener) {
         boolean kingside = kingTo.getColumn() > kingFrom.getColumn();
-        listener.onCastling(color, kingside);
+        listener.onCastling(color, kingside, kingFrom, kingTo);
     }
     @Override
     public Move getMove() {

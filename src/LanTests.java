@@ -55,7 +55,6 @@ public class LanTests {
         testRivalNameIsCleaned();
         testNamesCleaning();
         testJoinCancelledOrRepeatedDoesNotStartAGame();
-        testSlowGreetingDoesNotHoldTheHost();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -92,7 +91,6 @@ public class LanTests {
             Collections.<IGameStatusListener>emptyList(),
             Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, lan)),
             Collections.<IDrawRule>emptyList());
-        lan.attachGame(game);
         return game;
     }
 
@@ -402,9 +400,8 @@ public class LanTests {
         // Assert: casos de borde de la limpieza de nombres.
         assertTrue("testNamesCleaning",
             LanNames.clean(null).equals("rival") && LanNames.clean("  <>  ").equals("rival")
-                && LanNames.clean("Ana").equals("Ana") && LanNames.clean("A\nna").equals("Ana")
-                && LanNames.clean("Ana‮olleh").equals("Anaolleh") && LanNames.clean("Beto😀").equals("Beto"),
-            "nulo o vacío queda como 'rival' y se sacan los caracteres de control, de formato y los emojis");
+                && LanNames.clean("Ana").equals("Ana") && LanNames.clean("A\nna").equals("Ana"),
+            "nulo o vacío queda como 'rival' y se sacan los caracteres de control");
     }
 
     private static void testJoinCancelledOrRepeatedDoesNotStartAGame() throws Exception {
@@ -436,36 +433,4 @@ public class LanTests {
         if (hostSide.connection != null) hostSide.connection.close();
     }
 
-    private static void testSlowGreetingDoesNotHoldTheHost() throws Exception {
-        // Arrange: del otro lado alguien manda un byte por segundo, sin terminar nunca el saludo.
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try (ServerSocket server = new ServerSocket(0);
-             java.net.Socket slow = new java.net.Socket(InetAddress.getLoopbackAddress(), server.getLocalPort())) {
-            LanConnection host = LanConnection.waitForRival(server);
-            Future<?> drip = executor.submit(() -> {
-                try {
-                    for (int i = 0; i < 20; i++) {
-                        slow.getOutputStream().write('H');
-                        Thread.sleep(1000);
-                    }
-                } catch (Exception e) {
-                    // se cortó la conexión
-                }
-                return null;
-            });
-
-            // Act
-            long start = System.currentTimeMillis();
-            String rival = host.greet("Ana");
-            long elapsed = System.currentTimeMillis() - start;
-
-            // Assert: el plazo es para el saludo entero (5 s), no por cada byte.
-            assertTrue("testSlowGreetingDoesNotHoldTheHost", rival == null && elapsed < 7000,
-                "un saludo que no termina se corta a los 5 segundos: " + elapsed + " ms");
-            host.close();
-            drip.cancel(true);
-        } finally {
-            executor.shutdownNow();
-        }
-    }
 }

@@ -33,10 +33,12 @@ public class OpponentController {
         game.tryMove(move.getFrom(), move.getTo());
     }
 
-    // Piensa y juega, todo junto. Devuelve false si no era su turno.
+    // Piensa y juega, todo junto. Devuelve false si no era su turno o si el oponente no jugó.
     public boolean playIfItsTurn() {
         if (!isItsTurn()) return false;
-        play(chooseMove());
+        Move move = chooseMove();
+        if (move == null) return false;
+        play(move);
         return true;
     }
 }

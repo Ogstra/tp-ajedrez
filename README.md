@@ -31,7 +31,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Ojo: `data/` es re
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, 15 del juego por LAN (incluidas las de datos inválidos que llegan por la red y la cancelación al unirse), 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana y una partida por LAN entre dos ventanas):
+`./scripts/test.sh` corre 66 pruebas del juego y la IA, 20 de usuarios y ranking, 14 del juego por LAN (incluidas las de datos inválidos que llegan por la red y la cancelación al unirse), 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana y una partida por LAN entre dos ventanas):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -93,7 +93,7 @@ Lo que se ve en la materia está así:
 
 - **Una pieza nueva**: se escribe su `IMovementStrategy`, se crea un `PieceType` y se registra con `factory.register(...)`. Hay un test que lo hace con una pieza inventada que se mueve como torre y caballo.
 - **Otro tamaño de tablero**: `BoardSetup.custom(10, 10, filaTrasera, piezas)` en el `GameBuilder` de `MainSwing` (o `new Board(10, 10)`). Todo pregunta a `board.isInside()` en vez de asumir 8x8, el peón corona en la última fila de ese tablero y la ventana se adapta sola: casillas cuadradas, coordenadas hasta donde haga falta y casillas más chicas si no entra en la pantalla.
-- **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `Main`.
+- **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `core/StandardRules`, que usan la consola, la ventana y la IA.
 
 ## Cosas a tener en cuenta
 

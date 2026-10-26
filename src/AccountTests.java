@@ -130,7 +130,6 @@ public class AccountTests {
             Collections.<IMoveListener>singletonList(recorder),
             Collections.<IGameStatusListener>singletonList(recorder),
             specialMoves, drawRules);
-        recorder.attachGame(game);
         return game;
     }
 

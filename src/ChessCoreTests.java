@@ -101,6 +101,7 @@ public class ChessCoreTests {
         testRedoWithNothingToRedoReturnsFalse();
         testNewMoveClearsRedo();
         testRedoOfPromotionDoesNotAskAgain();
+        testRedoAnnouncesCheckmateAgain();
 
         testKingAgainstKingIsDraw();
         testInsufficientMaterialCases();
@@ -226,6 +227,28 @@ public class ChessCoreTests {
         public PieceType choose(Color color) {
             return PieceType.QUEEN;
         }
+    }
+
+    // TDD: rehacer el mate tiene que volver a anunciarlo (antes la partida quedaba terminada sin aviso).
+    private static void testRedoAnnouncesCheckmateAgain() {
+        // Arrange: el mate del loco, deshecho.
+        RecordingObserver observer = new RecordingObserver();
+        ChessGame game = buildGame(BoardSetup.standard(PIECES), Arrays.<IMoveListener>asList(observer),
+            Arrays.<IGameStatusListener>asList(observer), new AlwaysQueenChooser());
+        game.tryMove(Position.fromAlgebraic("f2"), Position.fromAlgebraic("f3"));
+        game.tryMove(Position.fromAlgebraic("e7"), Position.fromAlgebraic("e5"));
+        game.tryMove(Position.fromAlgebraic("g2"), Position.fromAlgebraic("g4"));
+        game.tryMove(Position.fromAlgebraic("d8"), Position.fromAlgebraic("h4"));
+        game.undo();
+        observer.events.clear();
+
+        // Act
+        game.redo();
+
+        // Assert
+        assertTrue("testRedoAnnouncesCheckmateAgain",
+            game.isGameOver() && observer.events.contains("checkmate"),
+            "al rehacer el mate se vuelve a avisar: " + observer.events);
     }
 
     // Mock (Clase 4): registra qué le avisaron, para verificarlo en el Assert.
@@ -921,7 +944,7 @@ public class ChessCoreTests {
         final List<String> events = new ArrayList<>();
 
         @Override public void onMoveMade(Position from, Position to, Piece piece, Piece captured) { events.add("move"); }
-        @Override public void onCastling(Color color, boolean kingside) { events.add("castling"); }
+        @Override public void onCastling(Color color, boolean kingside, Position kingFrom, Position kingTo) { events.add("castling"); }
         @Override public void onPromotion(Color color, Position position, PieceType newPiece) { events.add("promotion"); }
         @Override public void onUndo() { events.add("undo"); }
         @Override public void onDraw(String reason) { events.add("draw"); }

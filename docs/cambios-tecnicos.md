@@ -175,3 +175,8 @@ java --class-path out scripts/SwingIntegrationTests.java
 | Lo que llegaba por la red se usaba sin validar | Nombres limpios, líneas acotadas, jugadas validadas contra las legales (ver `docs/juego-en-red.md`). |
 | Skins con marcas y personajes de terceros | "Age of Empires" pasó a "Medieval"; se sacó la de Minecraft (ver `src/assets/skins/CREDITS.md`). |
 | `scripts/Capture.java` no compilaba y `list_types.py` pedía Python | Se borró `Capture.java`; la lista del UML se genera con `java scripts/ListTypes.java`. |
+| Rehacer un jaque o un mate no lo volvía a anunciar | `ChessGame.redo()` vuelve a avisar el estado. `ScoreRecorder` ya no necesita la partida ni una lista aparte para rehacer. |
+| Las reglas de siempre se armaban igual en tres lugares | `core/StandardRules` las arma para la consola, la ventana y la búsqueda de la IA. |
+| La coronación automática de la IA estaba repetida en la ventana | Se usa el mismo Decorator (`AutoPromotionChooser`) en la consola y en la ventana. |
+| Los listeners tenían muchos métodos vacíos y el enroque no decía las casillas | Los puertos traen métodos vacíos por defecto, y `onCastling` pasa las casillas del rey. `LanOpponent` ya no necesita la partida. |
+| Controles de red de más para un riesgo bajo | Quedan los que importan: jugadas validadas contra las legales, líneas acotadas, nombres sin `<`, `>`, `;` ni caracteres de control, y 5 segundos para el saludo. |

@@ -83,7 +83,7 @@ public class LanPanel extends JPanel {
         });
         FlatButton cancelButton = new FlatButton("Cancelar", FlatButton.Style.LINK);
         cancelButton.addActionListener(e -> {
-            lobby.stopHosting();
+            lobby.close(); // deja de esperar rival; open vuelve a buscar partidas
             open(ownName);
         });
 

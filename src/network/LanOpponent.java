@@ -23,7 +23,6 @@ public class LanOpponent implements IOpponent, IMoveListener, IPromotionChooser 
     private final Color localColor;
     private final String rivalName;
     private final IPromotionChooser localChooser; // pregunta a la persona a qué corona su peón
-    private IChessGame game;
     private PieceType localPromotion = null;      // la pieza elegida para la jugada propia en curso
     private PieceType rivalPromotion = PieceType.QUEEN;
 
@@ -32,11 +31,6 @@ public class LanOpponent implements IOpponent, IMoveListener, IPromotionChooser 
         this.localColor = localColor;
         this.rivalName = rivalName;
         this.localChooser = localChooser;
-    }
-
-    // Hace falta para reconstruir el enroque propio (ver onCastling).
-    public void attachGame(IChessGame game) {
-        this.game = game;
     }
 
     public Color getRivalColor() { return localColor.opposite(); }
@@ -92,14 +86,11 @@ public class LanOpponent implements IOpponent, IMoveListener, IPromotionChooser 
         connection.send(line);
     }
 
-    // El enroque se avisa sin casillas, pero el rey siempre se mueve dos columnas: con dónde
-    // quedó el rey se sabe de dónde salió, y se manda como una jugada del rey.
+    // El enroque propio se manda como la jugada del rey: del otro lado, mover el rey dos columnas
+    // es el enroque.
     @Override
-    public void onCastling(Color color, boolean kingside) {
-        if (color != localColor || game == null) return;
-        Position kingTo = game.getBoard().findKing(color);
-        Position kingFrom = new Position(kingTo.getRow(), kingTo.getColumn() + (kingside ? -2 : 2));
-        connection.send(kingFrom + " " + kingTo);
+    public void onCastling(Color color, boolean kingside, Position kingFrom, Position kingTo) {
+        if (color == localColor) connection.send(kingFrom + " " + kingTo);
     }
 
     private static PieceType pieceFor(String letter) {
@@ -119,7 +110,4 @@ public class LanOpponent implements IOpponent, IMoveListener, IPromotionChooser 
     }
 
     // Lo demás que avisa la partida no hace falta mandarlo: el rival lo calcula en su PC.
-    @Override public void onPromotion(Color color, Position position, PieceType newPiece) { }
-    @Override public void onUndo() { }
-    @Override public void onRedo() { }
 }

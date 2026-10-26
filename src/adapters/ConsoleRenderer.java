@@ -109,7 +109,7 @@ public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
     }
 
     @Override
-    public void onCastling(Color color, boolean kingSide) {
+    public void onCastling(Color color, boolean kingSide, Position kingFrom, Position kingTo) {
         System.out.println(name(color) + ": enroque " + (kingSide ? "corto" : "largo") + ".");
     }
 

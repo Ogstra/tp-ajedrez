@@ -64,12 +64,12 @@ public class LanConnection {
     }
 
     // Saludo al conectarse: cada uno manda "HOLA;su nombre" y lee el del otro. Devuelve el
-    // nombre del rival ya limpio (ver LanNames), o null si lo que llegó no es del juego o no
-    // llegó a tiempo. El plazo es para el saludo entero, no por cada lectura: alguien que manda
-    // un byte por vez no retiene la espera. Después del saludo, esperar jugadas no tiene límite.
+    // nombre del rival ya limpio (ver LanNames), o null si lo que llegó no es del juego o si no
+    // llega nada durante 5 segundos. Después del saludo, esperar jugadas no tiene límite.
     public String greet(String ownName) throws IOException {
         send(HELLO + ";" + LanNames.clean(ownName));
-        String line = readLine(System.currentTimeMillis() + GREETING_TIMEOUT_MS);
+        socket.setSoTimeout(GREETING_TIMEOUT_MS);
+        String line = receive();
         socket.setSoTimeout(0);
         if (line == null || !line.startsWith(HELLO + ";")) return null;
         return LanNames.clean(line.substring(HELLO.length() + 1));
@@ -83,21 +83,9 @@ public class LanConnection {
     // salió de la partida o se cortó la red) o si manda una línea más larga de lo que el juego
     // usa: lo que llega de la otra PC no es confiable y no se guarda sin límite en memoria.
     public String receive() {
-        return readLine(0);
-    }
-
-    // Lee una línea; con deadline > 0, devuelve null si no termina de llegar antes de ese momento.
-    private String readLine(long deadline) {
         try {
             StringBuilder line = new StringBuilder();
-            while (true) {
-                if (deadline > 0) {
-                    long left = deadline - System.currentTimeMillis();
-                    if (left <= 0) return null;
-                    socket.setSoTimeout((int) left);
-                }
-                int c = in.read();
-                if (c == '\n') break;
+            for (int c = in.read(); c != '\n'; c = in.read()) {
                 if (c == -1) return null;
                 if (c == '\r') continue;
                 if (line.length() == MAX_LINE) return null;

@@ -6,21 +6,11 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ## Paquete `(raíz, sin paquete)`
 
-### AccountTests (class)
-- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
-
-### LanTests (class)
-- Usa: Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, LanAnnouncer, LanBrowser, LanConnection, LanGame, LanLobby, LanNames, LanOpponent, Move, Piece, PieceFactory, PieceType, Position, PromotionMove
-
 ### Main (class)
-- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, CastlingMove, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, PromotionMove, ScoreRecorder, ThreefoldRepetitionRule, User
+- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, ScoreRecorder, StandardRules, User
 
 ### MainSwing (class)
-- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, FileSkinStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IGameView, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, LanConnection, LanLobby, LanOpponent, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SkinCatalogReader, SkinService, SwingChessView, ThreefoldRepetitionRule, User
-
-### SkinTests (class)
-- Tiene: Skin
-- Usa: AccountService, Assets, FileSkinStore, IAccountStore, ISkinStore, Result, Score, SkinCatalogReader, SkinService, User
+- Usa: AccountService, AutoPromotionChooser, BoardSetup, ChessGame, Color, FileAccountStore, FileSkinStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IGameView, IMoveListener, IPromotionChooser, ISpecialMove, LanConnection, LanLobby, LanOpponent, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, ScoreRecorder, SkinCatalogReader, SkinService, StandardRules, SwingChessView, User
 
 ## Paquete `accounts`
 
@@ -39,8 +29,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### ScoreRecorder (class)
 - Implementa: IGameStatusListener, IMoveListener
-- Tiene: AccountService, IChessGame, User
-- Usa: Color, Piece, PieceType, Position, Result
+- Tiene: AccountService, User
+- Usa: Color, Result
 
 ### User (class)
 
@@ -190,7 +180,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IChessGame, Move
 
 ### SearchGames (class)
-- Usa: CastlingMove, ChessGame, EnPassantMove, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, PromotionMove
+- Usa: ChessGame, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, StandardRules
 
 ## Paquete `core`
 
@@ -232,7 +222,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IMoveListener, Move
 
 ### HistoryEntry (class)
-- Tiene: Board, IGameState, IMoveCommand
+- Tiene: Board, IGameState, IMoveCommand, MoveOutcome
 
 ### IChessGame (interface)
 - Usa: Board, Color, Move, MoveOutcome, Position
@@ -288,6 +278,9 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### StalemateState (class)
 - Implementa: IGameState
 - Tiene: Color
+
+### StandardRules (class)
+- Usa: CastlingMove, EnPassantMove, FiftyMoveRule, IDrawRule, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, PieceFactory, PromotionMove, ThreefoldRepetitionRule
 
 ### WhiteTurnState (class)
 - Implementa: IGameState
@@ -374,8 +367,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### LanOpponent (class)
 - Implementa: IOpponent, IMoveListener, IPromotionChooser
-- Tiene: Color, IChessGame, IPromotionChooser, LanConnection, PieceType
-- Usa: Move, Piece, Position
+- Tiene: Color, IPromotionChooser, LanConnection, PieceType
+- Usa: IChessGame, Move, Piece, Position
 
 ## Paquete `ports`
 
@@ -402,11 +395,11 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `core.draw`, `core.special`, `network`, `ports`, `skins` |
+| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `network`, `ports`, `skins` |
 | `accounts` | `core`, `ports` |
 | `adapters` | `accounts`, `ai`, `core`, `network`, `ports`, `skins` |
-| `ai` | `core`, `core.special`, `ports` |
-| `core` | `core.movement`, `ports` |
+| `ai` | `core`, `ports` |
+| `core` | `core.draw`, `core.movement`, `core.special`, `ports` |
 | `core.draw` | `core` |
 | `core.movement` | `core` |
 | `core.special` | `core`, `ports` |

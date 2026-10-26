@@ -15,13 +15,8 @@ import core.IDrawRule;
 import core.ISpecialMove;
 import core.MoveOutcome;
 import core.PieceFactory;
+import core.StandardRules;
 import core.Position;
-import core.special.CastlingMove;
-import core.special.EnPassantMove;
-import core.special.PromotionMove;
-import core.draw.FiftyMoveRule;
-import core.draw.InsufficientMaterialRule;
-import core.draw.ThreefoldRepetitionRule;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 import ports.IPromotionChooser;
@@ -63,14 +58,8 @@ public class Main {
             ? human
             : new AutoPromotionChooser(Color.BLACK, human);
 
-        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-            new CastlingMove(),
-            new EnPassantMove(),
-            new PromotionMove(pieces, chooser));
-        List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
-            new InsufficientMaterialRule(),
-            new FiftyMoveRule(),
-            new ThreefoldRepetitionRule());
+        List<ISpecialMove> specialMoves = StandardRules.specialMoves(pieces, chooser);
+        List<IDrawRule> drawRules = StandardRules.drawRules();
 
         ScoreRecorder recorder = new ScoreRecorder(accounts, player, null);
         IChessGame game = new ChessGame(board,
@@ -78,7 +67,6 @@ public class Main {
             Arrays.<IGameStatusListener>asList(renderer, recorder),
             specialMoves,
             drawRules);
-        recorder.attachGame(game);
 
         // La IA juega con negras; el humano con blancas.
         OpponentController opponent = level == OpponentLevel.NONE

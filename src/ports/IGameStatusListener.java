@@ -2,11 +2,12 @@ package ports;
 
 import core.Color;
 
-// Puerto de salida (Clase 2), parte 2: el estado de la partida.
+// Puerto de salida (Clase 2), parte 2: el estado de la partida. Igual que IMoveListener, cada
+// adaptador sobrescribe solo los avisos que le interesan.
 public interface IGameStatusListener {
-    void onInvalidMove(String reason);
-    void onCheck(Color colorInCheck);
-    void onCheckmate(Color winner);
-    void onStalemate();
-    void onDraw(String reason);
+    default void onInvalidMove(String reason) { }
+    default void onCheck(Color colorInCheck) { }
+    default void onCheckmate(Color winner) { }
+    default void onStalemate() { }
+    default void onDraw(String reason) { }
 }

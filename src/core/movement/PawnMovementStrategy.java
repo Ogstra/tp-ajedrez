@@ -30,7 +30,7 @@ public class PawnMovementStrategy implements IMovementStrategy {
             }
         }
 
-        // Capturas en diagonal (no se implementa "al paso").
+        // Capturas en diagonal. La captura al paso es una regla especial aparte (EnPassantMove).
         for (Position diagonal : attackedSquares(board, from, color)) {
             if (board.isOccupiedByOpponent(diagonal, color)) {
                 moves.add(diagonal);

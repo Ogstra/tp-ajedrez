@@ -53,7 +53,7 @@ public class LanLobby {
     public synchronized boolean host(String ownName, Listener listener) {
         stopBrowsing();
         stopHosting();
-        attempt++;
+        int mine = ++attempt;
         try {
             server = new ServerSocket(0);
         } catch (IOException e) {
@@ -69,7 +69,7 @@ public class LanLobby {
                     connection = LanConnection.waitForRival(current);
                 } catch (IOException e) {
                     synchronized (this) {
-                        if (server != current) return; // se canceló: el server se cerró mientras esperaba
+                        if (mine != attempt) return; // se canceló: el server se cerró mientras esperaba
                         stopHosting();
                     }
                     listener.failed("No se pudo esperar rival.");
@@ -77,7 +77,7 @@ public class LanLobby {
                 }
                 String rival = greetOrNull(connection, ownName);
                 synchronized (this) {
-                    if (server != current) { // se canceló mientras se saludaban
+                    if (mine != attempt) { // se canceló mientras se saludaban
                         connection.close();
                         return;
                     }

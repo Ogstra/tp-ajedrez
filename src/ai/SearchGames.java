@@ -5,10 +5,8 @@ import core.IChessGame;
 import core.IDrawRule;
 import core.ISpecialMove;
 import core.PieceFactory;
+import core.StandardRules;
 import core.PieceType;
-import core.special.CastlingMove;
-import core.special.EnPassantMove;
-import core.special.PromotionMove;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 
@@ -28,10 +26,7 @@ public final class SearchGames {
 
     public static IChessGame from(IChessGame game) {
         PieceFactory pieces = PieceFactory.standard();
-        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-            new CastlingMove(),
-            new EnPassantMove(),
-            new PromotionMove(pieces, new FixedPromotionChooser(PieceType.QUEEN)));
+        List<ISpecialMove> specialMoves = StandardRules.specialMoves(pieces, new FixedPromotionChooser(PieceType.QUEEN));
         return new ChessGame(
             game.getBoard().cloneBoard(),
             new ArrayList<IMoveListener>(),

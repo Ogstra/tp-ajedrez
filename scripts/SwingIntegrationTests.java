@@ -435,7 +435,7 @@ public class SwingIntegrationTests {
                 lastWhite = white;
                 lastBlack = black;
                 ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
-                game = newGame(v, recorder, v, null, size);
+                game = newGame(v, recorder, level == OpponentLevel.NONE ? v : new ai.AutoPromotionChooser(aiColor, v), null, size);
                 OpponentController opponent = level == OpponentLevel.NONE
                     ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
                 return new Match(game, opponent);
@@ -447,7 +447,6 @@ public class SwingIntegrationTests {
                 ScoreRecorder recorder = new ScoreRecorder(accounts,
                     localColor == core.Color.WHITE ? localUser : null, localColor == core.Color.BLACK ? localUser : null);
                 IChessGame lanGame = newGame(v, recorder, lan, lan, 8);
-                lan.attachGame(lanGame);
                 if (lanGames != null) lanGames[lanIndex] = lanGame;
                 return new Match(lanGame, new OpponentController(lanGame, lan, lan.getRivalColor()), lan);
             }
@@ -462,9 +461,8 @@ public class SwingIntegrationTests {
                 if (extra != null) moveListeners.add(extra);
                 IChessGame created = new ChessGame(board, moveListeners,
                     Arrays.<IGameStatusListener>asList(v, recorder),
-                    Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, chooser)),
-                    Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
-                recorder.attachGame(created);
+                    StandardRules.specialMoves(pieces, chooser),
+                    StandardRules.drawRules());
                 return created;
             }
         };

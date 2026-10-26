@@ -4,6 +4,8 @@ Resumen del material de la materia (Ingeniería de Software, UADE, 2.º cuatrime
 
 Fuentes, en orden de autoridad: el enunciado del TPO, el modelo de examen, los apuntes del alumno y las presentaciones de las unidades 0 a 6, los ejemplos de código de la cátedra y, por último, las transcripciones de clase.
 
+Los números de unidad son los del material (Unidad 4: optimización; Unidad 5: gobernanza; Unidad 6: auditoría). El cronograma numera distinto: ahí el 2.º parcial toma "unidades 4, 5 y 6", que incluyen además ética, privacidad, accesibilidad y continuidad del negocio (DRP y BCP), de las que todavía no hay material.
+
 ## 1. El enunciado del TPO
 
 | Pide | Dónde se cumple |
@@ -13,7 +15,7 @@ Fuentes, en orden de autoridad: el enunciado del TPO, el modelo de examen, los a
 | El núcleo no depende de framework, motor gráfico ni infraestructura | `core/` solo importa `java.util` y `ports/` (ver la tabla de dependencias de `docs/uml-checklist.md`) |
 | Tests unitarios del núcleo sin infraestructura | `ChessCoreTests`: sin archivos, sin red, sin ventana |
 | Agregar clases sin modificar las existentes, sin romper herencia ni composición | Pieza nueva, tablero de otro tamaño, regla nueva: sección "Agregar cosas sin tocar lo que ya está" del README |
-| UML fiel al código y mantenido | `docs/uml-checklist.md` se genera del código con `java scripts/ListTypes.java` |
+| UML fiel al código y mantenido | **Pendiente: falta el diagrama.** La lista de clases y relaciones para dibujarlo (`docs/uml-checklist.md`) se genera del código con `java scripts/ListTypes.java` |
 | Justificación qué / por qué / cuándo se rompería, sobre decisiones propias | `docs/justificacion.md` |
 | Presentación PPTX | `docs/presentacion.pptx` (se genera con `scripts/build_deck.js`) |
 | Grupo de 3 a 5 personas; defensa individual con una extensión no programada | Ver la sección 9 de este documento |
@@ -31,8 +33,8 @@ Fuentes, en orden de autoridad: el enunciado del TPO, el modelo de examen, los a
 | Puerto de entrada | `IChessGame` (lo usan la consola, la ventana, la IA y la red) |
 | Puertos de salida | `IMoveListener`, `IGameStatusListener`, `IPromotionChooser` (en `ports/`); `IAccountStore` en `accounts/` e `ISkinStore` en `skins/` |
 | SRP | `BoardView` (dibujo del tablero), `LanLobby` (sockets) y `SwingChessView` (pantallas y turno) están separados |
-| OCP | Pieza nueva con `PieceFactory.register`, reglas especiales y de tablas enchufables, skins agregadas solo con datos |
-| LSP | Todas las `IMovementStrategy`, `ISpecialMove`, `IDrawRule` e `IOpponent` se intercambian sin sorpresas |
+| OCP | Pieza nueva con `PieceFactory.register`, reglas especiales y de tablas enchufables (las de siempre se arman en `StandardRules`), skins agregadas solo con datos |
+| LSP | Las `IMovementStrategy`, `ISpecialMove` e `IDrawRule` se intercambian sin sorpresas. `IOpponent` dice en su contrato que puede devolver null (el rival por LAN se fue) y quien lo usa lo contempla |
 | ISP | Los avisos del núcleo están partidos en dos interfaces chicas |
 | DIP | `ChessGame` depende de interfaces; `GameBuilder` depende de `IGameView`, no de la ventana concreta |
 | Los 4 niveles de dependencias | Se usa el nivel 4 (inyección por constructor) en `ChessGame`, `AccountService`, `SkinService`, `SwingChessView`, `LanPanel`. No hay Singleton ni Service Locator |
@@ -45,7 +47,7 @@ Fuentes, en orden de autoridad: el enunciado del TPO, el modelo de examen, los a
 | Strategy | Movimiento de cada pieza, reglas especiales, reglas de tablas, niveles de IA y el rival por LAN |
 | State | Turno y estados terminales (mate, ahogado, tablas) |
 | Command | Deshacer y rehacer (el enunciado lo lista como opcional) |
-| Observer | Varios interesados en la misma partida: consola o ventana, `ScoreRecorder` y el rival por LAN |
+| Observer | Varios interesados en la misma partida: consola o ventana, `ScoreRecorder` y el rival por LAN. Las interfaces traen métodos vacíos por defecto, así cada uno sobrescribe solo lo que usa |
 | Factory | `PieceFactory`, `BoardSetup`, `Opponents`, `GameBuilder` |
 
 Testing: pirámide (muchos unitarios del núcleo, algunos de integración de adaptadores y uno de sistema con la ventana real), Arrange-Act-Assert, stub (`AlwaysQueenChooser`), mock (`RecordingObserver`, `RecordingLobbyListener`), fake (almacenes en memoria de `AccountTests` y `SkinTests`) y tests marcados `// TDD:`.
@@ -58,12 +60,10 @@ No hay terceros contratados, pero la idea del SLA como interfaz aparece en el di
 
 ## 6. Unidad 4: optimización
 
-"Premature optimization is the root of all evil": primero se mide. En el TP solo se optimizó donde el costo era evidente y se dejó escrito:
+"Premature optimization is the root of all evil": primero se mide con un profiler. En el TP no se midió nada, así que no se presenta ninguna optimización como de la Unidad 4:
 
-- **Caching**: los íconos de las piezas se arman una vez por tamaño de casilla (`BoardView.pieceIcons`) y las imágenes de cada skin se leen una sola vez (`SkinImages`).
-- **Batching / lazy**: al cambiar el tamaño de la ventana, las piezas se rehacen cuando se deja de arrastrar el borde (un `Timer` que se reinicia), no en cada evento.
-- **Precomputation**: el recuadro común de las 12 piezas de una skin se calcula al cargarla.
-- Estas técnicas viven en adaptadores, nunca en el núcleo.
+- En la ventana, los íconos de las piezas se arman una vez por tamaño de casilla y se rehacen cuando se deja de arrastrar el borde. Es una decisión de experiencia de uso (que agrandar la ventana no se trabe), no una optimización medida.
+- No hay ninguna técnica de optimización en el núcleo.
 - La IA busca sobre una copia del tablero (`SearchGames`); si fuera lenta, primero habría que medir con un profiler (VisualVM) antes de agregar poda.
 
 ## 7. Unidad 5: gobernanza, riesgos, ética, privacidad y propiedad intelectual
@@ -72,7 +72,7 @@ No hay terceros contratados, pero la idea del SLA como interfaz aparece en el di
 - **La salida de otro sistema no es confiable** (bonus "IA asesora de ajedrez"): lo que llega por la red se valida (`LanNames`, `LanConnection.receive`, `LanOpponent.chooseMove`) y el núcleo decide qué jugada es legal. La red propone, el núcleo arbitra.
 - **Minimización de datos** (Ley 25.326): por la red solo viajan el nombre de usuario y las jugadas. No hay contraseñas ni otros datos personales; los datos de usuarios quedan en `data/`, que no se sube al repositorio.
 - **Propiedad intelectual**: las piezas de terceros tienen su licencia y autor (`src/assets/skins/CREDITS.md`, README). Se sacaron la marca "Age of Empires" y la skin de Minecraft, que usaba personajes y texturas de Mojang sin una licencia que lo cubra.
-- **Accesibilidad**: los colores de texto de la interfaz tienen contraste de 4,5:1 o más (`adapters/Palette`), y la ventana se puede agrandar: el tablero y las piezas crecen con ella.
+- **Accesibilidad**: los colores de texto de la interfaz tienen contraste de 4,5:1 o más (el mínimo que pide WCAG; `adapters/Palette`), y la ventana se puede agrandar: el tablero y las piezas crecen con ella.
 
 ## 8. Unidad 6: auditoría, métricas e integridad
 

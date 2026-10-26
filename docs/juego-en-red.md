@@ -32,7 +32,7 @@ Crear partida
 | `LanBrowser` | Escucha esos avisos y arma la lista de partidas. La IP sale del paquete recibido. Una partida que no avisa por 3 segundos sale de la lista. |
 | `LanGame` | Una partida de la lista: identificador, nombre de quien la creó, IP y puerto. |
 | `LanLobby` | Lo que pasa antes de la partida: buscar partidas, crear una (abre el puerto libre y anuncia) y esperar rival, o unirse a una de la lista. Cada espera va en su hilo. |
-| `LanConnection` | El canal TCP entre las dos PCs: saludo (`HOLA;nombre`) y una línea de texto por jugada. `CHAU` o el cierre del canal es que el rival se fue. Corta las líneas de más de 128 caracteres y espera el saludo hasta 5 segundos. |
+| `LanConnection` | El canal TCP entre las dos PCs: saludo (`HOLA;nombre`) y una línea de texto por jugada. `CHAU` o el cierre del canal es que el rival se fue. Corta las líneas de más de 128 caracteres y espera el saludo hasta 5 segundos sin recibir nada. |
 | `LanNames` | Limpia los nombres que llegan por la red: sin caracteres de control, sin `<`, `>` ni `;`, hasta 20 caracteres. |
 | `LanOpponent` | El rival de la otra PC, para la partida. Ver abajo. |
 
@@ -51,8 +51,10 @@ Es la misma idea del ejemplo de la cátedra con la IA (Unidad 5): el otro lado p
 - El nombre del rival y el de cada partida de la lista se limpian (`LanNames`) antes de mostrarlos. Swing interpreta como HTML un texto que empieza con `<html>`; además la barra de estado escapa el texto cuando lo pasa a dos filas.
 - Una línea de más de 128 caracteres se trata como desconexión: no se guarda sin límite en memoria.
 - Una jugada mal formada, o que no está entre las legales de la partida, cierra la conexión y la ventana lo muestra como desconexión. El juego no se traba esperando una jugada que nunca va a ser válida.
-- Un aviso con un puerto fuera de rango o con otra forma se ignora, y la lista no pasa de 20 partidas.
-- Quien se conecta y no termina el saludo en 5 segundos (en total, aunque mande de a un byte) no deja trabada la espera: se descarta y se sigue esperando rival.
+- Un aviso con un puerto fuera de rango o con otra forma se ignora.
+- Si del otro lado no llega nada durante 5 segundos en el saludo, no queda trabada la espera: se descarta y se sigue esperando rival.
+
+No se agregó más que esto a propósito: en el registro de riesgos (`docs/gobernanza-y-calidad.md`, R8) la LAN es un riesgo bajo, entre compañeros de una misma red, y un control que cuesta más que el riesgo que evita es sobre-ingeniería (Unidad 5).
 - Si la persona cancela (Volver) o toca dos veces una partida mientras se conecta, el lobby descarta los intentos viejos: no arranca una partida cancelada ni dos a la vez.
 
 ## Por qué UDP para la lista y TCP para la partida

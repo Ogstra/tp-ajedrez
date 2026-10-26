@@ -36,7 +36,9 @@ public class ListTypes {
     private static final Pattern TYPE_NAME = Pattern.compile("\\b[A-Z]\\w*\\b");
     private static final Pattern NOISE = Pattern.compile(
         "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|/\\*.*?\\*/|//[^\\n]*", Pattern.DOTALL);
-    private static final Set<String> SKIP_FILES = Set.of("ChessCoreTests.java");
+    // Los tests no son parte del diseño que muestra el diagrama.
+    private static final Set<String> SKIP_FILES = Set.of(
+        "ChessCoreTests.java", "AccountTests.java", "LanTests.java", "SkinTests.java");
     private static final String MARKER = "## Dónde está cada patrón";
 
     private record Type(String pkg, String kind, String name, String text,

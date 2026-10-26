@@ -10,7 +10,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Por qué.** La prueba es una sola pregunta: si cambia la tecnología, ¿esto cambia? Las reglas no cambian si pasamos de consola a ventana, por eso son núcleo. Gracias a esto la ventana Swing se agregó después sin tocar `ChessGame`, y el núcleo se prueba sin levantar ninguna infraestructura.
 
-**Cuándo se rompería.** Si el sistema fuera un prototipo descartable de pocos días, separar en paquetes sería sobre-ingeniería. Acá el sistema tiene que crecer (más reglas, otras interfaces) y se defiende oralmente, así que la frontera paga.
+**Cuándo se rompería.** Si el TP fuera solo la consola, sin ventana, IA ni red, `ChessGame` podría imprimir directo y los puertos serían de más. La frontera pagó cuando agregamos la ventana, la IA, los usuarios y la LAN sin tocar `ChessGame`.
 
 ## 2. Un puerto de entrada y puertos de salida chicos
 
@@ -64,17 +64,17 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Qué.** El enroque, la captura al paso y la coronación implementan `ISpecialMove`. `ChessGame` las recibe por constructor y no sabe cuáles son: cada una declara qué destinos extra habilita y qué comando arma.
 
-**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en el composition root (Open/Closed).
+**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en `StandardRules`, que arma las reglas de siempre para la consola, la ventana y la búsqueda de la IA (Open/Closed).
 
 **Cuándo se rompería.** Con una sola excepción a las reglas, un `if` sería más directo. Con tres y la posibilidad de más, la estrategia compensa.
 
 ## 9. State con estados terminales
 
-**Qué.** El turno es un estado (`WhiteTurnState`, `BlackTurnState`) y el fin de la partida también (`CheckmateState`, `StalemateState`, `DrawState`). No hay un booleano `gameOver`.
+**Qué.** El turno es un estado (`WhiteTurnState`, `BlackTurnState`) y el fin de la partida también (`CheckmateState`, `StalemateState`, `DrawState`). Cada estado dice de quién es el turno y si la partida terminó. Las transiciones a mate, ahogado o tablas no las deciden los estados: las decide `ChessGame` después de cada jugada, porque es el único que conoce el tablero y las reglas.
 
-**Por qué.** Antes el patrón era dos estados triviales y un booleano aparte, es decir, el patrón usado a medias. Con los estados terminales el patrón resuelve un problema real: de un estado terminal no se sale jugando, y deshacer vuelve al estado anterior sin trucos.
+**Por qué.** No hay un booleano `gameOver` suelto: el historial guarda el estado de antes y el de después de cada jugada, y deshacer o rehacer vuelve a ese estado sin recalcular nada.
 
-**Cuándo se rompería.** Con solo dos estados estables un enum y un `switch` serían más claros. Se justifica por los estados terminales, que cambian el comportamiento de las jugadas.
+**Cuándo se rompería.** Es un State a medio camino, y lo decimos así: si aparecieran más fases (abandono, tiempo agotado, tablas por acuerdo), convendría que cada estado decida su transición, porque si no hay que tocar `ChessGame` por cada una. Si el grupo prefiere lo más simple, con el color al turno y un resultado alcanzaría.
 
 ## 9 bis. Dónde vive la validación de jugadas
 
@@ -118,9 +118,9 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 13. Sin puerto fijo para la partida
 
-**Qué.** Quien crea la partida abre el socket en el puerto 0 (el sistema elige uno libre) y lo anuncia por UDP. El único puerto fijo es el de los avisos, 47123, y se cambia con `-Dajedrez.lan.port`.
+**Qué.** La partida usa un puerto libre que elige el sistema y que viaja en el aviso; el único fijo es el de los avisos (47123, configurable con `-Dajedrez.lan.port`).
 
-**Por qué.** La primera versión usaba el 5000, que en macOS ocupa el receptor de AirPlay: en una Mac la partida no se podía crear. Un puerto elegido por el sistema no choca con ningún programa. Los avisos sí necesitan un puerto acordado para que las dos PCs se encuentren, así que se eligió uno fuera de los conocidos y se dejó configurable. En macOS y Linux además se activa `SO_REUSEPORT` para poder buscar con dos ventanas en la misma máquina; Windows no lo tiene y no lo necesita.
+**Por qué.** La primera versión usaba el 5000, que en macOS ocupa AirPlay. El detalle está en `docs/juego-en-red.md`.
 
 **Cuándo se rompería.** Si una red bloqueara el broadcast (pasa en redes de facultad o de invitados), la lista quedaría vacía y haría falta poder escribir la IP a mano.
 
@@ -136,15 +136,15 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Qué.** `BoardView` dibuja las casillas, las coordenadas y las piezas; `SwingChessView` maneja las pantallas y el turno. Cuando la ventana cambia de tamaño, `BoardView.fitTo` calcula el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño, con imágenes de varias resoluciones (`SmoothImage`) para que se vean nítidas con la pantalla escalada (125 %, 150 %, Retina).
 
-**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento) y se guardan mientras no cambie el tamaño de las casillas (caching).
+**Por qué.** La ventana tenía unas 670 líneas con todo mezclado. Separar el tablero lo hizo más fácil de leer y permitió el requisito no funcional de que se vea bien en cualquier tamaño y pantalla. Rehacer doce piezas en varias resoluciones cuesta, así que se rehacen cuando se deja de arrastrar el borde (Unidad 4: no pagar el costo en cada evento). Es una decisión de experiencia de uso: no se midió con un profiler.
 
 **Cuándo se rompería.** Si la ventana tuviera un tamaño fijo, recalcular las casillas sería trabajo de más.
 
 ## 16. Los recursos se leen del classpath
 
-**Qué.** El ícono, las piezas y el catálogo de skins se leen con `getResourceAsStream` (`Assets`), no con una ruta como `src/assets/...`. `build.sh` copia los recursos al lado de las clases e IntelliJ lo hace solo. El ícono se carga en sus tamaños estándar (16 a 256) con `setIconImages`, que deja que Java elija el que corresponde a cada lugar; en macOS, donde el ícono de la ventana no se usa, se pone el del Dock con `Taskbar`.
+**Qué.** El ícono, las piezas y el catálogo de skins se leen del classpath (`Assets`), no de `src/assets/...`. El ícono va con `setIconImages` y, en macOS, con `Taskbar`.
 
-**Por qué.** Con la ruta relativa, el juego dependía de la carpeta desde la que se lo ejecutaba: corrido desde otra carpeta, o en una Mac desde el IDE con otro directorio de trabajo, quedaba sin ícono y sin piezas. Y el ícono solo aparecía en Windows. Es portabilidad, un requisito no funcional: tiene que andar igual en las PCs de todo el grupo.
+**Por qué.** Con la ruta relativa el juego dependía de la carpeta desde la que se ejecutaba, y el ícono solo aparecía en Windows. Es un requisito no funcional: tiene que andar igual en las PCs del grupo.
 
 **Cuándo se rompería.** Si los recursos tuvieran que poder cambiarse sin recompilar (por ejemplo, skins que agrega el usuario), habría que leerlos de una carpeta configurable además del classpath.
 
@@ -176,4 +176,4 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 - **Service Locator**: se prefirió inyectar por constructor, que deja explícitas las dependencias.
 - **Facade**: `IChessGame` ya es la entrada única; otra capa encima no agregaría nada.
 - **Object Pool**: no hay un problema de rendimiento medido que lo justifique.
-Fuera del núcleo, `AutoPromotionChooser` sí usa Decorator: envuelve al selector humano y elige reina automáticamente para el bando de la IA.
+Fuera del núcleo, `AutoPromotionChooser` sí usa Decorator: envuelve al selector humano y elige reina automáticamente para el bando de la IA, en la consola y en la ventana.

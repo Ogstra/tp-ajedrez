@@ -8,6 +8,7 @@ import adapters.IGameView;
 import adapters.Match;
 import adapters.SkinCatalogReader;
 import adapters.SwingChessView;
+import ai.AutoPromotionChooser;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
@@ -18,12 +19,7 @@ import core.IChessGame;
 import core.IDrawRule;
 import core.ISpecialMove;
 import core.PieceFactory;
-import core.draw.FiftyMoveRule;
-import core.draw.InsufficientMaterialRule;
-import core.draw.ThreefoldRepetitionRule;
-import core.special.CastlingMove;
-import core.special.EnPassantMove;
-import core.special.PromotionMove;
+import core.StandardRules;
 import network.LanConnection;
 import network.LanLobby;
 import network.LanOpponent;
@@ -77,7 +73,9 @@ public class MainSwing {
         @Override
         public Match local(IGameView view, User whiteUser, User blackUser, OpponentLevel level, Color aiColor) {
             ScoreRecorder recorder = new ScoreRecorder(accounts, whiteUser, blackUser);
-            IChessGame game = newGame(view, recorder, view, null);
+            // Contra la IA, la coronación de la IA es siempre reina (Decorator, igual que en la consola).
+            IPromotionChooser chooser = level == OpponentLevel.NONE ? view : new AutoPromotionChooser(aiColor, view);
+            IChessGame game = newGame(view, recorder, chooser, null);
             OpponentController opponent = level == OpponentLevel.NONE
                 ? null : new OpponentController(game, Opponents.create(level, random), aiColor);
             return new Match(game, opponent);
@@ -90,7 +88,6 @@ public class MainSwing {
                 localColor == Color.WHITE ? localUser : null, localColor == Color.BLACK ? localUser : null);
             // Las coronaciones del rival las decide el mensaje que llega por la red; las propias, la ventana.
             IChessGame game = newGame(view, recorder, lan, lan);
-            lan.attachGame(game);
             return new Match(game, new OpponentController(game, lan, lan.getRivalColor()), lan);
         }
 
@@ -99,14 +96,8 @@ public class MainSwing {
         private IChessGame newGame(IGameView view, ScoreRecorder recorder, IPromotionChooser chooser,
                                    IMoveListener extraListener) {
             PieceFactory pieces = PieceFactory.standard();
-            List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-                new CastlingMove(),
-                new EnPassantMove(),
-                new PromotionMove(pieces, chooser));
-            List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
-                new InsufficientMaterialRule(),
-                new FiftyMoveRule(),
-                new ThreefoldRepetitionRule());
+            List<ISpecialMove> specialMoves = StandardRules.specialMoves(pieces, chooser);
+            List<IDrawRule> drawRules = StandardRules.drawRules();
             List<IMoveListener> moveListeners = new ArrayList<>(Arrays.<IMoveListener>asList(view, recorder));
             if (extraListener != null) moveListeners.add(extraListener);
             IChessGame game = new ChessGame(BoardSetup.standard(pieces),
@@ -114,7 +105,6 @@ public class MainSwing {
                 Arrays.<IGameStatusListener>asList(view, recorder),
                 specialMoves,
                 drawRules);
-            recorder.attachGame(game);
             return game;
         }
     }
