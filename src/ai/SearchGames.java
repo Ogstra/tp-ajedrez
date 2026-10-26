@@ -1,16 +1,16 @@
 package ai;
 
-import nucleo.ChessGame;
-import nucleo.IChessGame;
-import nucleo.IDrawRule;
-import nucleo.ISpecialMove;
-import nucleo.PieceFactory;
-import nucleo.PieceType;
-import nucleo.especiales.CastlingMove;
-import nucleo.especiales.EnPassantMove;
-import nucleo.especiales.PromotionMove;
-import puertos.IGameStatusListener;
-import puertos.IMoveListener;
+import core.ChessGame;
+import core.IChessGame;
+import core.IDrawRule;
+import core.ISpecialMove;
+import core.PieceFactory;
+import core.PieceType;
+import core.special.CastlingMove;
+import core.special.EnPassantMove;
+import core.special.PromotionMove;
+import ports.IGameStatusListener;
+import ports.IMoveListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;

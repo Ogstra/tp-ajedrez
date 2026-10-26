@@ -8,3 +8,7 @@ node_modules/
 package-lock.json
 package.json
 data/
+
+# IntelliJ abierto con src/ como proyecto
+src/.idea/
+src/*.iml

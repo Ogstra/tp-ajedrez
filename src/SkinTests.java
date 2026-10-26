@@ -1,13 +1,13 @@
-import adaptadores.FileSkinCatalog;
-import adaptadores.FileSkinStore;
-import puertos.IAccountStore;
-import puertos.ISkinStore;
+import adapters.FileSkinCatalog;
+import adapters.FileSkinStore;
+import ports.IAccountStore;
+import ports.ISkinStore;
 import skins.Skin;
 import skins.SkinService;
-import usuarios.AccountService;
-import usuarios.Result;
-import usuarios.Score;
-import usuarios.User;
+import accounts.AccountService;
+import accounts.Result;
+import accounts.Score;
+import accounts.User;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

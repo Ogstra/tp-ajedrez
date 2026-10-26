@@ -1,8 +1,8 @@
 package skins;
 
-import puertos.ISkinStore;
-import usuarios.AccountService;
-import usuarios.User;
+import ports.ISkinStore;
+import accounts.AccountService;
+import accounts.User;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,31 +1,31 @@
-import adaptadores.FileAccountStore;
-import adaptadores.FileSkinCatalog;
-import adaptadores.FileSkinStore;
-import adaptadores.GameBuilder;
-import adaptadores.Match;
-import adaptadores.SwingChessView;
+import adapters.FileAccountStore;
+import adapters.FileSkinCatalog;
+import adapters.FileSkinStore;
+import adapters.GameBuilder;
+import adapters.Match;
+import adapters.SwingChessView;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
-import nucleo.BoardSetup;
-import nucleo.ChessGame;
-import nucleo.IChessGame;
-import nucleo.IDrawRule;
-import nucleo.ISpecialMove;
-import nucleo.PieceFactory;
-import nucleo.especiales.CastlingMove;
-import nucleo.especiales.EnPassantMove;
-import nucleo.especiales.PromotionMove;
-import nucleo.tablas.FiftyMoveRule;
-import nucleo.tablas.InsufficientMaterialRule;
-import nucleo.tablas.ThreefoldRepetitionRule;
-import puertos.IGameStatusListener;
-import puertos.IMoveListener;
-import puertos.IPromotionChooser;
-import red.LanOpponent;
+import core.BoardSetup;
+import core.ChessGame;
+import core.IChessGame;
+import core.IDrawRule;
+import core.ISpecialMove;
+import core.PieceFactory;
+import core.special.CastlingMove;
+import core.special.EnPassantMove;
+import core.special.PromotionMove;
+import core.draw.FiftyMoveRule;
+import core.draw.InsufficientMaterialRule;
+import core.draw.ThreefoldRepetitionRule;
+import ports.IGameStatusListener;
+import ports.IMoveListener;
+import ports.IPromotionChooser;
+import network.LanOpponent;
 import skins.SkinService;
-import usuarios.AccountService;
-import usuarios.ScoreRecorder;
+import accounts.AccountService;
+import accounts.ScoreRecorder;
 
 import javax.swing.SwingUtilities;
 import java.nio.file.Path;
@@ -37,7 +37,7 @@ import java.util.Random;
 // Composition root de la variante gráfica. Mismo esquema que Main.java: se crea el
 // adaptador (SwingChessView en vez de ConsoleRenderer, y a la vez es quien elige la pieza
 // de coronación y quien maneja al oponente) y se le da el GameBuilder que arma cada partida
-// con sus dependencias por constructor. ChessGame, Board y todo nucleo/ no tienen ni un
+// con sus dependencias por constructor. ChessGame, Board y todo core/ no tienen ni un
 // import de Swing.
 public class MainSwing {
     public static void main(String[] args) {

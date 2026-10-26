@@ -1,9 +1,9 @@
-import adaptadores.*;
-import nucleo.*;
-import nucleo.especiales.*;
-import nucleo.tablas.*;
-import puertos.*;
-import usuarios.*;
+import adapters.*;
+import core.*;
+import core.special.*;
+import core.draw.*;
+import ports.*;
+import accounts.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -28,7 +28,7 @@ public class CaptureScreenshot {
                 r.attachGame(g);
                 return new Match(g, null);
             };
-            view = new SwingChessView(acc, new skins.SkinService(adaptadores.FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")), acc, new adaptadores.FileSkinStore(data.resolve("s.csv"))), b);
+            view = new SwingChessView(acc, new skins.SkinService(adapters.FileSkinCatalog.load(Path.of("src", "assets", "skins", "skins.csv")), acc, new adapters.FileSkinStore(data.resolve("s.csv"))), b);
             view.setVisible(true);
             ((JComboBox<?>) named(view.getContentPane(), "white")).setSelectedIndex(2);
             ((JComboBox<?>) named(view.getContentPane(), "black")).setSelectedIndex(3);

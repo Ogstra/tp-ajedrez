@@ -1,7 +1,7 @@
 package ai;
 
-import nucleo.IChessGame;
-import nucleo.Move;
+import core.IChessGame;
+import core.Move;
 
 import java.util.List;
 import java.util.Random;

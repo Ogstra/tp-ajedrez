@@ -1,7 +1,7 @@
 package ai;
 
-import nucleo.IChessGame;
-import nucleo.Move;
+import core.IChessGame;
+import core.Move;
 
 // Strategy (Clase 3) de dificultad: cada nivel decide la jugada de otra forma.
 public interface IOpponent {

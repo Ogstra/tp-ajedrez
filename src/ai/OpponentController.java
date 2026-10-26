@@ -1,8 +1,8 @@
 package ai;
 
-import nucleo.Color;
-import nucleo.IChessGame;
-import nucleo.Move;
+import core.Color;
+import core.IChessGame;
+import core.Move;
 
 // Decide cuándo juega la IA: cuando la partida sigue y es el turno de su color.
 // chooseMove y play están separados para que la ventana pueda pensar en otro

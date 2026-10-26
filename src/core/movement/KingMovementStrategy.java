@@ -1,0 +1,30 @@
+package core.movement;
+
+import core.Board;
+import core.Color;
+import core.IMovementStrategy;
+import core.Position;
+
+import java.util.ArrayList;
+import java.util.List;
+
+// Solo los pasos del rey. El enroque no va acá: es una jugada especial (CastlingMove).
+public class KingMovementStrategy implements IMovementStrategy {
+
+    private static final int[][] DIRECTIONS = {
+        {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+    };
+
+    @Override
+    public List<Position> possibleMoves(Board board, Position from, Color color) {
+        List<Position> moves = new ArrayList<>();
+        for (int[] dir : DIRECTIONS) {
+            Position destination = new Position(from.getRow() + dir[0], from.getColumn() + dir[1]);
+            if (board.isInside(destination) && !board.isOccupiedByColor(destination, color)) {
+                moves.add(destination);
+            }
+        }
+        return moves;
+    }
+}

@@ -1,10 +1,10 @@
 package ai;
 
-import nucleo.IChessGame;
-import nucleo.Move;
-import nucleo.Piece;
-import nucleo.PieceType;
-import nucleo.Position;
+import core.IChessGame;
+import core.Move;
+import core.Piece;
+import core.PieceType;
+import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;
