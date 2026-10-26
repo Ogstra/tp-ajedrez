@@ -19,12 +19,10 @@ El perfil de cabeza y cuello adapta el diseño cburnett de Colin M. L. Burnett. 
 
 Interpretaciones originales hechas para este trabajo. No son recursos oficiales de ningún juego.
 
-## Skins que se sacaron
+## Cubos (`assets/skins/cubos`)
 
-Hasta la versión del 25/10/2026 había una skin "Age of Empires" y otra "Minecraft". La primera
-cambió de nombre a "Medieval" porque "Age of Empires" es una marca registrada de Microsoft. La
-segunda se sacó: reproducía personajes de Minecraft (Steve, Alex, el gólem, el creeper) y su
-caballo se basaba en la textura y el modelo de Mojang, que su licencia solo permite usar para
-crear contenido de Minecraft. Es el criterio de la Unidad 5 (propiedad intelectual) y de la
-Unidad 6 (integridad profesional: respetar licencias y atribuir). Si el grupo decide volver a
-incluirla, está en el historial de git, pero hace falta un permiso que lo cubra.
+Recupera las doce imágenes de la skin que antes figuraba como "Minecraft", de la versión
+`2d441f8` del proyecto. En el catálogo se presenta como **Cubos**.
+Las piezas representan personajes de Minecraft; el caballo se basa en su textura y modelo.
+Minecraft y sus personajes pertenecen a sus respectivos titulares. El cambio de nombre
+no cambia la procedencia de las imágenes ni las convierte en recursos originales del grupo.

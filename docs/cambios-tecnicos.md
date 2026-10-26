@@ -10,7 +10,7 @@ El principio de siempre se mantuvo: **el núcleo (`src/core`) no cambió**. Todo
 |---|---|
 | Login | La ventana y la consola arrancan con el login (entrar, registrarse o invitado). El registro tiene su propia vista. |
 | Puntos | Suman las partidas contra la IA. El 1 contra 1 en la misma PC no suma. |
-| Skins | Skins desbloqueables por puntos (piezas y colores del tablero): Clásico, Staunton y Medieval (hasta el 26/10 había "Age of Empires" y "Minecraft"; ver la sección 8). Paquete `skins/`. |
+| Skins | Skins desbloqueables por puntos (piezas y colores del tablero): Clásico, Staunton, Medieval y Cubos (antes llamada Minecraft). Paquete `skins/`. |
 | Ventana | Bordes completos con la pantalla escalada, imágenes nítidas, ícono propio, menos textos de relleno. |
 | Pruebas | 66 del juego, 20 de usuarios, 10 de skins, 4 de consola y la prueba de la ventana real con skins. |
 
@@ -68,6 +68,7 @@ Una skin cambia las piezas y los colores del tablero. Se desbloquea cuando los p
 | Clásico | 0 | — |
 | Staunton | 6 | 2 victorias |
 | Medieval | 15 | 5 victorias |
+| Cubos | 30 | 10 victorias |
 
 Para agregar una skin alcanza con una carpeta con las 12 imágenes (`wK`…`bP`) y una línea en el catálogo, sin tocar código.
 
@@ -126,7 +127,7 @@ java --class-path out scripts/SwingIntegrationTests.java
 | Recursos leídos de `src/assets` con una ruta relativa | Se leen del classpath (`Assets`): andan desde cualquier carpeta y en cualquier sistema. `build.sh` copia los recursos y compila con `--release 21`. |
 | Paquetes en español (`nucleo`, `adaptadores`, ...) | En inglés (`core`, `adapters`, ...): la convención de la cátedra es identificadores en inglés y comentarios en español. |
 | `ports` dependía de `accounts` (y el núcleo, de forma transitiva, de los usuarios) | `IAccountStore` pasó a `accounts` e `ISkinStore` a `skins`. |
-| Skins con marcas y personajes de terceros | "Age of Empires" pasó a "Medieval"; se sacó la de Minecraft (ver `src/assets/skins/CREDITS.md`). |
+| Skins con marcas y personajes de terceros | "Age of Empires" pasó a "Medieval"; la antigua skin Minecraft se recuperó como Cubos (ver `src/assets/skins/CREDITS.md`). |
 | `scripts/Capture.java` no compilaba y `list_types.py` pedía Python | Se borró `Capture.java`; la lista del UML se genera con `java scripts/ListTypes.java`. |
 | Rehacer un jaque o un mate no lo volvía a anunciar | `ChessGame.redo()` vuelve a avisar el estado. `ScoreRecorder` ya no necesita la partida ni una lista aparte para rehacer. |
 | Las reglas de siempre se armaban igual en tres lugares | `core/StandardRules` las arma para la consola, la ventana y la búsqueda de la IA. |

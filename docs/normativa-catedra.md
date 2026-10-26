@@ -69,7 +69,7 @@ No hay terceros contratados, pero la idea del SLA como interfaz aparece en el di
 ## 7. Unidad 5: gobernanza, riesgos, ética, privacidad y propiedad intelectual
 
 - **Minimización de datos** (Ley 25.326): solo se guardan nombres y resultados de las partidas. Los datos de usuarios quedan en `data/`, que no se sube al repositorio.
-- **Propiedad intelectual**: las piezas de terceros tienen su licencia y autor (`src/assets/skins/CREDITS.md`, README). Se sacaron la marca "Age of Empires" y la skin de Minecraft, que usaba personajes y texturas de Mojang sin una licencia que lo cubra.
+- **Propiedad intelectual**: las piezas de terceros tienen su licencia y autor (`src/assets/skins/CREDITS.md`, README). La antigua skin Minecraft se presenta como Cubos; su procedencia está identificada en los créditos.
 - **Accesibilidad**: los colores de texto de la interfaz tienen contraste de 4,5:1 o más (el mínimo que pide WCAG; `adapters/Palette`), y la ventana se puede agrandar: el tablero y las piezas crecen con ella.
 
 ## 8. Unidad 6: auditoría, métricas e integridad

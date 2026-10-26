@@ -124,11 +124,11 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Cuándo se rompería.** Si los recursos tuvieran que poder cambiarse sin recompilar (por ejemplo, skins que agrega el usuario), habría que leerlos de una carpeta configurable además del classpath.
 
-## 17. Las skins son datos, y sin derechos de terceros
+## 17. Las skins se agregan con datos
 
-**Qué.** El catálogo de skins es un archivo (`assets/skins/skins.csv`) más una carpeta con las 12 piezas. `SkinService` decide cuáles están desbloqueadas por los puntos del ranking y la elegida se guarda por el puerto `ISkinStore`. Solo se incluyen imágenes con licencia que lo permita y con autor citado.
+**Qué.** El catálogo de skins es un archivo (`assets/skins/skins.csv`) más una carpeta con las 12 piezas. `SkinService` decide cuáles están desbloqueadas por los puntos del ranking y la elegida se guarda por el puerto `ISkinStore`. La procedencia de las imágenes se indica en `CREDITS.md`.
 
-**Por qué.** Una skin nueva no toca código (Open/Closed llevado a datos). Y la Unidad 5 pide respetar la propiedad intelectual: por eso "Age of Empires" pasó a llamarse "Medieval" (era una marca) y se sacó la skin de Minecraft, que usaba personajes y texturas de Mojang sin una licencia que cubra este uso. `SkinTests` revisa que ninguna skin del catálogo use esas marcas.
+**Por qué.** Una skin nueva no toca código (Open/Closed llevado a datos). El catálogo incluye Clásico, Staunton, Medieval y Cubos. Cubos recupera las piezas de la antigua skin Minecraft, con su procedencia identificada en los créditos. `SkinTests` comprueba que estén las doce imágenes de cada skin y que Cubos se desbloquee con 30 puntos.
 
 **Cuándo se rompería.** Si las skins necesitaran comportamiento propio (animaciones, sonidos), un archivo de datos no alcanzaría y cada una sería una clase.
 

@@ -23,8 +23,9 @@ No hay que tocar código. Si falta alguna imagen, se usa la del set de siempre. 
 | Clásico | 0 | — | Set Cburnett de siempre (`src/assets/piezas`). |
 | Staunton | 6 | 2 victorias | Piezas Staunton con contorno marcado (`skins/staunton`). |
 | Medieval | 15 | 5 victorias | Ejércitos medievales: azul las blancas y rojo las negras (`skins/medieval`). |
+| Cubos | 30 | 10 victorias | Las piezas de la antigua skin Minecraft (`skins/cubos`). |
 
-Los puntos crecen con lo vistoso de cada una: Staunton es un primer premio rápido y Medieval queda como meta. Hasta el 26/10 la Medieval se llamaba "Age of Empires" y había una de Minecraft: se cambiaron porque usaban marcas y personajes de otros juegos (Unidad 5, propiedad intelectual). Una skin nueva tiene que usar imágenes propias o con una licencia que lo permita, y citar al autor en `CREDITS.md`. Los créditos y licencias de las imágenes están en `src/assets/skins/CREDITS.md`.
+Los puntos crecen con lo vistoso de cada una: Staunton es un primer premio rápido, Medieval pide 15 puntos y Cubos 30. Medieval antes se llamaba "Age of Empires". La skin que se llamaba "Minecraft" se recuperó con el nombre Cubos. Una skin nueva tiene que usar imágenes propias o con una licencia que lo permita, y citar al autor en `CREDITS.md`. Los créditos y licencias de las imágenes están en `src/assets/skins/CREDITS.md`.
 
 ## Cómo está armado
 
@@ -49,4 +50,4 @@ Igual que los usuarios: la lógica no sabe de archivos ni de Swing, y se guarda 
 
 ## Pruebas
 
-`src/SkinTests.java` (corre en `./scripts/test.sh`): invitado solo con la gratis, desbloqueo al llegar a los puntos, rechazo de una bloqueada, la elegida se usa, vuelta a la de siempre si bajan los puntos, elección de invitado en la sesión, el archivo recuerda a cada usuario la lectura del catálogo y que cada skin del catálogo real traiga sus 12 piezas sin marcas de terceros. `SwingIntegrationTests` abre la pantalla de skins con 0 puntos.
+`src/SkinTests.java` (corre en `./scripts/test.sh`): invitado solo con la gratis, desbloqueo al llegar a los puntos, rechazo de una bloqueada, la elegida se usa, vuelta a la de siempre si bajan los puntos, elección de invitado en la sesión, el archivo recuerda a cada usuario la lectura del catálogo y que cada skin del catálogo real traiga sus 12 piezas y Cubos figure con su nombre y requisito de 30 puntos. `SwingIntegrationTests` abre la pantalla de skins con 0 puntos.

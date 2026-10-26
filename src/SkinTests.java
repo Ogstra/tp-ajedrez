@@ -229,11 +229,16 @@ public class SkinTests {
         // Arrange: el catálogo que viene con el juego, leído del classpath.
         List<Skin> skins = SkinCatalogReader.bundled();
         String[] keys = {"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"};
-        String[] brands = {"minecraft", "age of empires"}; // marcas de terceros (Unidad 5, propiedad intelectual)
+        String[] brands = {"minecraft", "age of empires"}; // nombres anteriores que no deben aparecer en el catálogo
 
         // Act: se busca alguna imagen faltante o algún nombre con una marca.
         List<String> problems = new ArrayList<>();
+        boolean cubosFound = false;
         for (Skin skin : skins) {
+            if (skin.getId().equals("cubos")) {
+                cubosFound = skin.getName().equals("Cubos") && skin.getRequiredPoints() == 30
+                    && skin.getPiecesFolder().equals("skins/cubos");
+            }
             for (String key : keys) {
                 if (Assets.image(skin.getPiecesFolder() + "/" + key + ".png") == null) {
                     problems.add(skin.getId() + " sin " + key);
@@ -246,7 +251,7 @@ public class SkinTests {
 
         // Assert
         assertTrue("testBundledCatalogIsCompleteAndHasNoThirdPartyBrands",
-            skins.size() >= 1 && skins.get(0).getRequiredPoints() == 0 && problems.isEmpty(),
-            "cada skin trae sus 12 piezas y ninguna usa marcas de terceros: " + problems);
+            skins.size() >= 1 && skins.get(0).getRequiredPoints() == 0 && cubosFound && problems.isEmpty(),
+            "Cubos figura con 30 puntos y cada skin trae sus 12 piezas con los nombres actuales: " + problems);
     }
 }

@@ -39,7 +39,7 @@ java --class-path out scripts/SwingIntegrationTests.java
 
 ## Skins
 
-Las skins cambian las piezas y los colores del tablero, y se desbloquean al llegar a un puntaje del ranking (los puntos no se gastan). Vienen Staunton (6 puntos) y Medieval (15), además de la clásica. No se incluyen marcas ni personajes de otros juegos (ver `src/assets/skins/CREDITS.md`). Se eligen desde el menú, en Skins. Para agregar una alcanza con una carpeta con las 12 imágenes y una línea en `src/assets/skins/skins.csv`, sin tocar código; está explicado en `docs/skins.md`.
+Las skins cambian las piezas y los colores del tablero, y se desbloquean al llegar a un puntaje del ranking (los puntos no se gastan). Vienen Staunton (6 puntos), Medieval (15) y Cubos (30), además de la clásica. Cubos recupera las piezas de la antigua skin Minecraft; la procedencia de las imágenes está en `src/assets/skins/CREDITS.md`. Se eligen desde el menú, en Skins. Para agregar una alcanza con una carpeta con las 12 imágenes y una línea en `src/assets/skins/skins.csv`, sin tocar código; está explicado en `docs/skins.md`.
 
 ## Qué reglas tiene
 
