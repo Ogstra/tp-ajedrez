@@ -63,7 +63,6 @@ public class AccountTests {
         testUndoRevertsTheResult();
         testRedoReappliesTheResult();
         testRedoOfAnEarlierMoveDoesNotReapply();
-        testBlackUserCanChangeDuringTheGame();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -130,7 +129,6 @@ public class AccountTests {
             Collections.<IMoveListener>singletonList(recorder),
             Collections.<IGameStatusListener>singletonList(recorder),
             specialMoves, drawRules);
-        recorder.attachGame(game);
         return game;
     }
 
@@ -501,24 +499,5 @@ public class AccountTests {
         assertTrue("testRedoOfAnEarlierMoveDoesNotReapply",
             scoreOf(service, ana).getGames() == 0 && scoreOf(service, beto).getGames() == 0 && !game.isGameOver(),
             "la partida sigue en juego, así que no hay resultado que acreditar");
-    }
-
-    // TDD: si en la ventana se pasa a jugar contra la IA, el usuario negro deja de acreditarse.
-    private static void testBlackUserCanChangeDuringTheGame() {
-        // Arrange
-        AccountService service = newService();
-        User ana = service.register("Ana");
-        User beto = service.register("Beto");
-        ScoreRecorder recorder = new ScoreRecorder(service, ana, beto);
-        ChessGame game = newGame(BoardSetup.standard(PieceFactory.standard()), recorder);
-
-        // Act
-        recorder.setBlackUser(null);
-        foolsCheckmate(game);
-
-        // Assert
-        assertTrue("testBlackUserCanChangeDuringTheGame",
-            scoreOf(service, ana).getLosses() == 1 && scoreOf(service, beto).getGames() == 0,
-            "Beto no debería sumar nada si ya no es el rival");
     }
 }

@@ -59,6 +59,7 @@ public class ChessCoreTests {
         testCheckIsDetectedAndIsNotMate();
         testMoveCommandUndoRestoresBoard();
         testFoolsMate();
+        testRedoAnnouncesCheckmateAgain();
         testShortCastlingMovesKingAndRook();
         testLongCastlingMovesKingAndRook();
         testCannotCastleIfKingAlreadyMoved();
@@ -351,6 +352,27 @@ public class ChessCoreTests {
         // Assert
         assertTrue("MoveCommand_ExecuteUndo_RestauraTablero", boardBefore.equals(board),
             "el tablero después de undo() debería ser idéntico al de antes de execute()");
+    }
+
+    // TDD: rehacer la jugada del mate vuelve a avisar el mate (antes solo avisaba que se rehizo).
+    private static void testRedoAnnouncesCheckmateAgain() {
+        // Arrange
+        RecordingObserver observer = new RecordingObserver();
+        ChessGame game = newGame(BoardSetup.standard(PIECES), observer);
+        game.tryMove(at("f2"), at("f3"));
+        game.tryMove(at("e7"), at("e5"));
+        game.tryMove(at("g2"), at("g4"));
+        game.tryMove(at("d8"), at("h4"));
+        game.undo();
+        observer.events.clear();
+
+        // Act
+        game.redo();
+
+        // Assert
+        assertTrue("Rehacer_VuelveAAnunciarElMate",
+            observer.events.contains("redo") && observer.events.contains("checkmate") && game.isGameOver(),
+            "eventos al rehacer: " + observer.events);
     }
 
     private static void testFoolsMate() {

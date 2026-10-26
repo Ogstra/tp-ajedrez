@@ -59,7 +59,6 @@ public class Main {
             Arrays.<IGameStatusListener>asList(renderer, recorder),
             StandardRules.specialMoves(pieces, chooser),
             StandardRules.drawRules());
-        recorder.attachGame(game);
 
         // La IA juega con negras; el humano con blancas.
         OpponentController opponent = level == OpponentLevel.NONE

@@ -51,7 +51,6 @@ public class MainSwing {
                     Arrays.<IGameStatusListener>asList(view, recorder),
                     StandardRules.specialMoves(pieces, chooser),
                     StandardRules.drawRules());
-                recorder.attachGame(game);
                 OpponentController opponent = level == OpponentLevel.NONE
                     ? null
                     : new OpponentController(game, Opponents.create(level, random), aiColor);

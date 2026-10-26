@@ -96,29 +96,41 @@ public class ChessGame implements IChessGame, IGameContext {
         boolean hasMoves = hasAnyLegalMove(opponent);
 
         MoveOutcome outcome;
+        String drawReason = null;
         if (check && !hasMoves) {
             state = new CheckmateState(opponent);
-            for (IGameStatusListener listener : statusListeners) listener.onCheckmate(mover);
             outcome = MoveOutcome.CHECKMATE;
         } else if (!check && !hasMoves) {
             state = new StalemateState(opponent);
-            for (IGameStatusListener listener : statusListeners) listener.onStalemate();
             outcome = MoveOutcome.STALEMATE;
         } else {
-            String drawReason = findDrawReason();
+            drawReason = findDrawReason();
             if (drawReason != null) {
                 state = new DrawState(opponent, drawReason);
-                for (IGameStatusListener listener : statusListeners) listener.onDraw(drawReason);
                 outcome = MoveOutcome.DRAW;
-            } else if (check) {
-                for (IGameStatusListener listener : statusListeners) listener.onCheck(opponent);
-                outcome = MoveOutcome.CHECK;
             } else {
-                outcome = MoveOutcome.OK;
+                outcome = check ? MoveOutcome.CHECK : MoveOutcome.OK;
             }
         }
         entry.stateAfter = state;
+        entry.outcome = outcome;
+        entry.drawReason = drawReason;
+        announceStatus(entry, mover);
         return outcome;
+    }
+
+    // Avisa cómo quedó la partida después de una jugada. Lo usa también redo(): rehacer una
+    // jugada que dio jaque, mate o tablas lo vuelve a anunciar, igual que la primera vez.
+    private void announceStatus(HistoryEntry entry, Color mover) {
+        for (IGameStatusListener listener : statusListeners) {
+            switch (entry.outcome) {
+                case CHECKMATE: listener.onCheckmate(mover); break;
+                case STALEMATE: listener.onStalemate(); break;
+                case DRAW:      listener.onDraw(entry.drawReason); break;
+                case CHECK:     listener.onCheck(mover.opposite()); break;
+                default:        break;
+            }
+        }
     }
 
     @Override
@@ -143,6 +155,7 @@ public class ChessGame implements IChessGame, IGameContext {
             entry.command.announce(listener);
             listener.onRedo();
         }
+        announceStatus(entry, entry.stateBefore.currentColor());
         return true;
     }
 

@@ -1,7 +1,6 @@
 package accounts;
 
 import core.Color;
-import core.IChessGame;
 import core.Piece;
 import core.PieceType;
 import core.Position;
@@ -15,9 +14,9 @@ import java.util.List;
 // usuarios que juegan, sin que ChessGame sepa que existen los usuarios. Si el usuario de
 // las negras es null (juega la IA o nadie inició sesión) solo se acredita al de las blancas.
 //
-// Como la partida se puede deshacer y rehacer, también escucha eso: al deshacer el mate o
-// las tablas retira lo que acreditó, y al rehacerlo (si la partida terminó de nuevo) lo
-// vuelve a acreditar. Así cada partida cuenta una sola vez.
+// Como la partida se puede deshacer y rehacer, también escucha eso: al deshacer el mate o las
+// tablas retira lo que acreditó. Al rehacerlo, la partida vuelve a avisar el final y se acredita
+// de nuevo. Así cada partida cuenta una sola vez.
 public class ScoreRecorder implements IGameStatusListener, IMoveListener {
 
     private static class Credit {
@@ -32,24 +31,12 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
 
     private final AccountService accounts;
     private final User whiteUser;
-    private User blackUser;
-    private IChessGame game;
+    private final User blackUser;
     private List<Credit> recorded = new ArrayList<>();
-    private List<Credit> reverted = new ArrayList<>();
 
     public ScoreRecorder(AccountService accounts, User whiteUser, User blackUser) {
         this.accounts = accounts;
         this.whiteUser = whiteUser;
-        this.blackUser = blackUser;
-    }
-
-    // Hace falta para saber, al rehacer, si la partida volvió a terminar.
-    public void attachGame(IChessGame game) {
-        this.game = game;
-    }
-
-    // En la ventana se puede pasar a jugar contra la IA a mitad de partida.
-    public void setBlackUser(User blackUser) {
         this.blackUser = blackUser;
     }
 
@@ -68,27 +55,16 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
         credit(Result.DRAW, Result.DRAW);
     }
 
+    // Deshacer el mate o las tablas retira lo acreditado. Si después se rehace, la partida vuelve
+    // a avisar el final y se acredita de nuevo: no hace falta recordar nada para rehacer.
     @Override
     public void onUndo() {
-        if (recorded.isEmpty()) return;
         for (Credit credit : recorded) accounts.revert(credit.user, credit.result);
-        reverted = recorded;
         recorded = new ArrayList<>();
-    }
-
-    @Override
-    public void onRedo() {
-        // Solo se vuelve a acreditar si rehacer dejó la partida terminada; rehacer una
-        // jugada anterior al mate no es un final.
-        if (reverted.isEmpty() || game == null || !game.isGameOver()) return;
-        for (Credit credit : reverted) accounts.record(credit.user, credit.result);
-        recorded = reverted;
-        reverted = new ArrayList<>();
     }
 
     private void credit(Result whiteResult, Result blackResult) {
         recorded = new ArrayList<>();
-        reverted = new ArrayList<>();
         if (whiteUser != null) recorded.add(new Credit(whiteUser, whiteResult));
         if (blackUser != null) recorded.add(new Credit(blackUser, blackResult));
         for (Credit credit : recorded) accounts.record(credit.user, credit.result);
@@ -98,6 +74,7 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
     @Override public void onMoveMade(Position from, Position to, Piece piece, Piece captured) { }
     @Override public void onCastling(Color color, boolean kingside) { }
     @Override public void onPromotion(Color color, Position position, PieceType newPiece) { }
+    @Override public void onRedo() { }
     @Override public void onInvalidMove(String reason) { }
     @Override public void onCheck(Color colorInCheck) { }
 }

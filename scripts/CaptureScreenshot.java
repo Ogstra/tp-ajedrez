@@ -23,7 +23,6 @@ public class CaptureScreenshot {
                 IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),
                     StandardRules.specialMoves(p, v),
                     StandardRules.drawRules());
-                r.attachGame(g);
                 return new Match(g, null);
             };
             view = new SwingChessView(acc, b);

@@ -264,7 +264,6 @@ public class SwingIntegrationTests {
                 Arrays.<IGameStatusListener>asList(v, recorder),
                 StandardRules.specialMoves(pieces, level == OpponentLevel.NONE ? v : new AutoPromotionChooser(aiColor, v)),
                 StandardRules.drawRules());
-            recorder.attachGame(game);
             OpponentController opponent = level == OpponentLevel.NONE
                 ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);
             return new Match(game, opponent);
