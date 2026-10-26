@@ -49,7 +49,7 @@ public class MenuPanel extends JPanel {
     private final ChoiceControl modeControl = ChoiceControl.segments("1 contra 1", "Contra la IA");
     private final ChoiceControl levelControl = ChoiceControl.segments("Fácil", "Medio", "Difícil");
     private final ChoiceControl colorControl = ChoiceControl.cards(new String[]{"Blancas", "Negras"},
-        new Image[]{SwingChessView.pieceImage("wK"), SwingChessView.pieceImage("bK")});
+        new Image[]{BoardView.pieceImage("wK"), BoardView.pieceImage("bK")});
     private final JComboBox<String> whiteBox = new FlatComboBox();
     private final JComboBox<String> blackBox = new FlatComboBox();
     private final JPanel whiteSlot = new JPanel(new CardLayout());   // el desplegable o la etiqueta "IA"
@@ -246,7 +246,7 @@ public class MenuPanel extends JPanel {
         name.setFont(name.getFont().deriveFont(14f));
         name.setIconTextGap(10);
         name.setPreferredSize(new Dimension(108, 30));
-        Image image = SwingChessView.pieceImage(piece);
+        Image image = BoardView.pieceImage(piece);
         if (image != null) name.setIcon(new ImageIcon(SmoothImage.of(image, 28)));
 
         JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));

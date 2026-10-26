@@ -182,6 +182,28 @@ public class SwingIntegrationTests {
                     "la ventana debe entrar en la pantalla");
             });
             System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
+
+            // Al agrandar la ventana, las casillas crecen (y siguen cuadradas).
+            int[] sizes = new int[2];
+            SwingUtilities.invokeAndWait(() -> {
+                view.dispose();
+                AccountService accounts = new AccountService(new FileAccountStore(data.resolve("crece.csv")));
+                view = new SwingChessView(accounts, builder(accounts, 8));
+                view.setVisible(true);
+                button(view.getContentPane(), "Jugar").doClick();
+                inspect(view.getContentPane());
+                sizes[0] = boardPanel.getComponent(0).getWidth();
+                view.setSize(view.getWidth() + 320, view.getHeight() + 320);
+                view.validate();
+            });
+            Thread.sleep(600); // las piezas se rehacen cuando se deja de cambiar el tamaño
+            SwingUtilities.invokeAndWait(() -> {
+                JButton corner = (JButton) boardPanel.getComponent(0);
+                sizes[1] = corner.getWidth();
+                require(sizes[1] > sizes[0] && corner.getWidth() == corner.getHeight(),
+                    "al agrandar la ventana las casillas deben crecer y seguir cuadradas: " + sizes[0] + " -> " + sizes[1]);
+            });
+            System.out.println("[OK]   Swing: el tablero crece con la ventana (" + sizes[0] + " -> " + sizes[1] + " px)");
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
