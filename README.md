@@ -29,7 +29,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 65 pruebas del juego y la IA, 20 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking y un tablero de 10x10):
+`./scripts/test.sh` corre 66 pruebas del juego y la IA, 19 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10 y el tablero que crece con la ventana):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -75,7 +75,7 @@ Lo que se ve en la materia está así:
 
 - **Una pieza nueva**: se escribe su `IMovementStrategy`, se crea un `PieceType` y se registra con `factory.register(...)`. Hay un test que lo hace con una pieza inventada que se mueve como torre y caballo.
 - **Otro tamaño de tablero**: `BoardSetup.custom(10, 10, filaTrasera, piezas)` en el `GameBuilder` de `MainSwing` (o `new Board(10, 10)`). Todo pregunta a `board.isInside()` en vez de asumir 8x8, el peón corona en la última fila de ese tablero y la ventana se adapta sola: casillas cuadradas, coordenadas hasta donde haga falta y casillas más chicas si no entra en la pantalla.
-- **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `Main`.
+- **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `StandardRules`, que arma las reglas para la consola, la ventana y la IA.
 
 ## Cosas a tener en cuenta
 
@@ -83,7 +83,7 @@ La repetición de posición ignora los derechos de enroque y de captura al paso.
 
 ## Documentos
 
-En `docs/` están la justificación de las decisiones (`justificacion.md` y `.docx`), la presentación, la lista de clases para el UML y la spec y los planes con los que se terminó el trabajo.
+En `docs/` están la justificación de las decisiones (`justificacion.md` y `.docx`), la presentación, la lista de clases para el UML y la explicación de usuarios y ranking.
 
 Franco dibuja el UML con `docs/uml-checklist.md`. Cuando esté `docs/uml.png`, se regenera la presentación con `node scripts/build_deck.js` (hace falta `npm install pptxgenjs` una vez) para que aparezca en la diapositiva 4.
 

@@ -18,7 +18,7 @@ const UML = path.join(ROOT, "docs", "uml.png");
 
 const AUTHORS = "Franco Beron";
 const DATE = "20 de noviembre de 2026";
-const TEST_COUNT = "65";
+const TEST_COUNT = "66";
 
 // Paleta: verde del tablero como único acento, el resto neutros.
 const INK = "1F2933";
@@ -470,7 +470,7 @@ function callout(slide, head, text, x, y, w) {
   ["CastlingMove", "EnPassantMove", "PromotionMove"].forEach((n, i) => box(s, n, 1.0, 3.15 + i * 0.75, 5.2, 0.6, { mono: true, size: 14 }));
   ["InsufficientMaterialRule", "FiftyMoveRule", "ThreefoldRepetitionRule"].forEach((n, i) => box(s, n, 7.1, 3.15 + i * 0.75, 5.2, 0.6, { mono: true, size: 14 }));
   panel(s, 0.7, 5.85, 11.9, 0.85, WHITE);
-  s.addText("Regla nueva: una clase y una línea en el armado. ChessGame no se toca (Open/Closed).", {
+  s.addText("Regla nueva: una clase y una línea en StandardRules. ChessGame no se toca (Open/Closed).", {
     x: 1.0, y: 5.85, w: 11.3, h: 0.85, margin: 0, valign: "middle", fontFace: BODY, fontSize: 18, color: INK,
   });
 }
@@ -482,7 +482,7 @@ function callout(slide, head, text, x, y, w) {
   const cards = [
     { x: 0.7, title: "Una pieza nueva", text: "Una estrategia y un registro.", code: "factory.register(\n  new PieceType(\n    \"CHANCELLOR\"),\n  new Chancellor());", test: "testNewPieceWithout\nTouchingExistingClasses" },
     { x: 4.75, title: "Otro tablero", text: "El tamaño es un dato.", code: "Board board =\n  new Board(10, 10);", test: "testBoardOfAnotherSize" },
-    { x: 8.8, title: "Una regla de tablas", text: "Se inyecta por constructor.", code: "drawRules.add(\n  new MiRegla());", test: "testNewDrawRuleWithout\nTouchingExistingClasses" },
+    { x: 8.8, title: "Una regla de tablas", text: "Se inyecta por constructor.", code: "// en StandardRules:\nnew MiRegla()", test: "testNewDrawRuleWithout\nTouchingExistingClasses" },
   ];
   cards.forEach((c) => {
     panel(s, c.x, 1.95, 3.8, 4.35);
@@ -499,7 +499,7 @@ function callout(slide, head, text, x, y, w) {
   const s = content("Tests", "Núcleo probado sin ninguna infraestructura",
     "Los tests corren solo con javac, sin librerías: ./scripts/test.sh compila y corre todo. Usan Arrange, Act, Assert, un stub y un mock. Los marcados TDD se escribieron antes que el código. Además hay pruebas de integración de la ventana Swing.");
   s.addText(TEST_COUNT, { x: 0.7, y: 1.7, w: 5.2, h: 2.2, margin: 0, valign: "middle", fontFace: HEAD, fontSize: 130, bold: true, color: ACCENT });
-  label(s, "tests del núcleo y 20 de usuarios, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
+  label(s, "tests del núcleo y 19 de usuarios, todos pasan", 0.7, 3.95, 5.2, { size: 20, color: INK });
   code(s, "./scripts/test.sh", 0.7, 4.7, 4.2, 0.75, 17);
   rows(s, [
     "Arrange, Act, Assert en cada uno",

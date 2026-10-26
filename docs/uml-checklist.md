@@ -10,10 +10,10 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### Main (class)
-- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, CastlingMove, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, EnPassantMove, FiftyMoveRule, FileAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, PromotionMove, ScoreRecorder, ThreefoldRepetitionRule, User
+- Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, FileAccountStore, IChessGame, IGameStatusListener, IMoveListener, IPromotionChooser, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, ScoreRecorder, StandardRules, User
 
 ### MainSwing (class)
-- Usa: AccountService, BoardSetup, CastlingMove, ChessGame, EnPassantMove, FiftyMoveRule, FileAccountStore, GameBuilder, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, InsufficientMaterialRule, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, PromotionMove, ScoreRecorder, SwingChessView, ThreefoldRepetitionRule
+- Usa: AccountService, AutoPromotionChooser, BoardSetup, ChessGame, FileAccountStore, GameBuilder, IChessGame, IGameStatusListener, IMoveListener, IPromotionChooser, Match, OpponentController, OpponentLevel, Opponents, PieceFactory, ScoreRecorder, StandardRules, SwingChessView
 
 ## Paquete `accounts`
 
@@ -32,7 +32,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### ScoreRecorder (class)
 - Implementa: IGameStatusListener, IMoveListener
-- Tiene: AccountService, IChessGame, User
+- Tiene: AccountService, User
 - Usa: Color, Piece, PieceType, Position, Result
 
 ### User (class)
@@ -42,6 +42,11 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### BoardStrip (class)
 - Extiende: JComponent
 - Usa: Palette
+
+### BoardView (class)
+- Extiende: JPanel
+- Tiene: Board, PieceType, Position
+- Usa: Color, Move, Palette, Piece, SmoothImage
 
 ### ChoiceControl (class)
 - Extiende: JComponent
@@ -80,7 +85,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### MenuPanel (class)
 - Extiende: JPanel
 - Tiene: AccountService, ChoiceControl, FlatButton, User
-- Usa: BoardStrip, Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, RoundedPanel, Score, SmoothImage, SwingChessView
+- Usa: BoardStrip, BoardView, Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, RoundedPanel, Score, SmoothImage
 
 ### Palette (class)
 - Tiene: Color
@@ -103,8 +108,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### SwingChessView (class)
 - Extiende: JFrame
 - Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, Board, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
-- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, SmoothImage, User
+- Tiene: AccountService, Board, BoardView, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
+- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, User
 
 ## Paquete `ai`
 
@@ -149,7 +154,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IChessGame, Move
 
 ### SearchGames (class)
-- Usa: CastlingMove, ChessGame, EnPassantMove, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, PromotionMove
+- Usa: ChessGame, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, PieceFactory, PieceType, StandardRules
 
 ## Paquete `core`
 
@@ -191,7 +196,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IMoveListener, Move
 
 ### HistoryEntry (class)
-- Tiene: Board, IGameState, IMoveCommand
+- Tiene: Board, IGameState, IMoveCommand, MoveOutcome
 
 ### IChessGame (interface)
 - Usa: Board, Color, Move, MoveOutcome, Position
@@ -247,6 +252,9 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### StalemateState (class)
 - Implementa: IGameState
 - Tiene: Color
+
+### StandardRules (class)
+- Usa: CastlingMove, EnPassantMove, FiftyMoveRule, IDrawRule, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, PieceFactory, PromotionMove, ThreefoldRepetitionRule
 
 ### WhiteTurnState (class)
 - Implementa: IGameState
@@ -329,8 +337,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 | `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `core.draw`, `core.special`, `ports` |
 | `accounts` | `core`, `ports` |
 | `adapters` | `accounts`, `ai`, `core`, `ports` |
-| `ai` | `core`, `core.special`, `ports` |
-| `core` | `core.movement`, `ports` |
+| `ai` | `core`, `ports` |
+| `core` | `core.draw`, `core.movement`, `core.special`, `ports` |
 | `core.draw` | `core` |
 | `core.movement` | `core` |
 | `core.special` | `core`, `ports` |
@@ -339,9 +347,10 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ## Dónde está cada patrón (para marcarlo en el diagrama)
 
 - Strategy: `IMovementStrategy` y sus seis implementaciones; `ISpecialMove` (`CastlingMove`, `EnPassantMove`, `PromotionMove`); `IDrawRule` (`InsufficientMaterialRule`, `FiftyMoveRule`, `ThreefoldRepetitionRule`); `IOpponent` (`RandomOpponent`, `GreedyOpponent`, `MinimaxOpponent`).
-- Factory: `PieceFactory`, `BoardSetup`, `Opponents` y `GameBuilder` (lo implementa `MainSwing` y devuelve un `Match`).
+- Factory: `PieceFactory`, `BoardSetup`, `StandardRules`, `Opponents` y `GameBuilder` (lo implementa `MainSwing` y devuelve un `Match`).
+- Decorator: `AutoPromotionChooser` envuelve al `IPromotionChooser` de la persona y corona a reina cuando juega la IA.
 - Command: `ICommand`, `IMoveCommand`, `MoveCommand`, `CastlingCommand`, `PromotionCommand`, `EnPassantCommand`.
 - State: `IGameState`, `WhiteTurnState`, `BlackTurnState`, `CheckmateState`, `StalemateState`, `DrawState`.
-- Observer: `IMoveListener` e `IGameStatusListener`, implementadas por `ConsoleRenderer`, `SwingChessView` y `ScoreRecorder`.
-- Puertos: de entrada `IChessGame`; de salida `IMoveListener`, `IGameStatusListener`, `IPromotionChooser` e `IAccountStore` (lo implementa `FileAccountStore`).
+- Observer: `IMoveListener` e `IGameStatusListener`, implementadas por `ConsoleRenderer`, `SwingChessView` y `ScoreRecorder`. `SwingChessView` delega el dibujo del tablero en `BoardView`.
+- Puertos: de entrada `IChessGame`; de salida `IMoveListener`, `IGameStatusListener`, `IPromotionChooser` e `IAccountStore` (en `accounts`, lo implementa `FileAccountStore`).
 - Composition roots: `Main` y `MainSwing`.

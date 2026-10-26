@@ -64,7 +64,7 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 **Qué.** El enroque, la captura al paso y la coronación implementan `ISpecialMove`. `ChessGame` las recibe por constructor y no sabe cuáles son: cada una declara qué destinos extra habilita y qué comando arma.
 
-**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en el composition root (Open/Closed).
+**Por qué.** Antes estaban como `if` dentro de `ChessGame`, con un `instanceof`. Agregar una regla nueva obligaba a modificarlo. Ahora es una clase nueva y una línea en `StandardRules`, la fábrica que arma las reglas de siempre para la consola, la ventana y la búsqueda de la IA (Open/Closed). `ChessGame` sigue sin saber cuáles son.
 
 **Cuándo se rompería.** Con una sola excepción a las reglas, un `if` sería más directo. Con tres y la posibilidad de más, la estrategia compensa.
 
@@ -128,4 +128,4 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 - **Service Locator**: se prefirió inyectar por constructor, que deja explícitas las dependencias.
 - **Facade**: `IChessGame` ya es la entrada única; otra capa encima no agregaría nada.
 - **Object Pool**: no hay un problema de rendimiento medido que lo justifique.
-Fuera del núcleo, `AutoPromotionChooser` sí usa Decorator: envuelve al selector humano y elige reina automáticamente para el bando de la IA.
+Fuera del núcleo, `AutoPromotionChooser` sí usa Decorator: envuelve al selector humano y elige reina automáticamente para el bando de la IA, en la consola y en la ventana.

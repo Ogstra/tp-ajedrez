@@ -43,7 +43,7 @@ Si un lado no tiene usuario (jugó anónimo o es la IA), a ese lado no se le acr
 
 ### Deshacer y rehacer
 
-Una partida terminada puede reabrirse con `undo`. Si no se hiciera nada, al volver a terminar se sumaría dos veces. Por eso el recorder guarda lo que acreditó (`Credit`) y, en `onUndo`, lo revierte. En `onRedo` vuelve a aplicarlo solo si la partida quedó otra vez terminada (`game.isGameOver()`). Rehacer una jugada anterior a la final no suma nada. Esto está cubierto por tests.
+Una partida terminada puede reabrirse con `undo`. Si no se hiciera nada, al volver a terminar se sumaría dos veces. Por eso el recorder guarda lo que acreditó (`Credit`) y, en `onUndo`, lo revierte. Al rehacer la jugada final, `ChessGame` vuelve a avisar el mate o las tablas y el recorder acredita de nuevo con ese aviso; rehacer una jugada anterior a la final no avisa ningún final, así que no suma nada. Esto está cubierto por tests.
 
 ### Contra la IA en la ventana
 
@@ -61,9 +61,9 @@ Orden: puntos de mayor a menor, después más victorias, después nombre alfabé
 
 ## 7. Pruebas
 
-- `AccountTests` (20): registro, validaciones, login, orden del ranking, persistencia en CSV (incluida la línea mal formada), acreditación por mate, ahogado y tablas, deshacer y rehacer, usuario anónimo, cambio del usuario de negras. Usa un `InMemoryAccountStore` como fake. Marcados con `// TDD:` los escritos antes del código.
+- `AccountTests` (19): registro, validaciones, login, orden del ranking, persistencia en CSV (incluida la línea mal formada), acreditación por mate, ahogado y tablas, deshacer y rehacer, usuario anónimo. Usa un `InMemoryAccountStore` como fake. Marcados con `// TDD:` los escritos antes del código.
 - `scripts/test-console.sh`: tres escenarios de punta a punta por consola con una carpeta de datos temporal (partida anónima, registro con ranking, segunda ejecución con login y ranking persistente).
-- `scripts/test.sh` corre todo junto: 65 pruebas del juego, 20 de usuarios y la consola.
+- `scripts/test.sh` corre todo junto: 66 pruebas del juego, 19 de usuarios y la consola.
 
 ## 8. Decisiones y límites
 
