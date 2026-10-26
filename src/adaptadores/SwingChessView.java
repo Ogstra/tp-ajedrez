@@ -33,14 +33,13 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Rectangle;
+import java.awt.Taskbar;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 // Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
@@ -123,18 +122,23 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
-        // Ícono de la ventana, achicado de antemano a los tamaños que pide Windows (también con la
-        // pantalla escalada: 20, 30 y 40 px al 125%) para que no lo reescale y se vea borroso.
-        try {
-            BufferedImage icon = ImageIO.read(new File("src" + File.separator + "assets" + File.separator + "icono.png"));
-            List<Image> icons = new ArrayList<>();
-            for (int size : new int[]{16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 96, 128}) icons.add(SmoothImage.scaled(icon, size));
-            icons.add(icon);
-            setIconImages(icons);
-        } catch (IOException e) {
-            // sin el archivo queda el ícono de Java
-        }
+        loadIcon();
         showCard(MENU); // la primera pantalla es el menú (y Enter aprieta Jugar)
+    }
+
+    // Ícono de la aplicación: Windows y Linux usan el de la ventana; macOS no, el del Dock va
+    // aparte con Taskbar. Sin el archivo queda el ícono de Java.
+    private void loadIcon() {
+        try {
+            Image icon = ImageIO.read(new File("src/assets/icono.png"));
+            if (icon == null) return;
+            setIconImage(icon);
+            if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
+                Taskbar.getTaskbar().setIconImage(icon);
+            }
+        } catch (IOException e) {
+            // sin ícono propio
+        }
     }
 
     // Arma la partida con lo elegido en el menú y pasa a la pantalla de juego.
