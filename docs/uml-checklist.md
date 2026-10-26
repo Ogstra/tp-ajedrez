@@ -30,7 +30,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### ScoreRecorder (class)
 - Implementa: IGameStatusListener, IMoveListener
 - Tiene: AccountService, User
-- Usa: Color, Result
+- Usa: Color, Piece, PieceType, Position, Result
 
 ### User (class)
 
@@ -175,7 +175,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: IChessGame, Move
 
 ### SearchGames (class)
-- Usa: ChessGame, FixedPromotionChooser, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, ISpecialMove, PieceFactory, PieceType, StandardRules
+- Usa: FixedPromotionChooser, IChessGame, PieceFactory, PieceType, StandardRules
 
 ## Paquete `core`
 
@@ -202,8 +202,8 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### ChessGame (class)
 - Implementa: IChessGame, IGameContext
-- Tiene: Board, Color, HistoryEntry, IDrawRule, IGameState, IGameStatusListener, IMoveListener, ISpecialMove
-- Usa: BlackTurnState, CheckmateState, DrawState, IMoveCommand, Move, MoveCommand, MoveOutcome, Piece, Position, StalemateState, WhiteTurnState
+- Tiene: Board, GamePosition, HistoryEntry, IDrawRule, IGameState, IGameStatusListener, IMoveListener, ISpecialMove, Move, Position
+- Usa: BlackTurnState, CheckmateState, Color, DrawState, IMoveCommand, MoveCommand, MoveOutcome, Piece, StalemateState, WhiteTurnState
 
 ### Color (enum)
 
@@ -216,11 +216,15 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Tiene: Board, Piece, Position
 - Usa: IMoveListener, Move
 
+### GamePosition (class)
+- Tiene: Board, Color
+- Usa: Move
+
 ### HistoryEntry (class)
-- Tiene: Board, IGameState, IMoveCommand, MoveOutcome
+- Tiene: GamePosition, IGameState, IMoveCommand, MoveOutcome
 
 ### IChessGame (interface)
-- Usa: Board, Color, Move, MoveOutcome, Position
+- Usa: Board, Color, ISpecialMove, Move, MoveOutcome, Position
 
 ### ICommand (interface)
 
@@ -241,7 +245,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: Board, Color, Position
 
 ### ISpecialMove (interface)
-- Usa: IGameContext, IMoveCommand, Position
+- Usa: IGameContext, IMoveCommand, Move, Position
 
 ### Move (class)
 - Tiene: Position
@@ -329,7 +333,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### CastlingMove (class)
 - Implementa: ISpecialMove
-- Usa: Board, CastlingCommand, Color, IGameContext, IMoveCommand, Piece, PieceType, Position
+- Usa: Board, CastlingCommand, Color, IGameContext, IMoveCommand, Move, Piece, PieceType, Position
 
 ### EnPassantMove (class)
 - Implementa: ISpecialMove
@@ -338,7 +342,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### PromotionMove (class)
 - Implementa: ISpecialMove
 - Tiene: IPromotionChooser, PieceFactory
-- Usa: Board, Color, IGameContext, IMoveCommand, Piece, PieceType, Position, PromotionCommand
+- Usa: Board, Color, IGameContext, IMoveCommand, Move, Piece, PieceType, Position, PromotionCommand
 
 ## Paquete `ports`
 

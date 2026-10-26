@@ -2,7 +2,7 @@
 
 Este documento resume, de forma técnica, todo lo que se agregó y cambió en esta etapa del trabajo: qué se hizo, por qué y cómo está implementado. Para el detalle de cada tema hay documentos propios: `docs/cambios-usuarios-y-ranking.md` y `docs/skins.md`.
 
-El principio de siempre se mantuvo: **el núcleo (`src/core`) no cambió**. Todo lo nuevo son adaptadores, servicios afuera del núcleo o pantallas, conectados en los composition roots (`Main` y `MainSwing`).
+El principio de siempre se mantuvo: **el núcleo (`src/core`) no depende de infraestructura**. Login y skins se conectan desde `Main` y `MainSwing`. Las correcciones de reglas de la sección 9 viven dentro del núcleo.
 
 ## Resumen
 
@@ -132,3 +132,10 @@ java --class-path out scripts/SwingIntegrationTests.java
 | Rehacer un jaque o un mate no lo volvía a anunciar | `ChessGame.redo()` vuelve a avisar el estado. `ScoreRecorder` ya no necesita la partida ni una lista aparte para rehacer. |
 | Las reglas de siempre se armaban igual en tres lugares | `core/StandardRules` las arma para la consola, la ventana y la búsqueda de la IA. |
 | La coronación automática de la IA estaba repetida en la ventana | Se usa el mismo Decorator (`AutoPromotionChooser`) en la consola y en la ventana. |
+
+## 9. Correcciones de reglas e historial
+
+- Captura al paso: la simulación ejecuta el comando especial sobre la copia del tablero, incluido retirar el peón capturado. No consulta al usuario por coronaciones hipotéticas.
+- Repetición: `GamePosition` compara tablero, turno y los derechos aportados por las estrategias. El enroque cuenta aunque hoy esté bloqueado; una captura al paso imposible por jaque no cuenta como derecho disponible.
+- Búsqueda: `IChessGame.copy` conserva derechos, última jugada, contador de medias jugadas, posiciones anteriores, reglas de tablas y estado terminal. La copia no tiene listeners ni comandos que puedan modificar la partida real. Su deshacer termina en el inicio de la búsqueda.
+- Pruebas: `RulesRegressionTests` agrega 17 casos. El test original de repetición ahora mueve caballos: mover las torres pierde derechos y, por lo tanto, no reproduce la posición inicial.

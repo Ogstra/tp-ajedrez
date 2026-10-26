@@ -17,4 +17,8 @@ public interface ISpecialMove {
     // Si esta regla maneja la jugada from -> to, devuelve su comando; si no
     // aplica, devuelve null y ChessGame prueba con la siguiente.
     IMoveCommand commandFor(IGameContext context, Position from, Position to);
+
+    // Derechos que distinguen posiciones para repeticion, aunque hoy haya piezas bloqueando.
+    // Una regla sin derechos persistentes devuelve una lista vacia.
+    List<Move> positionState(IGameContext context);
 }

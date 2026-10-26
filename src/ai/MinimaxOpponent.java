@@ -33,7 +33,7 @@ public class MinimaxOpponent implements IOpponent {
 
         int bestValue = Integer.MIN_VALUE;
         List<Move> best = new ArrayList<>();
-        // La copia no conserva derechos: la jugada elegida debe ser legal en la partida real.
+        // Control adicional: la jugada elegida tambien debe ser legal en la partida real.
         List<Move> realLegalMoves = game.legalMoves();
         for (Move move : search.legalMoves()) {
             if (!realLegalMoves.contains(move)) continue;
@@ -46,7 +46,7 @@ public class MinimaxOpponent implements IOpponent {
                 best.add(move);
             }
         }
-        // Si solo hay una captura al paso que la copia no conoce, se elige entre las reales.
+        // Si no quedaran candidatas en la busqueda, se conserva una jugada legal de respaldo.
         if (best.isEmpty()) return realLegalMoves.get(random.nextInt(realLegalMoves.size()));
         return best.get(random.nextInt(best.size()));
     }

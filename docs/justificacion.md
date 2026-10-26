@@ -134,17 +134,18 @@ Cada decisión está explicada en tres partes: qué se decidió, por qué, y en 
 
 ## 18. Tests del núcleo con un runner propio
 
-**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías. Afuera del núcleo hay tests de integración de los adaptadores: `SkinTests` y `scripts/SwingIntegrationTests.java`, que maneja la ventana real (pirámide de testing: muchos unitarios, menos de integración y uno de sistema).
+**Qué.** Los tests están en `ChessCoreTests` (y los de usuarios en `AccountTests`, con un almacén en memoria como fake), con formato Arrange-Act-Assert, un stub (`AlwaysQueenChooser`), un mock (`RecordingObserver`) y los marcados con `// TDD:` escritos antes que el código. Se corren con `./scripts/test.sh` y no usan librerías. `RulesRegressionTests` agrega 17 regresiones en memoria para captura al paso, repetición, copias de búsqueda y deshacer/rehacer. Afuera del núcleo hay tests de integración de los adaptadores: `SkinTests` y `scripts/SwingIntegrationTests.java`, que maneja la ventana real (pirámide de testing: muchos unitarios, menos de integración y uno de sistema).
 
 **Por qué.** Corren solo con `javac`, sin infraestructura, que es lo que pide la consigna, y no hay nada para instalar ni explicar en la defensa.
 
 **Cuándo se rompería.** En un proyecto real con un equipo grande convendría JUnit, por el reporte, los filtros y la integración con las herramientas.
 
-## 19. Simplificaciones declaradas
+## 19. Simulación y posiciones repetidas
 
-- La repetición de posición ignora los derechos de enroque y de captura al paso.
-- La simulación de captura al paso no retira el peón capturado: puede permitir un jaque descubierto horizontal y también rechazar una captura que eliminaría al peón que da jaque.
-- La búsqueda de la IA no conserva el historial: puede evaluar de forma imprecisa el enroque, la captura al paso y las tablas por repetición o por 50 movimientos. La jugada final se filtra contra las jugadas legales de la partida real.
+- Las jugadas especiales se simulan con su comando sobre un tablero independiente. Capturar al paso retira al peón capturado antes de comprobar el jaque; consultar jugadas no pregunta por una coronación hipotética.
+- `GamePosition` representa tablero, turno y derechos de las reglas especiales. Cada estrategia aporta esos derechos por `positionState`: el enroque cuenta aunque esté bloqueado temporalmente, y la captura al paso solo cuando es legal. Una oportunidad imposible por jaque no distingue posiciones.
+- `IChessGame.copy` conserva casillas tocadas, última jugada, reloj de medias jugadas, posiciones anteriores y estado terminal. La copia recibe las mismas reglas especiales con una coronación automática y mantiene las reglas de tablas configuradas. No comparte comandos ni listeners con la partida real; solo deshace sus propias jugadas.
+- La búsqueda sigue limitada a la profundidad configurada. La jugada final también se contrasta con las legales de la partida real.
 
 ## Patrones que no se usaron
 

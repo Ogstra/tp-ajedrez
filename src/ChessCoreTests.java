@@ -1095,10 +1095,10 @@ public class ChessCoreTests {
 
     // TDD: la misma posición con el mismo turno tres veces.
     private static void testThreefoldRepetitionDeclaresDraw() {
-        // Arrange: las dos torres van y vienen; la posición inicial reaparece cada 4 medias jugadas.
-        Board board = rooksOnTheHFile();
+        // Arrange: los caballos van y vienen sin cambiar derechos de enroque ni captura al paso.
+        Board board = BoardSetup.standard(PIECES);
         IChessGame game = newGameWithDrawRules(board, new ThreefoldRepetitionRule());
-        String[][] cycle = {{"h1", "h2"}, {"h8", "h7"}, {"h2", "h1"}, {"h7", "h8"}};
+        String[][] cycle = {{"g1", "f3"}, {"g8", "f6"}, {"f3", "g1"}, {"f6", "g8"}};
 
         // Act
         boolean earlyDraw = false;

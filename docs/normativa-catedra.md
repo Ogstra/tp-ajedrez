@@ -13,7 +13,7 @@ Los números de unidad son los del material (Unidad 4: optimización; Unidad 5: 
 | Tablero 8x8, las 6 piezas con su movimiento, turnos, captura, rechazo de movimientos inválidos, jaque | `core/`, probado en `ChessCoreTests` |
 | Opcional (no resta si falta): mate, enroque, captura al paso, coronación, tablas, IA, deshacer/rehacer, interfaz gráfica | Todo implementado: `core/special`, `core/draw`, `ai/`, Command en `core/`, `adapters/SwingChessView` |
 | El núcleo no depende de framework, motor gráfico ni infraestructura | `core/` solo importa `java.util` y `ports/` (ver la tabla de dependencias de `docs/uml-checklist.md`) |
-| Tests unitarios del núcleo sin infraestructura | `ChessCoreTests`: sin archivos, sin red, sin ventana |
+| Tests unitarios del núcleo sin infraestructura | `ChessCoreTests` y `RulesRegressionTests`: sin archivos, sin red, sin ventana |
 | Agregar clases sin modificar las existentes, sin romper herencia ni composición | Pieza nueva, tablero de otro tamaño, regla nueva: sección "Agregar cosas sin tocar lo que ya está" del README |
 | UML fiel al código y mantenido | **Pendiente: falta el diagrama.** La lista de clases y relaciones para dibujarlo (`docs/uml-checklist.md`) se genera del código con `java scripts/ListTypes.java` |
 | Justificación qué / por qué / cuándo se rompería, sobre decisiones propias | `docs/justificacion.md` |

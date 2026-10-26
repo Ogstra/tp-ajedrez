@@ -4,6 +4,7 @@ import core.Board;
 import core.Color;
 import core.IGameContext;
 import core.IMoveCommand;
+import core.Move;
 import core.ISpecialMove;
 import core.Piece;
 import core.PieceFactory;
@@ -27,6 +28,11 @@ public class PromotionMove implements ISpecialMove {
     public PromotionMove(PieceFactory pieces, IPromotionChooser chooser) {
         this.pieces = pieces;
         this.chooser = chooser;
+    }
+
+    @Override
+    public List<Move> positionState(IGameContext context) {
+        return Collections.emptyList(); // no deja un derecho pendiente entre jugadas
     }
 
     @Override

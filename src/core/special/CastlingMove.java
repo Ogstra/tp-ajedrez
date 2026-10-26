@@ -5,6 +5,7 @@ import core.CastlingCommand;
 import core.Color;
 import core.IGameContext;
 import core.IMoveCommand;
+import core.Move;
 import core.ISpecialMove;
 import core.Piece;
 import core.PieceType;
@@ -22,6 +23,25 @@ import java.util.List;
 // casillas entre ambos están vacías, el rey no está en jaque y no cruza ni
 // pisa una casilla atacada.
 public class CastlingMove implements ISpecialMove {
+
+    @Override
+    public List<Move> positionState(IGameContext context) {
+        List<Move> rights = new ArrayList<>();
+        Board board = context.getBoard();
+        for (Color color : Color.values()) {
+            Position king = board.findKing(color);
+            if (king == null || king.getRow() != backRow(board, color) || context.hasBeenTouched(king)) continue;
+            for (int column : new int[]{0, board.getColumns() - 1}) {
+                Position square = new Position(king.getRow(), column);
+                Piece rook = board.pieceAt(square);
+                if (rook != null && rook.getType().equals(PieceType.ROOK) && rook.getColor() == color
+                        && !context.hasBeenTouched(square) && Math.abs(column - king.getColumn()) >= 3) {
+                    rights.add(new Move(king, square));
+                }
+            }
+        }
+        return rights;
+    }
 
     @Override
     public List<Position> extraDestinations(IGameContext context, Position from) {

@@ -31,7 +31,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Ojo: `data/` es re
 
 ## Verificación
 
-`./scripts/test.sh` corre 66 pruebas del juego y la IA, 20 de usuarios y ranking, 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana):
+`./scripts/test.sh` corre 66 pruebas del juego y la IA, 17 regresiones de reglas e historial, 20 de usuarios y ranking, 10 de skins y cuatro regresiones de consola (invitado en 1 contra 1 con deshacer y repetir el mate, registro y partida contra la IA, un 1 contra 1 que no suma al ranking, login persistente). Para comprobar la ventana real (login, menú, 1 contra 1 sin ranking, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10, el ícono, el tablero que crece con la ventana):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -65,6 +65,7 @@ src/
   MainSwing.java arma todo para jugar con ventana
   ChessCoreTests.java
   AccountTests.java
+  RulesRegressionTests.java
   SkinTests.java
 ```
 
@@ -91,7 +92,7 @@ Lo que se ve en la materia está así:
 
 ## Cosas a tener en cuenta
 
-La repetición de posición ignora los derechos de enroque y de captura al paso. La simulación de captura al paso no retira el peón capturado: puede permitir un jaque descubierto horizontal o rechazar una captura que eliminaría al peón que da jaque. La búsqueda de la IA usa una copia sin historial y puede evaluar de forma imprecisa el enroque, la captura al paso y las tablas. La jugada final se filtra contra las legales de la partida real.
+La simulación de captura al paso ejecuta el comando especial sobre un tablero independiente antes de comprobar el jaque. La repetición compara tablero, turno, derechos de enroque y capturas al paso legales. La búsqueda de la IA conserva esos derechos, la última jugada, el contador de medias jugadas y las posiciones anteriores, sin compartir comandos ni listeners con la partida real. Solo puede deshacer las jugadas de la búsqueda. La dificultad sigue siendo una búsqueda de profundidad limitada, no un motor competitivo.
 
 La ventana se puede agrandar o achicar: el tablero ocupa el lugar que queda y las piezas se rehacen a ese tamaño.
 

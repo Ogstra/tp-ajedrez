@@ -16,10 +16,29 @@ import java.util.List;
 
 // Regla de captura al paso: si el peón rival acaba de avanzar dos casillas y
 // quedó al lado de mi peón, puedo capturarlo como si hubiera avanzado una.
-// Solo vale en la jugada inmediata. Simplificación: la simulación de
-// legalidad no quita el peón capturado, así que no detecta el jaque descubierto
-// horizontal que a veces vuelve ilegal esta captura.
+// Solo vale en la jugada inmediata. El mismo comando quita el peon capturado
+// tanto en la partida como en la simulacion de legalidad.
 public class EnPassantMove implements ISpecialMove {
+
+    @Override
+    public List<Move> positionState(IGameContext context) {
+        List<Move> rights = new ArrayList<>();
+        Move last = context.lastMove();
+        if (last == null || Math.abs(last.getTo().getRow() - last.getFrom().getRow()) != 2) return rights;
+        Piece moved = context.getBoard().pieceAt(last.getTo());
+        if (moved == null || !moved.getType().equals(PieceType.PAWN)) return rights;
+        List<Move> legal = null;
+        for (Position from : context.getBoard().positionsOfColor(moved.getColor().opposite())) {
+            Position target = targetSquare(context, from);
+            if (target != null) {
+                if (legal == null) legal = context.legalMoves();
+                Move capture = new Move(from, target);
+                if (legal.contains(capture)) rights.add(capture);
+            }
+        }
+        rights.sort(java.util.Comparator.comparing(Move::toString));
+        return rights;
+    }
 
     @Override
     public List<Position> extraDestinations(IGameContext context, Position from) {
@@ -56,6 +75,7 @@ public class EnPassantMove implements ISpecialMove {
         if (!doubleStep || !besideMyPawn) return null;
 
         int direction = pawn.getColor() == Color.WHITE ? 1 : -1;
-        return new Position(from.getRow() + direction, last.getTo().getColumn());
+        Position target = new Position(from.getRow() + direction, last.getTo().getColumn());
+        return board.isInside(target) && board.isEmpty(target) ? target : null;
     }
 }

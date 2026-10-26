@@ -1,9 +1,12 @@
 package core;
 
+import java.util.List;
+
 // Lo que una regla (ISpecialMove, IDrawRule) puede consultar de la partida,
 // sin conocer a ChessGame (DIP: las reglas dependen de esta abstracción).
 public interface IGameContext {
     Board getBoard();
+    List<Move> legalMoves();
 
     // true si, en alguna jugada que sigue en pie (no deshecha), una pieza
     // salió de esta casilla o llegó a ella. Una casilla sin tocar sigue
@@ -19,6 +22,6 @@ public interface IGameContext {
     // Cuántas medias jugadas seguidas (de las últimas) no movieron un peón ni capturaron.
     int halfMoveClock();
 
-    // Cuántas veces apareció la posición actual (con el mismo bando al turno), contando esta.
+    // Cuántas veces apareció la posición actual (con el mismo turno y derechos de las reglas especiales), contando esta.
     int occurrencesOfCurrentPosition();
 }

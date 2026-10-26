@@ -38,7 +38,7 @@ public class ListTypes {
         "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|/\\*.*?\\*/|//[^\\n]*", Pattern.DOTALL);
     // Los tests no son parte del diseño que muestra el diagrama.
     private static final Set<String> SKIP_FILES = Set.of(
-        "ChessCoreTests.java", "AccountTests.java", "SkinTests.java");
+        "ChessCoreTests.java", "AccountTests.java", "SkinTests.java", "RulesRegressionTests.java");
     private static final String MARKER = "## Dónde está cada patrón";
 
     private record Type(String pkg, String kind, String name, String text,

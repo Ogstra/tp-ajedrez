@@ -7,6 +7,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 // Núcleo del sistema (Clase 2): orquesta la partida. No sabe nada de
 // consola, UI ni ningún detalle técnico: solo reglas de negocio del
@@ -23,8 +27,11 @@ public class ChessGame implements IChessGame, IGameContext {
     private final List<IDrawRule> drawRules;
     private final Deque<HistoryEntry> history = new ArrayDeque<>();
     private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
-    private final Board initialBoard;
-    private final Color initialColor;
+    // Estado previo a la copia: valores de consulta, nunca comandos ligados al tablero original.
+    private final Set<Position> previousTouched = new HashSet<>();
+    private final List<GamePosition> previousPositions = new ArrayList<>();
+    private Move previousMove;
+    private int previousHalfMoveClock;
     private IGameState state;
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
@@ -43,9 +50,8 @@ public class ChessGame implements IChessGame, IGameContext {
         this.statusListeners = statusListeners;
         this.specialMoves = specialMoves;
         this.drawRules = drawRules;
-        this.initialBoard = board.cloneBoard();
-        this.initialColor = firstToMove;
         this.state = firstToMove == Color.WHITE ? new WhiteTurnState() : new BlackTurnState();
+        previousPositions.add(position());
     }
 
     @Override
@@ -82,13 +88,14 @@ public class ChessGame implements IChessGame, IGameContext {
         redoStack.clear(); // una jugada nueva borra lo que se podía rehacer
         IMoveCommand command = createCommand(from, to);
         command.execute();
-        HistoryEntry entry = new HistoryEntry(command, state, board.cloneBoard());
+        HistoryEntry entry = new HistoryEntry(command, state);
         history.push(entry);
 
         Color mover = state.currentColor();
         Color opponent = mover.opposite();
         state = state.afterMove();
         entry.stateAfter = state;
+        entry.positionAfter = position();
 
         for (IMoveListener listener : moveListeners) command.announce(listener);
 
@@ -177,7 +184,7 @@ public class ChessGame implements IChessGame, IGameContext {
         for (HistoryEntry entry : history) {
             if (entry.command.touchedSquares().contains(pos)) return true;
         }
-        return false;
+        return previousTouched.contains(pos);
     }
 
     @Override
@@ -187,27 +194,55 @@ public class ChessGame implements IChessGame, IGameContext {
 
     @Override
     public Move lastMove() {
-        return history.isEmpty() ? null : history.peek().command.getMove();
+        return history.isEmpty() ? previousMove : history.peek().command.getMove();
     }
 
     @Override
     public int halfMoveClock() {
         int count = 0;
         for (HistoryEntry entry : history) { // de la más reciente a la más vieja
-            if (entry.command.resetsHalfMoveClock()) break;
+            if (entry.command.resetsHalfMoveClock()) return count;
             count++;
         }
-        return count;
+        return count + previousHalfMoveClock;
     }
 
     @Override
     public int occurrencesOfCurrentPosition() {
-        Color toMove = state.currentColor();
-        int count = (initialColor == toMove && initialBoard.equals(board)) ? 1 : 0;
+        GamePosition current = history.isEmpty()
+            ? previousPositions.get(previousPositions.size() - 1) : history.peek().positionAfter;
+        int count = 0;
+        for (GamePosition previous : previousPositions) {
+            if (previous.equals(current)) count++;
+        }
         for (HistoryEntry entry : history) {
-            if (entry.stateAfter.currentColor() == toMove && entry.boardAfter.equals(board)) count++;
+            if (entry.positionAfter.equals(current)) count++;
         }
         return count;
+    }
+
+    private GamePosition position() {
+        List<List<Move>> rights = new ArrayList<>();
+        for (ISpecialMove rule : specialMoves) rights.add(rule.positionState(this));
+        return new GamePosition(board, state.currentColor(), rights);
+    }
+
+    @Override
+    public IChessGame copy(List<ISpecialMove> rules) {
+        ChessGame copy = new ChessGame(board.cloneBoard(), new ArrayList<IMoveListener>(),
+            new ArrayList<IGameStatusListener>(), rules, new ArrayList<>(drawRules), getTurn());
+        copy.previousTouched.addAll(previousTouched);
+        for (HistoryEntry entry : history) copy.previousTouched.addAll(entry.command.touchedSquares());
+        copy.previousMove = lastMove();
+        copy.previousHalfMoveClock = halfMoveClock();
+        copy.previousPositions.clear();
+        copy.previousPositions.addAll(previousPositions);
+        // El historial se consulta de la mas antigua a la mas reciente.
+        for (var entries = history.descendingIterator(); entries.hasNext();) {
+            copy.previousPositions.add(entries.next().positionAfter);
+        }
+        copy.state = state;
+        return copy;
     }
 
     private String findDrawReason() {
@@ -238,19 +273,42 @@ public class ChessGame implements IChessGame, IGameContext {
     private List<Position> legalMovesFrom(Position from) {
         Piece piece = board.pieceAt(from);
         List<Position> candidates = new ArrayList<>(piece.possibleMoves(board, from));
+        Map<Position, ISpecialMove> extraMoves = new HashMap<>();
         for (ISpecialMove rule : specialMoves) {
-            candidates.addAll(rule.extraDestinations(this, from));
+            for (Position target : rule.extraDestinations(this, from)) {
+                if (!candidates.contains(target)) candidates.add(target);
+                extraMoves.putIfAbsent(target, rule);
+            }
         }
 
         List<Position> legal = new ArrayList<>();
         for (Position destination : candidates) {
             Board simulated = board.cloneBoard();
-            simulated.movePiece(from, destination);
+            ISpecialMove rule = extraMoves.get(destination);
+            if (rule == null) {
+                // La coronacion no cambia la ocupacion para el jaque propio ni consulta al usuario.
+                simulated.movePiece(from, destination);
+            } else {
+                rule.commandFor(contextOn(simulated), from, destination).execute();
+            }
             if (!isInCheck(piece.getColor(), simulated)) {
                 legal.add(destination);
             }
         }
         return legal;
+    }
+
+    // Las estrategias reciben el tablero simulado y consultan el historial de esta posicion.
+    private IGameContext contextOn(Board simulated) {
+        return new IGameContext() {
+            public Board getBoard() { return simulated; }
+            public List<Move> legalMoves() { return ChessGame.this.legalMoves(); }
+            public boolean hasBeenTouched(Position pos) { return ChessGame.this.hasBeenTouched(pos); }
+            public boolean isAttacked(Position pos, Color color) { return isAttackedOn(simulated, pos, color); }
+            public Move lastMove() { return ChessGame.this.lastMove(); }
+            public int halfMoveClock() { return ChessGame.this.halfMoveClock(); }
+            public int occurrencesOfCurrentPosition() { return ChessGame.this.occurrencesOfCurrentPosition(); }
+        };
     }
 
     // ¿El rey de "color" está atacado por alguna pieza rival, en "b"?

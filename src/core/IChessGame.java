@@ -15,4 +15,8 @@ public interface IChessGame {
 
     // Todas las jugadas legales del bando que tiene el turno (vacía si la partida terminó).
     List<Move> legalMoves();
+
+    // Copia independiente sin listeners, con las mismas reglas y colaboradores de simulacion (coronacion automatica).
+    // Conserva el estado previo; solo permite deshacer jugadas hechas sobre la copia.
+    IChessGame copy(List<ISpecialMove> specialMoves);
 }

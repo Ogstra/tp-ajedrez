@@ -3,9 +3,8 @@ package core.draw;
 import core.IDrawRule;
 import core.IGameContext;
 
-// Tablas por repetición: la misma posición, con el mismo bando al turno, tres
-// veces. Simplificación: se ignoran los derechos de enroque y de captura al
-// paso (las reglas oficiales los tienen en cuenta).
+// Tablas por repeticion: mismo tablero, turno, derechos de enroque y capturas
+// al paso legales, tres veces. La identidad la calcula la partida con sus estrategias.
 public class ThreefoldRepetitionRule implements IDrawRule {
 
     @Override
