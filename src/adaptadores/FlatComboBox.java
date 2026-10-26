@@ -34,6 +34,14 @@ public class FlatComboBox extends JComboBox<String> {
             public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
                 // el fondo redondeado lo pinta el componente
             }
+
+            // Con el foco, Swing pinta el valor elegido con los colores de selección (texto blanco),
+            // que sobre el fondo blanco no se ve. Se pinta siempre como sin foco: el foco ya lo
+            // muestra el borde verde.
+            @Override
+            public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
+                super.paintCurrentValue(g, bounds, false);
+            }
         });
         setOpaque(false);
         setBackground(Palette.CARD);
