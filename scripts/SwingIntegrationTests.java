@@ -5,9 +5,8 @@ import adapters.GameBuilder;
 import adapters.Match;
 import adapters.SwingChessView;
 import core.*;
-import core.special.*;
-import core.draw.*;
 import ports.*;
+import ai.AutoPromotionChooser;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
@@ -263,8 +262,8 @@ public class SwingIntegrationTests {
             ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
             game = new ChessGame(board, Arrays.<IMoveListener>asList(v, recorder),
                 Arrays.<IGameStatusListener>asList(v, recorder),
-                Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(pieces, v)),
-                Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+                StandardRules.specialMoves(pieces, level == OpponentLevel.NONE ? v : new AutoPromotionChooser(aiColor, v)),
+                StandardRules.drawRules());
             recorder.attachGame(game);
             OpponentController opponent = level == OpponentLevel.NONE
                 ? null : new OpponentController(game, Opponents.create(level, new java.util.Random(7)), aiColor);

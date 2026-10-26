@@ -456,11 +456,10 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }).start();
     }
 
-    // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón.
-    // Si corona la IA, elige reina sin abrir el diálogo.
+    // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón de la persona. Cuando
+    // corona la IA no llega acá: MainSwing la envuelve con AutoPromotionChooser (Decorator).
     @Override
     public PieceType choose(Color color) {
-        if (opponent != null && color == opponent.getColor()) return PieceType.QUEEN;
         String[] options = {"Reina", "Torre", "Alfil", "Caballo"};
         int choice = JOptionPane.showOptionDialog(this, "¿A qué pieza corona el peón?",
             "Coronación", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,

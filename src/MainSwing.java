@@ -2,30 +2,24 @@ import adapters.FileAccountStore;
 import adapters.GameBuilder;
 import adapters.Match;
 import adapters.SwingChessView;
+import ai.AutoPromotionChooser;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
 import core.BoardSetup;
 import core.ChessGame;
 import core.IChessGame;
-import core.IDrawRule;
-import core.ISpecialMove;
 import core.PieceFactory;
-import core.special.CastlingMove;
-import core.special.EnPassantMove;
-import core.special.PromotionMove;
-import core.draw.FiftyMoveRule;
-import core.draw.InsufficientMaterialRule;
-import core.draw.ThreefoldRepetitionRule;
+import core.StandardRules;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
+import ports.IPromotionChooser;
 import accounts.AccountService;
 import accounts.ScoreRecorder;
 
 import javax.swing.SwingUtilities;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 // Composition root de la variante gráfica. Mismo esquema que Main.java: se crea el
@@ -48,20 +42,15 @@ public class MainSwing {
             Random random = new Random();
             GameBuilder builder = (view, white, black, level, aiColor) -> {
                 PieceFactory pieces = PieceFactory.standard();
-                List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-                    new CastlingMove(),
-                    new EnPassantMove(),
-                    new PromotionMove(pieces, view));
-                List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
-                    new InsufficientMaterialRule(),
-                    new FiftyMoveRule(),
-                    new ThreefoldRepetitionRule());
+                // Contra la IA, la pieza a la que corona ella la elige el Decorator (siempre reina),
+                // igual que en la consola; la de la persona la pregunta la ventana.
+                IPromotionChooser chooser = level == OpponentLevel.NONE ? view : new AutoPromotionChooser(aiColor, view);
                 ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
                 IChessGame game = new ChessGame(BoardSetup.standard(pieces),
                     Arrays.<IMoveListener>asList(view, recorder),
                     Arrays.<IGameStatusListener>asList(view, recorder),
-                    specialMoves,
-                    drawRules);
+                    StandardRules.specialMoves(pieces, chooser),
+                    StandardRules.drawRules());
                 recorder.attachGame(game);
                 OpponentController opponent = level == OpponentLevel.NONE
                     ? null

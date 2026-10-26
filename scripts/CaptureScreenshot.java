@@ -1,7 +1,5 @@
 import adapters.*;
 import core.*;
-import core.special.*;
-import core.draw.*;
 import ports.*;
 import accounts.*;
 import javax.swing.*;
@@ -23,8 +21,8 @@ public class CaptureScreenshot {
                 PieceFactory p = PieceFactory.standard();
                 ScoreRecorder r = new ScoreRecorder(acc, w, bl);
                 IChessGame g = new ChessGame(BoardSetup.standard(p), Arrays.<IMoveListener>asList(v, r), Arrays.<IGameStatusListener>asList(v, r),
-                    Arrays.<ISpecialMove>asList(new CastlingMove(), new EnPassantMove(), new PromotionMove(p, v)),
-                    Arrays.<IDrawRule>asList(new InsufficientMaterialRule(), new FiftyMoveRule(), new ThreefoldRepetitionRule()));
+                    StandardRules.specialMoves(p, v),
+                    StandardRules.drawRules());
                 r.attachGame(g);
                 return new Match(g, null);
             };

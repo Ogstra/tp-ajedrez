@@ -11,17 +11,10 @@ import core.BoardSetup;
 import core.ChessGame;
 import core.Color;
 import core.IChessGame;
-import core.IDrawRule;
-import core.ISpecialMove;
 import core.MoveOutcome;
 import core.PieceFactory;
+import core.StandardRules;
 import core.Position;
-import core.special.CastlingMove;
-import core.special.EnPassantMove;
-import core.special.PromotionMove;
-import core.draw.FiftyMoveRule;
-import core.draw.InsufficientMaterialRule;
-import core.draw.ThreefoldRepetitionRule;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 import ports.IPromotionChooser;
@@ -32,7 +25,6 @@ import accounts.User;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -61,21 +53,12 @@ public class Main {
             ? human
             : new AutoPromotionChooser(Color.BLACK, human);
 
-        List<ISpecialMove> specialMoves = Arrays.<ISpecialMove>asList(
-            new CastlingMove(),
-            new EnPassantMove(),
-            new PromotionMove(pieces, chooser));
-        List<IDrawRule> drawRules = Arrays.<IDrawRule>asList(
-            new InsufficientMaterialRule(),
-            new FiftyMoveRule(),
-            new ThreefoldRepetitionRule());
-
         ScoreRecorder recorder = new ScoreRecorder(accounts, white, black);
         IChessGame game = new ChessGame(board,
             Arrays.<IMoveListener>asList(renderer, recorder),
             Arrays.<IGameStatusListener>asList(renderer, recorder),
-            specialMoves,
-            drawRules);
+            StandardRules.specialMoves(pieces, chooser),
+            StandardRules.drawRules());
         recorder.attachGame(game);
 
         // La IA juega con negras; el humano con blancas.
