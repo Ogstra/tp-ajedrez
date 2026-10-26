@@ -57,14 +57,14 @@ public class FlatButton extends JButton {
             g2.fillRoundRect(0, 0, w - 1, h - 1, 14, 14);
             if (hasFocus()) {
                 g2.setColor(Palette.BADGE_TEXT);
-                g2.drawRoundRect(3, 3, w - 7, h - 7, 10, 10);
+                RoundedBorder.outline(g2, 3, 3, w - 6, h - 6, 10);
             }
             text = java.awt.Color.WHITE;
         } else if (style == Style.SECONDARY) {
             g2.setColor(!isEnabled() ? Palette.BACKGROUND : active ? Palette.TRACK_HOVER : Palette.TRACK);
             g2.fillRoundRect(0, 0, w - 1, h - 1, 10, 10);
             g2.setColor(hasFocus() ? Palette.PRIMARY : Palette.CONTROL);
-            g2.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
+            RoundedBorder.outline(g2, 0, 0, w, h, 10);
             text = isEnabled() ? Palette.INK : Palette.CONTROL;
         } else {
             text = active ? Palette.INK : Palette.MUTED;

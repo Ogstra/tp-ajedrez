@@ -115,7 +115,7 @@ public class ChoiceControl extends JComponent {
         g2.setColor(Palette.TRACK);
         g2.fillRoundRect(0, 0, w - 1, h - 1, 12, 12);
         g2.setColor(hasFocus() ? Palette.PRIMARY : Palette.CONTROL);
-        g2.drawRoundRect(0, 0, w - 1, h - 1, 12, 12);
+        RoundedBorder.outline(g2, 0, 0, w, h, 12);
 
         int segment = (w - 2 * PAD) / options.length;
         for (int i = 0; i < options.length; i++) {
@@ -151,7 +151,7 @@ public class ChoiceControl extends JComponent {
             FontMetrics fm = g2.getFontMetrics();
             int iconWidth = icons[i] != null ? ICON + 10 : 0;
             int start = x + (card - iconWidth - fm.stringWidth(options[i])) / 2;
-            if (icons[i] != null) g2.drawImage(icons[i], start, (h - ICON) / 2, ICON, ICON, null);
+            if (icons[i] != null) SmoothImage.draw(g2, icons[i], start, (h - ICON) / 2, ICON);
             g2.setColor(Palette.INK);
             g2.drawString(options[i], start + iconWidth, (h - fm.getHeight()) / 2 + fm.getAscent());
         }

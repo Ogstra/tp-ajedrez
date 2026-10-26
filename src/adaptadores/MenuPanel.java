@@ -8,7 +8,6 @@ import usuarios.User;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -247,7 +246,7 @@ public class MenuPanel extends JPanel {
         name.setIconTextGap(10);
         name.setPreferredSize(new Dimension(108, 30));
         Image image = SwingChessView.pieceImage(piece);
-        if (image != null) name.setIcon(new ImageIcon(image.getScaledInstance(28, 28, Image.SCALE_SMOOTH)));
+        if (image != null) name.setIcon(SmoothImage.icon(image, 28));
 
         JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
         badge.setOpaque(false);

@@ -18,7 +18,6 @@ import usuarios.User;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -39,7 +38,9 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
@@ -122,6 +123,17 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         this.menu = new MenuPanel(accounts, this::startGame, this::showRanking);
         this.ranking = new RankingPanel(() -> showCard(cardBeforeRanking));
         buildInterface();
+        // Ícono de la ventana, achicado de antemano a los tamaños que pide Windows (también con la
+        // pantalla escalada: 20, 30 y 40 px al 125%) para que no lo reescale y se vea borroso.
+        try {
+            BufferedImage icon = ImageIO.read(new File("src" + File.separator + "assets" + File.separator + "icono.png"));
+            List<Image> icons = new ArrayList<>();
+            for (int size : new int[]{16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 96, 128}) icons.add(SmoothImage.scaled(icon, size));
+            icons.add(icon);
+            setIconImages(icons);
+        } catch (IOException e) {
+            // sin el archivo queda el ícono de Java
+        }
         showCard(MENU); // la primera pantalla es el menú (y Enter aprieta Jugar)
     }
 
@@ -251,6 +263,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         text.setPreferredSize(new Dimension(0, 36)); // siempre dos filas como máximo
         text.add(status, BorderLayout.CENTER);
         text.add(players, BorderLayout.SOUTH);
+        // Los botones de la barra no toman el foco: así no queda marcado Menú al empezar la partida.
+        for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
@@ -306,6 +320,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                 JButton button = new JButton();
                 button.setOpaque(true);
                 button.setBorderPainted(false);
+                button.setFocusable(false); // se juega con el mouse: sin el aro de foco sobre una casilla
                 button.addActionListener(e -> onSquareClicked(pos));
                 squares[pos.getRow()][pos.getColumn()] = button;
                 boardPanel.add(button);
@@ -476,7 +491,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
             return;
         }
         button.setText("");
-        button.setIcon(new ImageIcon(image.getScaledInstance(squareSize * 85 / 100, squareSize * 85 / 100, Image.SCALE_SMOOTH)));
+        button.setIcon(SmoothImage.icon(image, squareSize * 85 / 100));
     }
 
     private String imageKey(Piece piece) {
