@@ -115,7 +115,7 @@ public class ChoiceControl extends JComponent {
         g2.setColor(Palette.TRACK);
         g2.fillRoundRect(0, 0, w - 1, h - 1, 12, 12);
         g2.setColor(hasFocus() ? Palette.PRIMARY : Palette.CONTROL);
-        g2.drawRoundRect(0, 0, w - 1, h - 1, 12, 12);
+        RoundedBorder.outline(g2, 0, 0, w, h, 12);
 
         int segment = (w - 2 * PAD) / options.length;
         for (int i = 0; i < options.length; i++) {

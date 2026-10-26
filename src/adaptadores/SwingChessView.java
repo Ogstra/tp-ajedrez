@@ -263,6 +263,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         text.setPreferredSize(new Dimension(0, 36)); // siempre dos filas como máximo
         text.add(status, BorderLayout.CENTER);
         text.add(players, BorderLayout.SOUTH);
+        // Los botones de la barra no toman el foco: así no queda marcado Menú al empezar la partida.
+        for (JButton button : new JButton[]{menuButton, undoButton, redoButton, rankingButton}) button.setFocusable(false);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
@@ -318,6 +320,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
                 JButton button = new JButton();
                 button.setOpaque(true);
                 button.setBorderPainted(false);
+                button.setFocusable(false); // se juega con el mouse: sin el aro de foco sobre una casilla
                 button.addActionListener(e -> onSquareClicked(pos));
                 squares[pos.getRow()][pos.getColumn()] = button;
                 boardPanel.add(button);

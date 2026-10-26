@@ -19,7 +19,7 @@ class RoundedPanel extends JPanel {
         g2.setColor(Palette.CARD);
         g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
         g2.setColor(Palette.CONTROL);
-        g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
+        RoundedBorder.outline(g2, 0, 0, getWidth(), getHeight(), 14);
         g2.dispose();
     }
 }
