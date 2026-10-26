@@ -1,3 +1,4 @@
+import adapters.Assets;
 import adapters.SkinCatalogReader;
 import adapters.FileSkinStore;
 import ports.IAccountStore;
@@ -39,6 +40,7 @@ public class SkinTests {
         testFileStoreRemembersEachUser();
         testCatalogFileIsRead();
         testCatalogWithoutFileHasTheClassicSkin();
+        testBundledCatalogIsCompleteAndHasNoThirdPartyBrands();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -221,5 +223,30 @@ public class SkinTests {
         assertTrue("testCatalogWithoutFileHasTheClassicSkin",
             skins.size() == 1 && skins.get(0).getRequiredPoints() == 0,
             "sin catálogo queda la skin de siempre");
+    }
+
+    private static void testBundledCatalogIsCompleteAndHasNoThirdPartyBrands() {
+        // Arrange: el catálogo que viene con el juego, leído del classpath.
+        List<Skin> skins = SkinCatalogReader.bundled();
+        String[] keys = {"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"};
+        String[] brands = {"minecraft", "age of empires"}; // marcas de terceros (Unidad 5, propiedad intelectual)
+
+        // Act: se busca alguna imagen faltante o algún nombre con una marca.
+        List<String> problems = new ArrayList<>();
+        for (Skin skin : skins) {
+            for (String key : keys) {
+                if (Assets.image(skin.getPiecesFolder() + "/" + key + ".png") == null) {
+                    problems.add(skin.getId() + " sin " + key);
+                }
+            }
+            for (String brand : brands) {
+                if (skin.getName().toLowerCase().contains(brand)) problems.add(skin.getId() + " usa la marca " + brand);
+            }
+        }
+
+        // Assert
+        assertTrue("testBundledCatalogIsCompleteAndHasNoThirdPartyBrands",
+            skins.size() >= 1 && skins.get(0).getRequiredPoints() == 0 && problems.isEmpty(),
+            "cada skin trae sus 12 piezas y ninguna usa marcas de terceros: " + problems);
     }
 }
