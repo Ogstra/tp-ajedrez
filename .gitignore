@@ -1,0 +1,16 @@
+out/
+*.class
+.DS_Store
+.idea/*
+!.idea/misc.xml
+!.idea/modules.xml
+node_modules/
+package-lock.json
+package.json
+
+# Scripts de apoyo que no son pruebas (documentación, presentación, controles de estilo)
+scripts/*
+!scripts/build.sh
+!scripts/test.sh
+!scripts/test-console.sh
+!scripts/SwingIntegrationTests.java
