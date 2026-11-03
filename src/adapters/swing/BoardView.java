@@ -1,13 +1,11 @@
 package adapters.swing;
 
-import adapters.swing.components.Palette;
-import adapters.swing.components.SmoothImage;
+import core.Move;
 import core.board.Board;
 import core.board.Color;
 import core.board.Piece;
 import core.board.PieceType;
 import core.board.Position;
-import core.Move;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -18,7 +16,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -34,22 +31,19 @@ import java.util.function.Consumer;
 // El tablero de la ventana: las casillas, las coordenadas, las piezas y las marcas de la pieza
 // elegida. SwingChessView se ocupa de la partida y los textos; el dibujo del tablero vive acá
 // (SRP: cada clase tiene una sola razón para cambiar).
-//
-// Las casillas se adaptan al espacio que hay: cuando la ventana cambia de tamaño, fitTo() calcula
-// el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño. Rehacer las imágenes
-// cuesta, así que se espera a que se deje de arrastrar el borde (un Timer que se reinicia).
 public class BoardView extends JPanel {
 
-    static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
-    static final int MIN_SQUARE = 32;
-    static final int MAX_SQUARE = 160;     // agrandando la ventana, hasta acá crecen las casillas
+    private static final int SQUARE = 80;          // lado de cada casilla, en píxeles
+    private static final int PIECE = 68;           // lado de la imagen de la pieza, con un margen
+    private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
 
+    private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
+    private static final java.awt.Color DARK = new java.awt.Color(0x76, 0x96, 0x56);
     private static final java.awt.Color SELECTED = new java.awt.Color(0xF6, 0xF6, 0x69);
     private static final java.awt.Color LEGAL = new java.awt.Color(0xF2, 0xC9, 0x6B);          // destino libre
     private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B);        // destino con captura
     private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);          // marco de las casillas marcadas
     private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E); // marco de las capturas
-    private static final int ICON_PERCENT = 85; // la pieza ocupa el 85% de la casilla
 
     // Letra de la imagen (wK.png, bQ.png...) y símbolo de texto de respaldo, por tipo de pieza.
     // Una pieza que este adaptador no conoce (una nueva del núcleo) se muestra con la inicial de
@@ -67,9 +61,9 @@ public class BoardView extends JPanel {
         define(PieceType.PAWN, "P", "♙", "♟");
     }
 
-    // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0. Se cargan una
-    // sola vez desde assets/piezas/. Si falta alguna, esa pieza se muestra con su símbolo.
-    private static final Map<String, Image> IMAGES = loadImages();
+    // Set de piezas "Cburnett" (Wikimedia Commons / lichess.org), CC BY-SA 3.0. Se cargan y se
+    // achican una sola vez desde assets/piezas/. Si falta alguna, esa pieza se muestra con su símbolo.
+    private static final Map<String, Icon> ICONS = loadIcons();
 
     private static void define(PieceType type, String letter, String white, String black) {
         LETTERS.put(type, letter);
@@ -81,16 +75,12 @@ public class BoardView extends JPanel {
     private final JPanel grid = new JPanel();
     private final JPanel rankLabels = new JPanel();
     private final JPanel fileLabels = new JPanel();
-    private final Map<String, Icon> pieceIcons = new HashMap<>(); // "wK" -> ícono al tamaño actual
-    private final Timer rescale = new Timer(150, e -> refreshIcons());
     private JButton[][] squares = new JButton[0][0];
     private Board board;
-    private int squareSize = MIN_SQUARE;
 
     public BoardView(Consumer<Position> onSquareClicked) {
         super(new BorderLayout());
         this.onSquareClicked = onSquareClicked;
-        rescale.setRepeats(false);
         grid.setName("board");
         // Números a la izquierda y letras abajo, alineadas con las columnas.
         JPanel fileRow = new JPanel(new BorderLayout());
@@ -99,17 +89,17 @@ public class BoardView extends JPanel {
         add(grid, BorderLayout.CENTER);
         add(rankLabels, BorderLayout.WEST);
         add(fileRow, BorderLayout.SOUTH);
-        for (JPanel panel : new JPanel[]{this, fileRow, rankLabels, fileLabels}) panel.setOpaque(false);
     }
 
     // Arma las casillas para este tablero, con las blancas abajo.
-    public void setup(Board board, int squareSize) {
+    public void setup(Board board) {
         this.board = board;
         int rows = board.getRows();
         int columns = board.getColumns();
         squares = new JButton[rows][columns];
         grid.removeAll();
         grid.setLayout(new GridLayout(rows, columns));
+        grid.setPreferredSize(new Dimension(columns * SQUARE, rows * SQUARE));
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
                 final Position pos = new Position(rows - 1 - i, j);
@@ -123,27 +113,8 @@ public class BoardView extends JPanel {
             }
         }
         buildCoordinates(rows, columns);
-        resize(squareSize);
-        refreshIcons();
+        render(board);
     }
-
-    // El lado de casilla más grande que entra en el espacio disponible, entre MIN y MAX.
-    public static int squareSizeFor(Dimension available, int rows, int columns) {
-        int byWidth = (available.width - COORDINATE_SIZE) / columns;
-        int byHeight = (available.height - COORDINATE_SIZE) / rows;
-        return Math.max(MIN_SQUARE, Math.min(MAX_SQUARE, Math.min(byWidth, byHeight)));
-    }
-
-    // Se llama cuando cambia el espacio para el tablero (la ventana se agrandó o se achicó).
-    public void fitTo(Dimension available) {
-        if (board == null) return;
-        int size = squareSizeFor(available, board.getRows(), board.getColumns());
-        if (size == squareSize) return;
-        resize(size);
-        rescale.restart(); // las piezas se rehacen cuando se deja de arrastrar
-    }
-
-    public int getSquareSize() { return squareSize; }
 
     // Redibuja las piezas y los colores de las casillas. Borra lo que hubiera marcado.
     public void render(Board board) {
@@ -152,7 +123,7 @@ public class BoardView extends JPanel {
             for (int col = 0; col < squares[row].length; col++) {
                 JButton button = squares[row][col];
                 applyIcon(button, board.pieceAt(new Position(row, col)));
-                button.setBackground((row + col) % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT);
+                button.setBackground((row + col) % 2 == 0 ? DARK : LIGHT);
                 button.setBorderPainted(false); // quita el marco de una selección anterior
             }
         }
@@ -171,9 +142,8 @@ public class BoardView extends JPanel {
     }
 
     // Una imagen de assets/, leída del classpath y no de una ruta en disco como "src/assets/...":
-    // así se encuentra igual en Windows, macOS y Linux, desde IntelliJ o desde la terminal, y
-    // aunque el juego se corra desde otra carpeta. build.sh copia src/assets junto a las clases.
-    // Devuelve null si falta el archivo.
+    // así se encuentra igual desde IntelliJ o desde la terminal, y aunque el juego se corra desde
+    // otra carpeta. build.sh copia src/assets junto a las clases. Devuelve null si falta el archivo.
     static BufferedImage asset(String path) {
         try (InputStream in = BoardView.class.getResourceAsStream("/assets/" + path)) {
             return in == null ? null : ImageIO.read(in);
@@ -182,25 +152,13 @@ public class BoardView extends JPanel {
         }
     }
 
-    private static Map<String, Image> loadImages() {
-        Map<String, Image> map = new HashMap<>();
+    private static Map<String, Icon> loadIcons() {
+        Map<String, Icon> map = new HashMap<>();
         for (String key : new String[]{"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"}) {
-            map.put(key, asset("piezas/" + key + ".png"));
+            BufferedImage image = asset("piezas/" + key + ".png");
+            if (image != null) map.put(key, new ImageIcon(image.getScaledInstance(PIECE, PIECE, Image.SCALE_SMOOTH)));
         }
         return map;
-    }
-
-    private void resize(int size) {
-        squareSize = size;
-        Dimension gridSize = new Dimension(squares.length == 0 ? 0 : squares[0].length * size, squares.length * size);
-        grid.setPreferredSize(gridSize);
-        grid.setMinimumSize(gridSize); // con menos lugar no se deforma: las casillas siguen cuadradas
-        revalidate();
-    }
-
-    private void refreshIcons() {
-        pieceIcons.clear();
-        if (board != null) render(board);
     }
 
     // Números (filas) y letras (columnas) en el mismo orden en que se ven las casillas.
@@ -209,20 +167,14 @@ public class BoardView extends JPanel {
         rankLabels.setLayout(new GridLayout(rows, 1));
         rankLabels.setPreferredSize(new Dimension(COORDINATE_SIZE, 0));
         for (int i = 0; i < rows; i++) {
-            rankLabels.add(coordinate(String.valueOf(rows - i)));
+            rankLabels.add(new JLabel(String.valueOf(rows - i), SwingConstants.CENTER));
         }
         fileLabels.removeAll();
         fileLabels.setLayout(new GridLayout(1, columns));
         fileLabels.setPreferredSize(new Dimension(0, COORDINATE_SIZE));
         for (int j = 0; j < columns; j++) {
-            fileLabels.add(coordinate(String.valueOf((char) ('a' + j))));
+            fileLabels.add(new JLabel(String.valueOf((char) ('a' + j)), SwingConstants.CENTER));
         }
-    }
-
-    private static JLabel coordinate(String text) {
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setForeground(Palette.MUTED);
-        return label;
     }
 
     // Pinta la casilla y le pone un marco, así dos casillas marcadas pegadas
@@ -235,20 +187,9 @@ public class BoardView extends JPanel {
     }
 
     private void applyIcon(JButton button, Piece piece) {
-        String key = piece == null ? null : imageKey(piece);
-        Image image = key == null ? null : IMAGES.get(key);
-        if (image == null) {
-            button.setIcon(null);
-            button.setText(piece == null ? "" : symbol(piece)); // imagen faltante o pieza desconocida: texto
-            return;
-        }
-        button.setText("");
-        Icon icon = pieceIcons.get(key);
-        if (icon == null) {
-            icon = new ImageIcon(SmoothImage.of(image, squareSize * ICON_PERCENT / 100));
-            pieceIcons.put(key, icon);
-        }
+        Icon icon = piece == null ? null : ICONS.get(imageKey(piece));
         button.setIcon(icon);
+        button.setText(piece != null && icon == null ? symbol(piece) : ""); // imagen faltante o pieza desconocida: texto
     }
 
     private static String imageKey(Piece piece) {

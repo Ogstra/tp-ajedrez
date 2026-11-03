@@ -17,7 +17,7 @@ En la consola se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se
 
 ## Pruebas
 
-`./scripts/test.sh` corre las 52 pruebas del juego y la regresión de consola (deshacer y repetir un mate). Para comprobar la ventana real (partida, marcas, deshacer, rehacer, nueva partida, un tablero de 10x10 y el tablero que crece con la ventana):
+`./scripts/test.sh` corre las 51 pruebas del juego y la regresión de consola (deshacer y repetir un mate). Para comprobar la ventana real (partida, marcas, deshacer, rehacer, nueva partida y un tablero de 10x10):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -42,7 +42,6 @@ src/
   adapters/      lo que depende de una tecnología, separado por tecnología
     console/       consola
     swing/         la ventana: tablero y armado de cada partida
-      components/    botones, colores e imágenes de la ventana
   Main.java      arma todo para jugar por consola
   MainSwing.java arma todo para jugar con ventana
   ChessCoreTests.java
@@ -65,7 +64,7 @@ Lo que se ve en la materia está así:
 ## Agregar cosas sin tocar lo que ya está
 
 - **Una pieza nueva**: se escribe su `IMovementStrategy`, se crea un `PieceType` y se registra con `factory.register(...)`. Hay un test que lo hace con una pieza inventada que se mueve como torre y caballo.
-- **Otro tamaño de tablero**: `BoardSetup.custom(10, 10, filaTrasera, piezas)` en el `GameBuilder` de `MainSwing` (o `new Board(10, 10)`). Todo pregunta a `board.isInside()` en vez de asumir 8x8, el peón corona en la última fila de ese tablero y la ventana se adapta sola.
+- **Otro tamaño de tablero**: `BoardSetup.custom(10, 10, filaTrasera, piezas)` en el `GameBuilder` de `MainSwing` (o `new Board(10, 10)`). Todo pregunta a `board.isInside()` en vez de asumir 8x8, el peón corona en la última fila de ese tablero y la ventana toma el tamaño del tablero.
 - **Una regla especial o de tablas nueva**: una clase que implemente `ISpecialMove` o `IDrawRule` y una línea en `StandardRules`.
 
 ## Cosas a tener en cuenta

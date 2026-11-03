@@ -1,6 +1,5 @@
 package core.command;
 
-import core.Move;
 import core.board.Board;
 import core.board.Piece;
 import core.board.PieceType;
@@ -53,10 +52,6 @@ public class MoveCommand implements IMoveCommand {
     @Override
     public void announce(IMoveListener listener) {
         listener.onMoveMade(from, to, movedPiece, capturedPiece);
-    }
-    @Override
-    public Move getMove() {
-        return new Move(from, to);
     }
     @Override
     public boolean resetsHalfMoveClock() {

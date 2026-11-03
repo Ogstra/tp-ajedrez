@@ -37,7 +37,6 @@ public class ChessGame implements IChessGame, IGameContext {
     private final Deque<HistoryEntry> history = new ArrayDeque<>();
     private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
     private final Board initialBoard;
-    private final Color initialColor;
     private IGameState state;
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
@@ -49,7 +48,6 @@ public class ChessGame implements IChessGame, IGameContext {
         this.specialMoves = specialMoves;
         this.drawRules = drawRules;
         this.initialBoard = board.cloneBoard();
-        this.initialColor = Color.WHITE;
         this.state = new WhiteTurnState();
     }
 
@@ -191,11 +189,6 @@ public class ChessGame implements IChessGame, IGameContext {
     }
 
     @Override
-    public Move lastMove() {
-        return history.isEmpty() ? null : history.peek().command.getMove();
-    }
-
-    @Override
     public int halfMoveClock() {
         int count = 0;
         for (HistoryEntry entry : history) { // de la más reciente a la más vieja
@@ -208,7 +201,7 @@ public class ChessGame implements IChessGame, IGameContext {
     @Override
     public int occurrencesOfCurrentPosition() {
         Color toMove = state.currentColor();
-        int count = (initialColor == toMove && initialBoard.equals(board)) ? 1 : 0;
+        int count = (toMove == Color.WHITE && initialBoard.equals(board)) ? 1 : 0; // la partida arranca con blancas
         for (HistoryEntry entry : history) {
             if (entry.stateAfter.currentColor() == toMove && entry.boardAfter.equals(board)) count++;
         }

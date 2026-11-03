@@ -1,6 +1,5 @@
 package core.command;
 
-import core.Move;
 import core.board.Board;
 import core.board.Color;
 import core.board.Position;
@@ -51,10 +50,6 @@ public class CastlingCommand implements IMoveCommand {
     public void announce(IMoveListener listener) {
         boolean kingside = kingTo.getColumn() > kingFrom.getColumn();
         listener.onCastling(color, kingside);
-    }
-    @Override
-    public Move getMove() {
-        return new Move(kingFrom, kingTo);
     }
     @Override
     public boolean resetsHalfMoveClock() {

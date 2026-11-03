@@ -1,6 +1,5 @@
 package core.command;
 
-import core.Move;
 import core.board.Board;
 import core.board.Piece;
 import core.board.Position;
@@ -54,10 +53,6 @@ public class PromotionCommand implements IMoveCommand {
     public void announce(IMoveListener listener) {
         listener.onMoveMade(from, to, originalPawn, capturedPiece);
         listener.onPromotion(promotedPiece.getColor(), to, promotedPiece.getType());
-    }
-    @Override
-    public Move getMove() {
-        return new Move(from, to);
     }
     @Override
     public boolean resetsHalfMoveClock() {

@@ -15,8 +15,8 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 
-// Prueba de integración de la ventana real (partida, marcas, deshacer, rehacer y tamaño del
-// tablero), sin reflection ni librerías de tests.
+// Prueba de integración de la ventana real (partida, marcas, deshacer, rehacer y otro tamaño
+// de tablero), sin reflection ni librerías de tests.
 public class SwingIntegrationTests {
     private static SwingChessView view;
     private static IChessGame game;
@@ -90,30 +90,9 @@ public class SwingIntegrationTests {
                 require(corner.getWidth() == corner.getHeight() && corner.getWidth() > 0,
                     "las casillas deben ser cuadradas: " + corner.getWidth() + "x" + corner.getHeight());
                 require(label(root, "j") != null && label(root, "10") != null, "las coordenadas llegan hasta j y 10");
-                require(view.getContentPane().getHeight() <= Toolkit.getDefaultToolkit().getScreenSize().height,
-                    "la ventana debe entrar en la pantalla");
             });
             System.out.println("[OK]   Swing: tablero de 10x10 con casillas cuadradas y coordenadas hasta j y 10");
 
-            // Al agrandar la ventana, las casillas crecen (y siguen cuadradas).
-            int[] sizes = new int[2];
-            SwingUtilities.invokeAndWait(() -> {
-                view.dispose();
-                view = new SwingChessView(builder(8));
-                view.setVisible(true);
-                inspect(view.getContentPane());
-                sizes[0] = boardPanel.getComponent(0).getWidth();
-                view.setSize(view.getWidth() + 320, view.getHeight() + 320);
-                view.validate();
-            });
-            Thread.sleep(600); // las piezas se rehacen cuando se deja de cambiar el tamaño
-            SwingUtilities.invokeAndWait(() -> {
-                JButton corner = (JButton) boardPanel.getComponent(0);
-                sizes[1] = corner.getWidth();
-                require(sizes[1] > sizes[0] && corner.getWidth() == corner.getHeight(),
-                    "al agrandar la ventana las casillas deben crecer y seguir cuadradas: " + sizes[0] + " -> " + sizes[1]);
-            });
-            System.out.println("[OK]   Swing: el tablero crece con la ventana (" + sizes[0] + " -> " + sizes[1] + " px)");
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }

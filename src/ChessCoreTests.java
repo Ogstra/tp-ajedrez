@@ -85,7 +85,6 @@ public class ChessCoreTests {
         testCannotCastleWithPieceBetween();
 
         testMoveValueEquality();
-        testCommandsExposeTheirMove();
 
         testUndoAfterCheckmateReopensTheGame();
 
@@ -885,20 +884,6 @@ public class ChessCoreTests {
             "dos Move con las mismas casillas son iguales");
     }
 
-    // TDD: cada comando sabe decir qué jugada representa.
-    private static void testCommandsExposeTheirMove() {
-        // Arrange
-        Board board = new Board();
-        board.placePiece(piece(PieceType.PAWN, Color.WHITE), at("e2"));
-        MoveCommand simple = new MoveCommand(board, at("e2"), at("e4"));
-        CastlingCommand castling = new CastlingCommand(board, at("e1"), at("g1"), at("h1"), at("f1"));
-
-        // Act / Assert
-        assertTrue("testCommandsExposeTheirMove",
-            simple.getMove().equals(new Move(at("e2"), at("e4")))
-                && castling.getMove().equals(new Move(at("e1"), at("g1"))),
-            "el enroque se representa con el movimiento del rey");
-    }
     // TDD: se puede deshacer la jugada que terminó la partida y seguir jugando.
     private static void testUndoAfterCheckmateReopensTheGame() {
         // Arrange: mate del loco.
@@ -1127,11 +1112,12 @@ public class ChessCoreTests {
         assertTrue("testStatusListenerReceivesDraw", observer.events.equals(Arrays.asList("move", "draw")),
             "esperaba [move, draw] y llegó " + observer.events);
     }
+
     // Una regla de tablas inventada en el test: declara tablas apenas hay una jugada hecha.
     private static class AlwaysDrawRule implements IDrawRule {
         @Override
         public String reason(IGameContext context) {
-            return context.lastMove() != null ? "regla de prueba" : null;
+            return "regla de prueba"; // se consulta después de cada jugada: declara tablas en la primera
         }
     }
 

@@ -17,9 +17,6 @@ public interface IGameContext {
     // true si alguna pieza rival de "color" ataca la casilla.
     boolean isAttacked(Position pos, Color color);
 
-    // La última jugada que sigue en pie, o null si todavía no se jugó ninguna.
-    Move lastMove();
-
     // Cuántas medias jugadas seguidas (de las últimas) no movieron un peón ni capturaron.
     int halfMoveClock();
 
