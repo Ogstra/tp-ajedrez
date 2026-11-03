@@ -17,9 +17,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +38,7 @@ import java.util.function.Consumer;
 public class BoardView extends JPanel {
 
     private static final int SQUARE = 80;          // lado de cada casilla, en píxeles
-    private static final int PIECE = 68;           // lado de la imagen de la pieza, con un margen
+    private static final int PIECE = 68;           // lado de la pieza en pantalla, con un margen
     private static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
 
     private static final java.awt.Color LIGHT = new java.awt.Color(0xEE, 0xEE, 0xD2);
@@ -156,9 +160,27 @@ public class BoardView extends JPanel {
         Map<String, Icon> map = new HashMap<>();
         for (String key : new String[]{"wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"}) {
             BufferedImage image = asset("piezas/" + key + ".png");
-            if (image != null) map.put(key, new ImageIcon(image.getScaledInstance(PIECE, PIECE, Image.SCALE_SMOOTH)));
+            if (image != null) map.put(key, sharpIcon(image.getScaledInstance(2 * PIECE, 2 * PIECE, Image.SCALE_SMOOTH)));
         }
         return map;
+    }
+
+    // Ícono de PIECE x PIECE que guarda la imagen al doble de resolución: en una pantalla Retina o
+    // escalada se usan todos sus píxeles y la pieza se ve nítida; en una común se achica al dibujar.
+    private static Icon sharpIcon(Image image) {
+        new ImageIcon(image); // espera a que la imagen achicada termine de armarse
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.drawImage(image, x, y, PIECE, PIECE, null);
+                g2.dispose();
+            }
+
+            @Override public int getIconWidth() { return PIECE; }
+            @Override public int getIconHeight() { return PIECE; }
+        };
     }
 
     // Números (filas) y letras (columnas) en el mismo orden en que se ven las casillas.
