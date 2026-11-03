@@ -1,5 +1,9 @@
 package core;
 
+import core.board.Board;
+import core.board.Color;
+import core.board.Position;
+
 // Lo que una regla (ISpecialMove, IDrawRule) puede consultar de la partida,
 // sin conocer a ChessGame (DIP: las reglas dependen de esta abstracción).
 public interface IGameContext {

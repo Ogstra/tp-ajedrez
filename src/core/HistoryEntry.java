@@ -1,5 +1,9 @@
 package core;
 
+import core.board.Board;
+import core.command.IMoveCommand;
+import core.state.IGameState;
+
 // Una jugada del historial junto con el estado de la partida antes y después,
 // y una foto del tablero después de la jugada (para contar repeticiones).
 // Así deshacer es volver a stateBefore, sin trucos de alternar turnos.

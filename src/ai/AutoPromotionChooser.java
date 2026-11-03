@@ -1,7 +1,7 @@
 package ai;
 
-import core.Color;
-import core.PieceType;
+import core.board.Color;
+import core.board.PieceType;
 import ports.IPromotionChooser;
 
 // Decorador del chooser humano: cuando corona el bando de la IA elige reina

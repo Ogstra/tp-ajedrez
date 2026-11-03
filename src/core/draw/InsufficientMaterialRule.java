@@ -1,12 +1,11 @@
 package core.draw;
 
-import core.Board;
-import core.Color;
-import core.IDrawRule;
+import core.board.Board;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
 import core.IGameContext;
-import core.Piece;
-import core.PieceType;
-import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;

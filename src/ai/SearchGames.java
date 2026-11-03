@@ -1,11 +1,11 @@
 package ai;
 
+import core.board.PieceFactory;
+import core.board.PieceType;
+import core.draw.IDrawRule;
 import core.ChessGame;
 import core.IChessGame;
-import core.IDrawRule;
-import core.PieceFactory;
 import core.StandardRules;
-import core.PieceType;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 

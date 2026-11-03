@@ -1,7 +1,8 @@
 package ports;
 
-import core.Color;
-import core.PieceType;
+import core.board.Color;
+import core.board.PieceType;
+
 
 // Puerto de salida (Clase 2): lo que el núcleo necesita del mundo exterior
 // cuando un peón corona, sin saber cómo se resuelve. La consola pregunta por

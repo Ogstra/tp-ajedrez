@@ -1,10 +1,10 @@
 package ai;
 
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
 import core.IChessGame;
 import core.Move;
-import core.Piece;
-import core.PieceType;
-import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;

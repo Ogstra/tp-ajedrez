@@ -1,5 +1,8 @@
 package core;
 
+import core.board.PieceFactory;
+import core.draw.IDrawRule;
+import core.special.ISpecialMove;
 import core.draw.FiftyMoveRule;
 import core.draw.InsufficientMaterialRule;
 import core.draw.ThreefoldRepetitionRule;

@@ -1,6 +1,6 @@
 package ai;
 
-import core.Color;
+import core.board.Color;
 import core.IChessGame;
 import core.Move;
 import core.MoveOutcome;

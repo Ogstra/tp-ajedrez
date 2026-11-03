@@ -1,10 +1,9 @@
 package core.movement;
 
-import core.Board;
-import core.Color;
-import core.IMovementStrategy;
-import core.Position;
 
+import core.board.Board;
+import core.board.Color;
+import core.board.Position;
 import java.util.List;
 
 // La reina se mueve como torre + alfil combinados. En vez de heredar de

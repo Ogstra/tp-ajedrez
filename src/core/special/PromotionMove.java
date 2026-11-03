@@ -1,15 +1,14 @@
 package core.special;
 
-import core.Board;
-import core.Color;
+import core.board.Board;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceFactory;
+import core.board.PieceType;
+import core.board.Position;
+import core.command.IMoveCommand;
+import core.command.PromotionCommand;
 import core.IGameContext;
-import core.IMoveCommand;
-import core.ISpecialMove;
-import core.Piece;
-import core.PieceFactory;
-import core.PieceType;
-import core.Position;
-import core.PromotionCommand;
 import ports.IPromotionChooser;
 
 import java.util.Collections;

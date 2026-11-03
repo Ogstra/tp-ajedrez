@@ -7,7 +7,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ## Paquete `(raíz, sin paquete)`
 
 ### AccountTests (class)
-- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, Piece, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
+- Usa: AccountService, Board, BoardSetup, CastlingMove, ChessGame, Color, EnPassantMove, FiftyMoveRule, FileAccountStore, IAccountStore, IChessGame, IDrawRule, IGameStatusListener, IMoveListener, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, PieceFactory, PieceType, Position, PromotionMove, Result, Score, ScoreRecorder, ThreefoldRepetitionRule, User
 
 ### Main (class)
 - Usa: AccountService, AutoPromotionChooser, Board, BoardSetup, ChessGame, Color, ConsoleAccounts, ConsolePromotionChooser, ConsoleRenderer, FileAccountStore, IChessGame, IGameStatusListener, IMoveListener, IPromotionChooser, MoveOutcome, OpponentController, OpponentLevel, Opponents, PieceFactory, Position, ScoreRecorder, StandardRules, User
@@ -37,20 +37,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### User (class)
 
-## Paquete `adapters`
-
-### BoardStrip (class)
-- Extiende: JComponent
-- Usa: Palette
-
-### BoardView (class)
-- Extiende: JPanel
-- Tiene: Board, PieceType, Position
-- Usa: Color, Move, Palette, Piece, SmoothImage
-
-### ChoiceControl (class)
-- Extiende: JComponent
-- Usa: Color, Palette, RoundedBorder, SmoothImage
+## Paquete `adapters.console`
 
 ### ConsoleAccounts (class)
 - Usa: AccountService, Score, User
@@ -64,17 +51,18 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Tiene: PieceType
 - Usa: Board, Color, Piece, Position
 
+## Paquete `adapters.storage`
+
 ### FileAccountStore (class)
 - Implementa: IAccountStore
 - Usa: Score, User
 
-### FlatButton (class)
-- Extiende: JButton
-- Usa: Color, FlatComboBox, Palette, RoundedBorder
+## Paquete `adapters.swing`
 
-### FlatComboBox (class)
-- Extiende: JComboBox
-- Usa: Palette, RoundedBorder
+### BoardView (class)
+- Extiende: JPanel
+- Tiene: Board, PieceType, Position
+- Usa: Color, Move, Palette, Piece, SmoothImage
 
 ### GameBuilder (interface)
 - Usa: Color, Match, OpponentLevel, SwingChessView, User
@@ -87,13 +75,37 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Tiene: AccountService, ChoiceControl, FlatButton, User
 - Usa: BoardStrip, BoardView, Color, FlatComboBox, OpponentLevel, Palette, RoundedBorder, RoundedPanel, Score, SmoothImage
 
-### Palette (class)
-- Tiene: Color
-
 ### RankingPanel (class)
 - Extiende: JPanel
 - Tiene: RoundedPanel
 - Usa: BoardStrip, FlatButton, Palette, Score
+
+### SwingChessView (class)
+- Extiende: JFrame
+- Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
+- Tiene: AccountService, Board, BoardView, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
+- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, User
+
+## Paquete `adapters.swing.components`
+
+### BoardStrip (class)
+- Extiende: JComponent
+- Usa: Palette
+
+### ChoiceControl (class)
+- Extiende: JComponent
+- Usa: Color, Palette, RoundedBorder, SmoothImage
+
+### FlatButton (class)
+- Extiende: JButton
+- Usa: Color, FlatComboBox, Palette, RoundedBorder
+
+### FlatComboBox (class)
+- Extiende: JComboBox
+- Usa: Palette, RoundedBorder
+
+### Palette (class)
+- Tiene: Color
 
 ### RoundedBorder (class)
 - Extiende: AbstractBorder
@@ -104,12 +116,6 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Usa: Palette, RoundedBorder
 
 ### SmoothImage (class)
-
-### SwingChessView (class)
-- Extiende: JFrame
-- Implementa: IMoveListener, IGameStatusListener, IPromotionChooser
-- Tiene: AccountService, Board, BoardView, GameBuilder, IChessGame, MenuPanel, OpponentController, PieceType, Position, RankingPanel
-- Usa: Color, FlatButton, Match, Move, OpponentLevel, Palette, Piece, User
 
 ## Paquete `ai`
 
@@ -158,9 +164,29 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ## Paquete `core`
 
-### BlackTurnState (class)
-- Implementa: IGameState
-- Usa: Color, WhiteTurnState
+### ChessGame (class)
+- Implementa: IChessGame, IGameContext
+- Tiene: Board, Color, HistoryEntry, IDrawRule, IGameState, IGameStatusListener, IMoveListener, ISpecialMove
+- Usa: BlackTurnState, CheckmateState, DrawState, IMoveCommand, Move, MoveCommand, MoveOutcome, Piece, Position, StalemateState, WhiteTurnState
+
+### HistoryEntry (class)
+- Tiene: Board, IGameState, IMoveCommand, MoveOutcome
+
+### IChessGame (interface)
+- Usa: Board, Color, Move, MoveOutcome, Position
+
+### IGameContext (interface)
+- Usa: Board, Color, Move, Position
+
+### Move (class)
+- Tiene: Position
+
+### MoveOutcome (enum)
+
+### StandardRules (class)
+- Usa: CastlingMove, EnPassantMove, FiftyMoveRule, IDrawRule, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, PieceFactory, PromotionMove, ThreefoldRepetitionRule
+
+## Paquete `core.board`
 
 ### Board (class)
 - Tiene: Piece, Position
@@ -170,67 +196,7 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Tiene: PieceType
 - Usa: Board, Color, PieceFactory, Position
 
-### CastlingCommand (class)
-- Implementa: IMoveCommand
-- Tiene: Board, Color, Position
-- Usa: IMoveListener, Move
-
-### CheckmateState (class)
-- Implementa: IGameState
-- Tiene: Color
-
-### ChessGame (class)
-- Implementa: IChessGame, IGameContext
-- Tiene: Board, Color, HistoryEntry, IDrawRule, IGameState, IGameStatusListener, IMoveListener, ISpecialMove
-- Usa: BlackTurnState, CheckmateState, DrawState, IMoveCommand, Move, MoveCommand, MoveOutcome, Piece, Position, StalemateState, WhiteTurnState
-
 ### Color (enum)
-
-### DrawState (class)
-- Implementa: IGameState
-- Tiene: Color
-
-### EnPassantCommand (class)
-- Implementa: IMoveCommand
-- Tiene: Board, Piece, Position
-- Usa: IMoveListener, Move
-
-### HistoryEntry (class)
-- Tiene: Board, IGameState, IMoveCommand, MoveOutcome
-
-### IChessGame (interface)
-- Usa: Board, Color, Move, MoveOutcome, Position
-
-### ICommand (interface)
-
-### IDrawRule (interface)
-- Usa: IGameContext
-
-### IGameContext (interface)
-- Usa: Board, Color, Move, Position
-
-### IGameState (interface)
-- Usa: Color
-
-### IMoveCommand (interface)
-- Extiende: ICommand
-- Usa: IMoveListener, Move, Position
-
-### IMovementStrategy (interface)
-- Usa: Board, Color, Position
-
-### ISpecialMove (interface)
-- Usa: IGameContext, IMoveCommand, Position
-
-### Move (class)
-- Tiene: Position
-
-### MoveCommand (class)
-- Implementa: IMoveCommand
-- Tiene: Board, Piece, Position
-- Usa: IMoveListener, Move, PieceType
-
-### MoveOutcome (enum)
 
 ### Piece (class)
 - Tiene: Color, IMovementStrategy, PieceType
@@ -244,26 +210,41 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 ### Position (class)
 
+## Paquete `core.command`
+
+### CastlingCommand (class)
+- Implementa: IMoveCommand
+- Tiene: Board, Color, Position
+- Usa: IMoveListener, Move
+
+### EnPassantCommand (class)
+- Implementa: IMoveCommand
+- Tiene: Board, Piece, Position
+- Usa: IMoveListener, Move
+
+### ICommand (interface)
+
+### IMoveCommand (interface)
+- Extiende: ICommand
+- Usa: IMoveListener, Move, Position
+
+### MoveCommand (class)
+- Implementa: IMoveCommand
+- Tiene: Board, Piece, Position
+- Usa: IMoveListener, Move, PieceType
+
 ### PromotionCommand (class)
 - Implementa: IMoveCommand
 - Tiene: Board, Piece, Position
 - Usa: IMoveListener, Move
 
-### StalemateState (class)
-- Implementa: IGameState
-- Tiene: Color
-
-### StandardRules (class)
-- Usa: CastlingMove, EnPassantMove, FiftyMoveRule, IDrawRule, IPromotionChooser, ISpecialMove, InsufficientMaterialRule, PieceFactory, PromotionMove, ThreefoldRepetitionRule
-
-### WhiteTurnState (class)
-- Implementa: IGameState
-- Usa: BlackTurnState, Color
-
 ## Paquete `core.draw`
 
 ### FiftyMoveRule (class)
 - Implementa: IDrawRule
+- Usa: IGameContext
+
+### IDrawRule (interface)
 - Usa: IGameContext
 
 ### InsufficientMaterialRule (class)
@@ -279,6 +260,9 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 ### BishopMovementStrategy (class)
 - Implementa: IMovementStrategy
 - Usa: Board, Color, Position, SlidingMovement
+
+### IMovementStrategy (interface)
+- Usa: Board, Color, Position
 
 ### KingMovementStrategy (class)
 - Implementa: IMovementStrategy
@@ -314,10 +298,38 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 - Implementa: ISpecialMove
 - Usa: Board, Color, EnPassantCommand, IGameContext, IMoveCommand, Move, Piece, PieceType, Position
 
+### ISpecialMove (interface)
+- Usa: IGameContext, IMoveCommand, Position
+
 ### PromotionMove (class)
 - Implementa: ISpecialMove
 - Tiene: IPromotionChooser, PieceFactory
 - Usa: Board, Color, IGameContext, IMoveCommand, Piece, PieceType, Position, PromotionCommand
+
+## Paquete `core.state`
+
+### BlackTurnState (class)
+- Implementa: IGameState
+- Usa: Color, WhiteTurnState
+
+### CheckmateState (class)
+- Implementa: IGameState
+- Tiene: Color
+
+### DrawState (class)
+- Implementa: IGameState
+- Tiene: Color
+
+### IGameState (interface)
+- Usa: Color
+
+### StalemateState (class)
+- Implementa: IGameState
+- Tiene: Color
+
+### WhiteTurnState (class)
+- Implementa: IGameState
+- Usa: BlackTurnState, Color
 
 ## Paquete `ports`
 
@@ -334,15 +346,21 @@ Cómo leerla: **Implementa** es una flecha de realización (línea punteada con 
 
 | Paquete | Importa de |
 |---|---|
-| `(raíz, sin paquete)` | `accounts`, `adapters`, `ai`, `core`, `core.draw`, `core.special`, `ports` |
-| `accounts` | `core`, `ports` |
-| `adapters` | `accounts`, `ai`, `core`, `ports` |
-| `ai` | `core`, `ports` |
-| `core` | `core.draw`, `core.movement`, `core.special`, `ports` |
-| `core.draw` | `core` |
-| `core.movement` | `core` |
-| `core.special` | `core`, `ports` |
-| `ports` | `core` |
+| `(raíz, sin paquete)` | `accounts`, `adapters.console`, `adapters.storage`, `adapters.swing`, `ai`, `core`, `core.board`, `core.draw`, `core.special`, `ports` |
+| `accounts` | `core.board`, `ports` |
+| `adapters.console` | `accounts`, `core.board`, `ports` |
+| `adapters.storage` | `accounts` |
+| `adapters.swing` | `accounts`, `adapters.swing.components`, `ai`, `core`, `core.board`, `ports` |
+| `adapters.swing.components` | nada del proyecto |
+| `ai` | `core`, `core.board`, `core.draw`, `ports` |
+| `core` | `core.board`, `core.command`, `core.draw`, `core.special`, `core.state`, `ports` |
+| `core.board` | `core.movement` |
+| `core.command` | `core`, `core.board`, `ports` |
+| `core.draw` | `core`, `core.board` |
+| `core.movement` | `core.board` |
+| `core.special` | `core`, `core.board`, `core.command`, `ports` |
+| `core.state` | `core.board` |
+| `ports` | `core.board` |
 
 ## Dónde está cada patrón (para marcarlo en el diagrama)
 

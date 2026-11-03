@@ -1,5 +1,19 @@
 package core;
 
+import core.board.Board;
+import core.board.Color;
+import core.board.Piece;
+import core.board.Position;
+import core.command.IMoveCommand;
+import core.command.MoveCommand;
+import core.draw.IDrawRule;
+import core.special.ISpecialMove;
+import core.state.BlackTurnState;
+import core.state.CheckmateState;
+import core.state.DrawState;
+import core.state.IGameState;
+import core.state.StalemateState;
+import core.state.WhiteTurnState;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 

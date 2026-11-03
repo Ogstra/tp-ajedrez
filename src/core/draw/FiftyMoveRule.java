@@ -1,6 +1,5 @@
 package core.draw;
 
-import core.IDrawRule;
 import core.IGameContext;
 
 // Tablas por la regla de los 50 movimientos: 100 medias jugadas seguidas sin

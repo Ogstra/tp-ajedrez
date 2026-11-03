@@ -1,5 +1,6 @@
 package core;
 
+import core.board.Position;
 import java.util.Objects;
 
 // Value object inmutable: una jugada es "de esta casilla a esta otra".

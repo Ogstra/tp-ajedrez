@@ -1,10 +1,11 @@
 package ai;
 
-import core.Board;
-import core.Color;
-import core.Piece;
-import core.PieceType;
-import core.Position;
+import core.board.Board;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
+
 
 // Cuánto vale una posición para un bando: el material, que es lo principal, y
 // un poco de criterio posicional para que no juegue al azar cuando ninguna

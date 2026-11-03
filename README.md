@@ -43,12 +43,19 @@ Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahog
 
 ```
 src/
-  core/          el núcleo: las reglas del ajedrez, sin nada de consola ni de Swing
+  core/          el núcleo: ChessGame, su interfaz de entrada y las reglas de siempre
+    board/         tablero, piezas, posiciones y colores
+    state/         turnos y finales de partida (State)
+    command/       cada jugada como comando para deshacer y rehacer (Command)
+    movement/      cómo se mueve cada pieza (Strategy)
     special/       enroque, captura al paso y coronación
-    movement/      cómo se mueve cada pieza
     draw/          las condiciones de tablas
   ports/         interfaces con las que el núcleo avisa y pregunta al exterior
-  adapters/      consola, Swing y archivo CSV, que implementan los puertos
+  adapters/      lo que depende de una tecnología, separado por tecnología
+    console/       consola
+    storage/       archivo CSV de usuarios
+    swing/         la ventana: pantallas, tablero y armado de cada partida
+      components/    botones, selectores y colores propios de la ventana
   accounts/      cuentas, puntajes y ranking, con su propio puerto (IAccountStore), afuera del núcleo
   ai/            el oponente, afuera del núcleo
   Main.java      arma todo para jugar por consola

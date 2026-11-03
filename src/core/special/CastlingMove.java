@@ -1,14 +1,13 @@
 package core.special;
 
-import core.Board;
-import core.CastlingCommand;
-import core.Color;
+import core.board.Board;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
+import core.command.CastlingCommand;
+import core.command.IMoveCommand;
 import core.IGameContext;
-import core.IMoveCommand;
-import core.ISpecialMove;
-import core.Piece;
-import core.PieceType;
-import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;

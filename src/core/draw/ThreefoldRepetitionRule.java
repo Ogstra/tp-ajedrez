@@ -1,6 +1,5 @@
 package core.draw;
 
-import core.IDrawRule;
 import core.IGameContext;
 
 // Tablas por repetición: la misma posición, con el mismo bando al turno, tres

@@ -1,5 +1,8 @@
 package core;
 
+import core.board.Board;
+import core.board.Color;
+import core.board.Position;
 import java.util.List;
 
 // Puerto de entrada (Clase 2): lo único que el mundo exterior (consola,

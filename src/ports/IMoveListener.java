@@ -1,9 +1,10 @@
 package ports;
 
-import core.Color;
-import core.Piece;
-import core.PieceType;
-import core.Position;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
+
 
 // Puerto de salida (Clase 2), parte 1: lo que pasa con las piezas.
 // Interface Segregation (Clase 3): un adaptador que solo quiere saber de

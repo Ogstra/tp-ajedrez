@@ -1,7 +1,7 @@
 package ai;
 
-import core.Color;
-import core.PieceType;
+import core.board.Color;
+import core.board.PieceType;
 import ports.IPromotionChooser;
 
 // Puerto de salida (Clase 2) resuelto sin preguntar a nadie: siempre la misma pieza.

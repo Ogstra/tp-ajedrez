@@ -1,9 +1,9 @@
 package accounts;
 
-import core.Color;
-import core.Piece;
-import core.PieceType;
-import core.Position;
+import core.board.Color;
+import core.board.Piece;
+import core.board.PieceType;
+import core.board.Position;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 
