@@ -1,21 +1,26 @@
 package adapters.swing;
 
+import ai.OpponentController;
+import ai.OpponentLevel;
 import core.board.Board;
 import core.board.Color;
 import core.board.Piece;
 import core.board.PieceType;
 import core.board.Position;
 import core.IChessGame;
+import core.Move;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
 import ports.IPromotionChooser;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -45,8 +50,15 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     private final BoardView boardView = new BoardView(this::onSquareClicked);
     private final JLabel status = new JLabel("Turno de Blancas");
     private final JButton newGameButton = new JButton("Nueva partida");
+    private final JButton undoButton = new JButton("Deshacer");
+    private final JButton redoButton = new JButton("Rehacer");
+    // Mismo orden que OpponentLevel: NONE, EASY, MEDIUM, HARD.
+    private final JComboBox<String> levelBox = new JComboBox<>(new String[]{"Dos jugadores", "IA fácil", "IA media", "IA difícil"});
 
     private IChessGame game;
+    private OpponentController opponent; // null cuando juegan dos personas
+    private OpponentLevel level = OpponentLevel.NONE;
+    private boolean thinking = false;
     private Position selection = null;
     private Board startBoard;        // el tablero al empezar, para saber si hubo jugadas
 
@@ -73,7 +85,9 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     // Arma una partida nueva y la muestra.
     private void startGame() {
-        game = builder.build(this);
+        Match match = builder.build(this, level);
+        game = match.getGame();
+        opponent = match.getOpponent();
         selection = null;
         startBoard = game.getBoard().cloneBoard();
         status.setText("Turno de Blancas");
@@ -83,39 +97,61 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
     // Empezar otra con una partida empezada y sin terminar la pierde: se pide confirmación.
     private void newGame() {
-        if (!game.isGameOver() && !game.getBoard().equals(startBoard)) {
-            String[] options = {"Empezar otra", "Seguir jugando"};
-            int choice = JOptionPane.showOptionDialog(this, "La partida sigue en juego. Si empezás otra, se pierde.",
-                "Nueva partida", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-            if (choice != 0) return;
+        if (confirmLosingGame()) startGame();
+    }
+
+    // Cambiar el rival empieza una partida nueva con ese rival.
+    private void changeLevel() {
+        OpponentLevel chosen = OpponentLevel.values()[levelBox.getSelectedIndex()];
+        if (chosen == level) return;
+        if (!confirmLosingGame()) {
+            levelBox.setSelectedIndex(level.ordinal()); // se queda con el rival de antes
+            return;
         }
+        level = chosen;
         startGame();
+    }
+
+    // Si hay una partida empezada y sin terminar, pregunta antes de perderla.
+    private boolean confirmLosingGame() {
+        if (game.isGameOver() || game.getBoard().equals(startBoard)) return true;
+        String[] options = {"Empezar otra", "Seguir jugando"};
+        int choice = JOptionPane.showOptionDialog(this, "La partida sigue en juego. Si empezás otra, se pierde.",
+            "Nueva partida", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+        return choice == 0;
     }
 
     private void buildInterface() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         newGameButton.addActionListener(e -> newGame());
-        JButton undoButton = new JButton("Deshacer");
+        levelBox.addActionListener(e -> changeLevel());
+        // Contra la IA se deshacen dos: su respuesta y la jugada de la persona. Lo mismo al rehacer.
         undoButton.addActionListener(e -> {
-            game.undo();
+            if (game.undo() && opponent != null && opponent.isItsTurn()) game.undo();
             render();
+            playOpponentIfNeeded(); // si quedó el turno de la IA, por ejemplo al deshacer un mate suyo
         });
-        JButton redoButton = new JButton("Rehacer");
         redoButton.addActionListener(e -> {
-            game.redo();
+            if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
             render();
+            playOpponentIfNeeded();
         });
 
-        // Arriba, una barra con Nueva partida, lo que acaba de pasar y los botones de la partida.
+        // Arriba, una barra con Nueva partida, el rival y los botones de la partida, y abajo
+        // de ella lo que acaba de pasar.
         status.setFont(status.getFont().deriveFont(Font.BOLD));
+        status.setBorder(BorderFactory.createEmptyBorder(8, 2, 0, 0));
+        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        left.add(newGameButton);
+        left.add(levelBox);
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         buttons.add(undoButton);
         buttons.add(redoButton);
         JPanel top = new JPanel(new BorderLayout(12, 0));
         top.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-        top.add(newGameButton, BorderLayout.WEST);
-        top.add(status, BorderLayout.CENTER);
+        top.add(left, BorderLayout.WEST);
         top.add(buttons, BorderLayout.EAST);
+        top.add(status, BorderLayout.SOUTH);
 
         add(top, BorderLayout.NORTH);
         add(boardView, BorderLayout.CENTER);
@@ -123,7 +159,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
     }
 
     private void onSquareClicked(Position pos) {
-        if (game.isGameOver()) return;
+        if (game.isGameOver() || thinking) return;
 
         Piece clicked = game.getBoard().pieceAt(pos);
         boolean ownPiece = clicked != null && clicked.getColor() == game.getTurn();
@@ -145,6 +181,32 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
 
         game.tryMove(origin, pos);
         render();
+        playOpponentIfNeeded();
+    }
+
+    // La IA piensa en otro hilo para no congelar la ventana, y la jugada se aplica después
+    // en el hilo de la interfaz. Mientras piensa no se puede tocar el tablero ni los botones.
+    private void playOpponentIfNeeded() {
+        if (opponent == null || !opponent.isItsTurn()) return;
+        setThinking(true);
+        status.setText("La IA está pensando...");
+        final OpponentController controller = opponent;
+        new Thread(() -> {
+            Move move = controller.chooseMove();
+            SwingUtilities.invokeLater(() -> {
+                controller.play(move);
+                render();
+                setThinking(false);
+            });
+        }).start();
+    }
+
+    private void setThinking(boolean value) {
+        thinking = value;
+        newGameButton.setEnabled(!value);
+        levelBox.setEnabled(!value);
+        undoButton.setEnabled(!value);
+        redoButton.setEnabled(!value);
     }
 
     // Selecciona la pieza de "pos" y el tablero marca adónde puede ir.
@@ -153,7 +215,8 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         boardView.highlight(pos, game.legalMoves());
     }
 
-    // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón.
+    // IPromotionChooser: el núcleo pregunta a qué pieza corona el peón de la persona. Cuando
+    // corona la IA no llega acá: MainSwing usa AutoPromotionChooser.
     @Override
     public PieceType choose(Color color) {
         String[] options = {"Reina", "Torre", "Alfil", "Caballo"};

@@ -1,6 +1,6 @@
 # TP Ajedrez
 
-Ajedrez para dos personas, en consola o en una ventana, hecho para el TPO de Ingeniería de Software (UADE). La idea del trabajo es que las reglas del juego no dependan de cómo se muestra ni de cómo se juega, así que casi todo el código está pensado para poder cambiarse sin romper el resto.
+Ajedrez para dos personas o contra la computadora, en consola o en una ventana, hecho para el TPO de Ingeniería de Software (UADE). La idea del trabajo es que las reglas del juego no dependan de cómo se muestra ni de cómo se juega, así que casi todo el código está pensado para poder cambiarse sin romper el resto.
 
 ## Cómo correrlo
 
@@ -13,11 +13,11 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana abre directo en la partida: se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Nueva partida, lo que acaba de pasar y los botones Deshacer y Rehacer.
+Al empezar, la consola pregunta el oponente: dos jugadores o la IA en nivel fácil, medio o difícil. Se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana abre directo en la partida: se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba están Nueva partida, el desplegable del rival (dos jugadores o la IA en fácil, medio o difícil) y los botones Deshacer y Rehacer, y debajo lo que acaba de pasar. La IA juega con negras; contra ella, deshacer vuelve atrás su respuesta y la jugada propia.
 
 ## Pruebas
 
-`./scripts/test.sh` corre las 51 pruebas del juego y la regresión de consola (deshacer y repetir un mate). Para comprobar la ventana real (partida, marcas, deshacer, rehacer, nueva partida y un tablero de 10x10):
+`./scripts/test.sh` corre las 61 pruebas del juego y de la IA y la regresión de consola (deshacer y repetir un mate). Para comprobar la ventana real (partida, marcas, deshacer, rehacer, nueva partida y un tablero de 10x10):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -25,7 +25,7 @@ java --class-path out scripts/SwingIntegrationTests.java
 
 ## Qué reglas tiene
 
-Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahogado, enroque, coronación (se elige la pieza), tablas por material insuficiente, por la regla de los 50 movimientos y por repetición, y deshacer y rehacer.
+Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahogado, enroque, coronación (se elige la pieza), tablas por material insuficiente, por la regla de los 50 movimientos y por repetición, y deshacer y rehacer. También se puede jugar contra la IA en tres niveles: fácil (una jugada al azar), medio (captura la pieza de más valor) y difícil (minimax mirando dos jugadas, con material y algo de criterio posicional).
 
 ## Cómo está armado
 
@@ -39,6 +39,7 @@ src/
     special/       enroque y coronación
     draw/          las condiciones de tablas
   ports/         interfaces con las que el núcleo avisa y pregunta al exterior
+  ai/            el oponente: un nivel por clase (Strategy) y quien decide cuándo juega
   adapters/      lo que depende de una tecnología, separado por tecnología
     console/       consola
     swing/         la ventana: tablero y armado de cada partida
@@ -59,6 +60,7 @@ Lo que se ve en la materia está así:
 - **Observer**: los dos listeners, que implementan la consola y la ventana.
 - **State**: el turno y los estados terminales (mate, ahogado, tablas).
 - **Command**: cada jugada es un comando que se puede deshacer y rehacer.
+- **IA**: cada nivel implementa `IOpponent` (Strategy) y `Opponents` los crea (Factory). La IA usa el núcleo como cualquier adaptador, a través de `IChessGame`, y piensa sobre una copia de la partida. `AutoPromotionChooser` (Decorator) hace que la IA corone sola sin preguntar.
 - **Tests sin interfaz**: `ChessCoreTests`, con un stub y un mock como dobles de prueba, y los marcados `// TDD:` escritos antes del código.
 
 ## Agregar cosas sin tocar lo que ya está

@@ -1,0 +1,19 @@
+package ai;
+
+import core.board.Color;
+import core.board.PieceType;
+import ports.IPromotionChooser;
+
+// Elige siempre la misma pieza, sin preguntar. Lo usa la partida de búsqueda de la IA.
+public class FixedPromotionChooser implements IPromotionChooser {
+    private final PieceType choice;
+
+    public FixedPromotionChooser(PieceType choice) {
+        this.choice = choice;
+    }
+
+    @Override
+    public PieceType choose(Color color) {
+        return choice;
+    }
+}

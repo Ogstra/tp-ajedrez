@@ -1,4 +1,5 @@
 import adapters.swing.GameBuilder;
+import adapters.swing.Match;
 import adapters.swing.SwingChessView;
 import ports.IGameStatusListener;
 import ports.IMoveListener;
@@ -126,7 +127,7 @@ public class SwingIntegrationTests {
 
     // El mismo armado que MainSwing, con un tablero de 8x8 o de otro tamaño.
     private static GameBuilder builder(int size) {
-        return v -> {
+        return (v, level) -> {
             PieceFactory pieces = PieceFactory.standard();
             Board board = size == 8 ? BoardSetup.standard(pieces) : BoardSetup.custom(size, size, backRow(size), pieces);
             before = board.cloneBoard();
@@ -134,7 +135,7 @@ public class SwingIntegrationTests {
                 Collections.<IGameStatusListener>singletonList(v),
                 StandardRules.specialMoves(pieces, v),
                 StandardRules.drawRules());
-            return game;
+            return new Match(game, null);
         };
     }
 

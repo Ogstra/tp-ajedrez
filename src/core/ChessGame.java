@@ -8,6 +8,7 @@ import core.command.IMoveCommand;
 import core.command.MoveCommand;
 import core.draw.IDrawRule;
 import core.special.ISpecialMove;
+import core.state.BlackTurnState;
 import core.state.CheckmateState;
 import core.state.DrawState;
 import core.state.IGameState;
@@ -33,18 +34,28 @@ public class ChessGame implements IChessGame, IGameContext {
     private final Deque<HistoryEntry> history = new ArrayDeque<>();
     private final Deque<HistoryEntry> redoStack = new ArrayDeque<>();
     private final Board initialBoard;
+    private final Color initialColor;
     private IGameState state;
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
                      List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
                      List<IDrawRule> drawRules) {
+        this(board, moveListeners, statusListeners, specialMoves, drawRules, Color.WHITE);
+    }
+
+    // Con firstToMove la partida puede arrancar con el turno de las negras. Lo usa la IA
+    // para buscar jugadas desde una posición a mitad de partida.
+    public ChessGame(Board board, List<IMoveListener> moveListeners,
+                     List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
+                     List<IDrawRule> drawRules, Color firstToMove) {
         this.board = board;
         this.moveListeners = moveListeners;
         this.statusListeners = statusListeners;
         this.specialMoves = specialMoves;
         this.drawRules = drawRules;
         this.initialBoard = board.cloneBoard();
-        this.state = new WhiteTurnState();
+        this.initialColor = firstToMove;
+        this.state = firstToMove == Color.WHITE ? new WhiteTurnState() : new BlackTurnState();
     }
 
     @Override
@@ -197,7 +208,7 @@ public class ChessGame implements IChessGame, IGameContext {
     @Override
     public int occurrencesOfCurrentPosition() {
         Color toMove = state.currentColor();
-        int count = (toMove == Color.WHITE && initialBoard.equals(board)) ? 1 : 0; // la partida arranca con blancas
+        int count = (toMove == initialColor && initialBoard.equals(board)) ? 1 : 0;
         for (HistoryEntry entry : history) {
             if (entry.stateAfter.currentColor() == toMove && entry.boardAfter.equals(board)) count++;
         }

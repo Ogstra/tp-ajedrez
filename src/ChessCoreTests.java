@@ -1,3 +1,8 @@
+import ai.AutoPromotionChooser;
+import ai.GreedyOpponent;
+import ai.MinimaxOpponent;
+import ai.OpponentController;
+import ai.RandomOpponent;
 import core.board.Board;
 import core.board.BoardSetup;
 import core.board.Color;
@@ -32,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// Tests del núcleo sin interfaz ni infraestructura, con Arrange-Act-Assert.
+// Tests del núcleo y de la IA, sin interfaz ni infraestructura, con Arrange-Act-Assert.
 // Corren con "java ChessCoreTests", sin JUnit.
 public class ChessCoreTests {
 
@@ -101,6 +106,16 @@ public class ChessCoreTests {
         testUndoAfterDrawReopensTheGame();
         testStatusListenerReceivesDraw();
         testNewDrawRuleWithoutTouchingExistingClasses();
+        testRandomOpponentChoosesALegalMove();
+        testGreedyOpponentTakesTheQueen();
+        testMinimaxOpponentFindsMateInOne();
+        testSearchDoesNotTouchTheRealGame();
+        testOpponentControllerPlaysOnlyOnItsTurn();
+        testAutoPromotionChooserDoesNotAskForTheOpponent();
+        testHardLevelRespondsInReasonableTime();
+        testHardLevelDoesNotWalkTheKingOutInTheOpening();
+        testHardLevelDevelopsPiecesInTheOpening();
+        testMinimaxRespectsLostCastlingRights();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -1130,5 +1145,183 @@ public class ChessCoreTests {
         // Assert
         assertTrue("testNewDrawRuleWithoutTouchingExistingClasses", outcome == MoveOutcome.DRAW,
             "una regla de tablas nueva se enchufa por constructor sin editar ChessGame");
+    }
+
+    // TDD: el nivel fácil siempre elige una jugada legal.
+    private static void testRandomOpponentChoosesALegalMove() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+
+        // Act
+        Move move = new RandomOpponent(new Random(7)).chooseMove(game);
+
+        // Assert
+        assertTrue("testRandomOpponentChoosesALegalMove", game.legalMoves().contains(move),
+            "la jugada elegida tiene que estar entre las legales");
+    }
+
+    // TDD: el nivel medio prefiere capturar la pieza de más valor.
+    private static void testGreedyOpponentTakesTheQueen() {
+        // Arrange: la torre blanca puede capturar la reina de a6 (valor 9) o el peón de c1 (valor 1).
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("a1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.QUEEN, Color.BLACK), at("a6"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("c1"));
+        IChessGame game = newGame(board);
+
+        // Act
+        Move move = new GreedyOpponent(new Random(7)).chooseMove(game);
+
+        // Assert
+        assertTrue("testGreedyOpponentTakesTheQueen", move.equals(new Move(at("a1"), at("a6"))),
+            "entre la reina y el peón, elige la reina; eligió " + move);
+    }
+
+    // TDD: el nivel difícil encuentra un mate en una jugada.
+    private static void testMinimaxOpponentFindsMateInOne() {
+        // Arrange: después de 1.f3 e5 2.g4 las negras tienen Dh4#.
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("f2"), at("f3"));
+        game.tryMove(at("e7"), at("e5"));
+        game.tryMove(at("g2"), at("g4"));
+
+        // Act
+        Move move = new MinimaxOpponent(2, new Random(7)).chooseMove(game);
+
+        // Assert
+        assertTrue("testMinimaxOpponentFindsMateInOne", move.equals(new Move(at("d8"), at("h4"))),
+            "la única jugada que da mate es Dh4; eligió " + move);
+    }
+
+    // TDD: pensar no toca la partida real ni avisa a los listeners.
+    private static void testSearchDoesNotTouchTheRealGame() {
+        // Arrange
+        Board board = BoardSetup.standard(PIECES);
+        RecordingObserver observer = new RecordingObserver();
+        IChessGame game = newGame(board, observer);
+        game.tryMove(at("e2"), at("e4"));
+        Board before = board.cloneBoard();
+
+        // Act
+        new MinimaxOpponent(2, new Random(7)).chooseMove(game);
+
+        // Assert
+        assertTrue("testSearchDoesNotTouchTheRealGame",
+            before.equals(board) && observer.events.equals(Arrays.asList("move")),
+            "la búsqueda trabaja sobre una copia: el tablero y los avisos quedan como estaban");
+    }
+
+    // TDD: el controlador solo juega cuando es el turno de la IA.
+    private static void testOpponentControllerPlaysOnlyOnItsTurn() {
+        // Arrange
+        Board board = BoardSetup.standard(PIECES);
+        IChessGame game = newGame(board);
+        OpponentController controller = new OpponentController(game, new RandomOpponent(new Random(7)), Color.BLACK);
+
+        // Act
+        boolean playedOnWhitesTurn = controller.playIfItsTurn();
+        game.tryMove(at("e2"), at("e4"));
+        boolean playedOnItsTurn = controller.playIfItsTurn();
+
+        // Assert
+        assertTrue("testOpponentControllerPlaysOnlyOnItsTurn",
+            !playedOnWhitesTurn && playedOnItsTurn && game.getTurn() == Color.WHITE,
+            "no juega en el turno de las blancas; juega en el suyo y devuelve el turno");
+    }
+
+    // TDD: la IA corona sola, sin preguntar.
+    private static void testAutoPromotionChooserDoesNotAskForTheOpponent() {
+        // Arrange
+        CountingChooser human = new CountingChooser();
+        AutoPromotionChooser chooser = new AutoPromotionChooser(Color.BLACK, human);
+
+        // Act
+        PieceType forBlack = chooser.choose(Color.BLACK);
+        chooser.choose(Color.WHITE);
+
+        // Assert
+        assertTrue("testAutoPromotionChooserDoesNotAskForTheOpponent",
+            forBlack.equals(PieceType.QUEEN) && human.calls == 1,
+            "para el bando de la IA corona a reina sin preguntar; para el humano pregunta");
+    }
+
+    // TDD: el nivel difícil contesta en un tiempo razonable desde la posición inicial.
+    private static void testHardLevelRespondsInReasonableTime() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        long start = System.currentTimeMillis();
+
+        // Act
+        new MinimaxOpponent(2, new Random(7)).chooseMove(game);
+        long elapsed = System.currentTimeMillis() - start;
+
+        // Assert
+        System.out.println("       (nivel difícil, profundidad 2: " + elapsed + " ms)");
+        assertTrue("testHardLevelRespondsInReasonableTime", elapsed < 15000,
+            "tardó " + elapsed + " ms; si pasa los 15 segundos hay que optimizar o bajar la profundidad");
+    }
+
+    // TDD: la copia de búsqueda no habilita un enroque que en la partida real ya no se puede hacer.
+    private static void testMinimaxRespectsLostCastlingRights() {
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.ROOK, Color.WHITE), at("h1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.ROOK, Color.BLACK), at("a8"));
+        IChessGame game = newGame(board);
+        game.tryMove(at("e1"), at("f1"));
+        game.tryMove(at("e8"), at("f8"));
+        game.tryMove(at("f1"), at("e1"));
+        game.tryMove(at("f8"), at("e8"));
+        List<Move> legal = game.legalMoves();
+        boolean allLegal = !legal.contains(new Move(at("e1"), at("g1")));
+        for (int seed = 0; seed < 64; seed++) {
+            Move chosen = new MinimaxOpponent(1, new Random(seed)).chooseMove(game);
+            allLegal = allLegal && legal.contains(chosen);
+        }
+        assertTrue("testMinimaxRespectsLostCastlingRights", allLegal,
+            "el oponente solo puede elegir jugadas legales en la partida real");
+    }
+    // TDD: sin nada que capturar, el nivel difícil no pasea al rey por el tablero.
+    private static void testHardLevelDoesNotWalkTheKingOutInTheOpening() {
+        // Arrange: 1.e4 d6 2.d4, le toca a las negras y el rey ya tiene la casilla d7 libre.
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.tryMove(at("d7"), at("d6"));
+        game.tryMove(at("d2"), at("d4"));
+
+        // Act: muchas semillas, porque los empates se resuelven al azar.
+        int kingMoves = 0;
+        for (long seed = 1; seed <= 200; seed++) {
+            Move move = new MinimaxOpponent(2, new Random(seed)).chooseMove(game);
+            if (game.getBoard().pieceAt(move.getFrom()).getType().equals(PieceType.KING)) kingMoves++;
+        }
+
+        // Assert
+        assertTrue("testHardLevelDoesNotWalkTheKingOutInTheOpening", kingMoves == 0,
+            "el rey se movió " + kingMoves + " de 200 veces en la apertura");
+    }
+
+    // TDD: en la apertura prefiere desarrollar caballos y alfiles antes que mover torres o el rey.
+    private static void testHardLevelDevelopsPiecesInTheOpening() {
+        // Arrange: 1.e4 h6 2.Cf3, le toca a las negras y la torre de h8 ya puede subir a h7.
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.tryMove(at("h7"), at("h6"));
+        game.tryMove(at("g1"), at("f3"));
+
+        // Act
+        int rookMoves = 0;
+        for (long seed = 1; seed <= 200; seed++) {
+            Move move = new MinimaxOpponent(2, new Random(seed)).chooseMove(game);
+            if (game.getBoard().pieceAt(move.getFrom()).getType().equals(PieceType.ROOK)) rookMoves++;
+        }
+
+        // Assert
+        assertTrue("testHardLevelDevelopsPiecesInTheOpening", rookMoves == 0,
+            "movió una torre " + rookMoves + " de 200 veces en la apertura");
     }
 }

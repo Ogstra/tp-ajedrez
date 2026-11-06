@@ -1,4 +1,8 @@
 import adapters.console.ConsolePromotionChooser;
+import ai.AutoPromotionChooser;
+import ai.OpponentController;
+import ai.OpponentLevel;
+import ai.Opponents;
 import adapters.console.ConsoleRenderer;
 import core.board.Board;
 import core.board.BoardSetup;
@@ -14,6 +18,7 @@ import ports.IMoveListener;
 import ports.IPromotionChooser;
 
 import java.util.Collections;
+import java.util.Random;
 import java.util.Scanner;
 
 // Adaptador de entrada por consola y composition root: acá se arma todo.
@@ -22,17 +27,25 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        OpponentLevel level = askLevel(scanner);
 
         PieceFactory pieces = PieceFactory.standard();
         Board board = BoardSetup.standard(pieces);
         ConsoleRenderer renderer = new ConsoleRenderer();
 
-        IPromotionChooser chooser = new ConsolePromotionChooser(scanner);
+        // Contra la IA, ella corona siempre a reina; a la persona se le pregunta.
+        IPromotionChooser human = new ConsolePromotionChooser(scanner);
+        IPromotionChooser chooser = level == OpponentLevel.NONE ? human : new AutoPromotionChooser(Color.BLACK, human);
         IChessGame game = new ChessGame(board,
             Collections.<IMoveListener>singletonList(renderer),
             Collections.<IGameStatusListener>singletonList(renderer),
             StandardRules.specialMoves(pieces, chooser),
             StandardRules.drawRules());
+
+        // La IA juega con negras y la persona con blancas.
+        OpponentController opponent = level == OpponentLevel.NONE
+            ? null
+            : new OpponentController(game, Opponents.create(level, new Random()), Color.BLACK);
 
         renderer.render(board);
         System.out.println("Ajedrez");
@@ -48,12 +61,13 @@ public class Main {
                 break;
             }
             if (input.equalsIgnoreCase("undo")) {
-                game.undo();
+                // Contra la IA se deshacen dos: su respuesta y la jugada de la persona.
+                if (game.undo() && opponent != null && opponent.isItsTurn()) game.undo();
                 renderer.render(board);
                 continue;
             }
             if (input.equalsIgnoreCase("redo")) {
-                game.redo();
+                if (game.redo() && opponent != null && opponent.isItsTurn()) game.redo();
                 renderer.render(board);
                 continue;
             }
@@ -66,9 +80,25 @@ public class Main {
 
             if (game.tryMove(move[0], move[1]) != MoveOutcome.INVALID) {
                 renderer.render(board);
+                if (opponent != null && opponent.isItsTurn()) {
+                    System.out.println("El oponente piensa...");
+                    opponent.playIfItsTurn();
+                    renderer.render(board);
+                }
             }
         }
         scanner.close();
+    }
+
+    private static OpponentLevel askLevel(Scanner scanner) {
+        System.out.print("Oponente: 0 = dos jugadores, 1 = fácil, 2 = medio, 3 = difícil > ");
+        String answer = scanner.hasNextLine() ? scanner.nextLine().trim() : "0";
+        switch (answer) {
+            case "1": return OpponentLevel.EASY;
+            case "2": return OpponentLevel.MEDIUM;
+            case "3": return OpponentLevel.HARD;
+            default:  return OpponentLevel.NONE;
+        }
     }
 
     // Acepta "e2 e4", "e2-e4" o "e2e4". Parte el texto donde empieza la
