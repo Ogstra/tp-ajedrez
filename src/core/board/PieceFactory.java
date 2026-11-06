@@ -11,10 +11,9 @@ import core.movement.RookMovementStrategy;
 import java.util.HashMap;
 import java.util.Map;
 
-// Factory (Clase 3) con registro: guarda un mapa "tipo de pieza -> estrategia de
-// movimiento" y se le agregan tipos nuevos con register(), sin modificar esta
-// clase ni ninguna otra (Open/Closed).
-// Las estrategias no tienen estado, por eso se comparte una instancia por tipo.
+// Factory con registro: guarda la estrategia de movimiento de cada tipo de pieza.
+// Los tipos nuevos se agregan con register(), sin modificar esta clase (Open/Closed).
+// Las estrategias no tienen estado, así que se comparte una por tipo.
 public class PieceFactory {
 
     private final Map<PieceType, IMovementStrategy> strategies = new HashMap<>();

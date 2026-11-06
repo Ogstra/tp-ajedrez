@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-// El tablero es un mapa "posición ocupada -> pieza", no una matriz fija. Una casilla vacía simplemente no tiene
-// entrada en el mapa. El tamaño es un dato del tablero, no una constante
-// repartida por el código: todo el que necesite saber si una casilla existe
-// le pregunta a Board.isInside().
+// El tablero guarda en un mapa la pieza de cada casilla ocupada; una casilla vacía no
+// está en el mapa. El tamaño es un dato del tablero: para saber si una casilla existe
+// se le pregunta a isInside().
 public class Board {
     private static final int DEFAULT_SIZE = 8;
 
@@ -49,8 +48,7 @@ public class Board {
         }
     }
 
-    // Necesario para deshacer una coronación: hay que poder dejar una
-    // casilla vacía sin poner ninguna pieza en su lugar.
+    // Deja la casilla vacía. Lo usa, por ejemplo, deshacer una coronación.
     public void removePiece(Position pos) {
         squares.remove(pos);
     }

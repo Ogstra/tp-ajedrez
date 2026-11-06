@@ -32,9 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// Tests del núcleo, sin ninguna UI (Clase 4: el núcleo puro se testea sin
-// infraestructura). Formato Arrange-Act-Assert y un runner propio: corre con
-// "java ChessCoreTests", sin JUnit ni herramientas de build.
+// Tests del núcleo sin interfaz ni infraestructura, con Arrange-Act-Assert.
+// Corren con "java ChessCoreTests", sin JUnit.
 public class ChessCoreTests {
 
     private static int passed = 0;
@@ -179,7 +178,7 @@ public class ChessCoreTests {
             "el comando ya guarda la pieza elegida: se pregunta una sola vez");
     }
 
-    // ---------- ayudas de los tests ----------
+    // Ayudas de los tests
 
     private static void assertTrue(String testName, boolean condition, String detail) {
         if (condition) {
@@ -199,7 +198,7 @@ public class ChessCoreTests {
         return PIECES.create(type, color);
     }
 
-    // Stub (Clase 4): devuelve un dato fijo, sin lógica.
+    // Stub: devuelve un dato fijo, sin lógica.
     private static class AlwaysQueenChooser implements IPromotionChooser {
         @Override
         public PieceType choose(Color color) {
@@ -207,13 +206,13 @@ public class ChessCoreTests {
         }
     }
 
-    // Mock (Clase 4): registra qué le avisaron, para verificarlo en el Assert.
+    // Mock: registra qué le avisaron, para verificarlo en el Assert.
 
 
-    // El armado que hace Main, sin consola: enroque + coronación (siempre a reina).
+    // El armado que hace Main, sin consola: enroque y coronación, siempre a reina.
 
 
-    // ---------- movimiento de cada pieza ----------
+    // Movimiento de cada pieza
 
     private static void testPawnAdvancesOneSquare() {
         // Arrange
@@ -268,7 +267,7 @@ public class ChessCoreTests {
             "la torre debería frenar antes de a3 (pieza propia) y no poder saltarla");
     }
 
-    // ---------- reglas de la partida ----------
+    // Reglas de la partida
 
     private static void testKingCannotMoveToAttackedSquare() {
         // Arrange: la torre negra en h2 controla toda la fila 2.
@@ -368,7 +367,7 @@ public class ChessCoreTests {
             "Dxh4 debería ser jaque mate y terminar la partida");
     }
 
-    // ---------- enroque ----------
+    // Enroque
 
     private static Board castlingBoard() {
         Board board = new Board();
@@ -462,7 +461,7 @@ public class ChessCoreTests {
             "si se deshizo el único movimiento del rey, el enroque tiene que volver a estar permitido");
     }
 
-    // ---------- coronación ----------
+    // Coronación
 
     private static void testPawnPromotesToQueen() {
         // Arrange: el rey negro lejos de la fila 8 y de las diagonales de a8, para que no haya jaque.
@@ -482,10 +481,10 @@ public class ChessCoreTests {
             "en a8 debería haber una reina blanca, no un peón");
     }
 
-    // ---------- extensibilidad ----------
+    // Extensibilidad
 
     // Una pieza inventada: se mueve como torre y como caballo.
-    // Se define ACÁ, en el test, sin tocar ninguna clase de core/.
+    // Se define en el test, sin tocar ninguna clase de core.
     private static class ChancellorMovementStrategy implements IMovementStrategy {
         private final RookMovementStrategy asRook = new RookMovementStrategy();
         private final KnightMovementStrategy asKnight = new KnightMovementStrategy();
@@ -499,7 +498,7 @@ public class ChessCoreTests {
     }
 
     private static void testNewPieceWithoutTouchingExistingClasses() {
-        // Arrange: se registra el tipo nuevo en una fábrica; no se modifica PieceType, PieceFactory ni nada.
+        // Arrange: se registra el tipo nuevo en una fábrica, sin modificar PieceType ni PieceFactory.
         PieceType chancellor = new PieceType("CHANCELLOR");
         PieceFactory factory = PieceFactory.standard();
         factory.register(chancellor, new ChancellorMovementStrategy());
@@ -547,7 +546,7 @@ public class ChessCoreTests {
             "el peón debería coronar al llegar a la fila 5, que es la última de este tablero");
     }
 
-    // ---------- el observer recibe lo que corresponde (con un mock) ----------
+    // Avisos al observer, con un mock
 
     private static void testObserverReceivesOnlyCastling() {
         // Arrange
@@ -579,7 +578,7 @@ public class ChessCoreTests {
             observer.events.equals(Arrays.asList("move", "promotion")),
             "esperaba [move, promotion] y llegó " + observer.events);
     }
-    // ---------- movimiento de las piezas que faltaban ----------
+    // Movimiento del resto de las piezas
 
     private static void testBishopSlidesAndStopsAtOwnPiece() {
         // Arrange
@@ -669,7 +668,7 @@ public class ChessCoreTests {
                 && !withoutEnemies.contains(at("d5")) && !withoutEnemies.contains(at("f5")),
             "el peón captura en diagonal solo si hay una pieza rival, y avanza recto");
     }
-    // ---------- reglas de la partida ----------
+    // Reglas de la partida
 
     private static void testRookCapturesThroughTryMove() {
         // Arrange
@@ -784,7 +783,7 @@ public class ChessCoreTests {
         assertTrue("testInvalidMoveNotifiesObserver", observer.events.equals(Arrays.asList("invalid")),
             "esperaba [invalid] y llegó " + observer.events);
     }
-    // ---------- coronación y enroque, casos que faltaban ----------
+    // Coronación y enroque, casos que faltaban
 
     // Stub que devuelve siempre la misma pieza, para probar coronaciones distintas de la reina.
     private static class FixedChooser implements IPromotionChooser {
@@ -902,7 +901,7 @@ public class ChessCoreTests {
             undone && again == MoveOutcome.CHECKMATE && game.isGameOver(),
             "al deshacer el mate la partida sigue; al repetir la jugada vuelve a terminar");
     }
-    // Mock (Clase 4): registra qué le avisaron, para verificarlo en el Assert.
+    // Mock: registra qué le avisaron, para verificarlo en el Assert.
     private static class RecordingObserver implements IMoveListener, IGameStatusListener {
         final List<String> events = new ArrayList<>();
 
@@ -987,10 +986,10 @@ public class ChessCoreTests {
             "con solo dos reyes no hay forma de ganar");
     }
 
-    // TDD
+    // TDD: qué combinaciones de piezas no alcanzan para dar mate.
     private static void testInsufficientMaterialCases() {
-        // Arrange: cuatro tableros. Caso por caso: [rey+alfil vs rey, rey+torre vs rey,
-        // alfiles del mismo color, alfiles de distinto color].
+        // Arrange: cuatro tableros: rey y alfil contra rey, rey y torre contra rey,
+        // alfiles del mismo color y alfiles de distinto color.
         Board bishopVsKing = new Board();
         bishopVsKing.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
         bishopVsKing.placePiece(piece(PieceType.BISHOP, Color.WHITE), at("c1"));

@@ -10,10 +10,8 @@ import core.IGameContext;
 import java.util.ArrayList;
 import java.util.List;
 
-// Tablas por material insuficiente: ninguno de los dos bandos puede dar mate.
-// Casos: rey contra rey, rey y un solo alfil o caballo contra rey, y solo
-// alfiles todos en casillas del mismo color. Cualquier otra pieza (peón,
-// torre, reina o una pieza nueva) cuenta como material suficiente.
+// Tablas por material insuficiente: rey contra rey, rey y un alfil o un caballo contra
+// rey, o solo alfiles en casillas del mismo color. Cualquier otra pieza alcanza para dar mate.
 public class InsufficientMaterialRule implements IDrawRule {
 
     @Override

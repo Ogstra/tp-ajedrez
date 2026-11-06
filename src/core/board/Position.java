@@ -2,9 +2,8 @@ package core.board;
 
 import java.util.Objects;
 
-// Value object inmutable, con equals/hashCode por
-// valor, para poder usarlo como clave de un Map y compararlo por contenido.
-// No sabe de qué tamaño es el tablero: eso lo responde Board.isInside().
+// Una casilla del tablero. Inmutable y con equals/hashCode por valor, para usarla
+// como clave de un Map. Si existe o no en el tablero lo responde Board.isInside().
 public final class Position {
     private final int row;    // 0 es la fila 1
     private final int column; // 0 es la columna a
@@ -17,9 +16,8 @@ public final class Position {
     public int getRow() { return row; }
     public int getColumn() { return column; }
 
-    // "e2" -> columna 'e'-'a'=4, fila 2-1=1. Acepta filas de más de un dígito
-    // ("e10"). Devuelve null si el texto no tiene ese formato; si la casilla
-    // existe en el tablero lo decide quien llama con Board.isInside().
+    // "e2" es la columna 4 y la fila 1. Acepta filas de más de un dígito ("e10").
+    // Devuelve null si el texto no tiene ese formato.
     public static Position fromAlgebraic(String text) {
         if (text == null || text.length() < 2) return null;
         char columnLetter = Character.toLowerCase(text.charAt(0));

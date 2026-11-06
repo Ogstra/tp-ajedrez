@@ -32,9 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-// El tablero de la ventana: las casillas, las coordenadas, las piezas y las marcas de la pieza
-// elegida. SwingChessView se ocupa de la partida y los textos; el dibujo del tablero vive acá
-// (SRP: cada clase tiene una sola razón para cambiar).
+// El tablero de la ventana: casillas, coordenadas, piezas y marcas de la pieza elegida.
+// SwingChessView se ocupa de la partida y los textos.
 public class BoardView extends JPanel {
 
     private static final int SQUARE = 80;          // lado de cada casilla, en píxeles
@@ -145,9 +144,8 @@ public class BoardView extends JPanel {
         }
     }
 
-    // Una imagen de assets/, leída del classpath y no de una ruta en disco como "src/assets/...":
-    // así se encuentra igual desde IntelliJ o desde la terminal, y aunque el juego se corra desde
-    // otra carpeta. build.sh copia src/assets junto a las clases. Devuelve null si falta el archivo.
+    // Lee una imagen de assets/ desde el classpath, así se encuentra igual desde IntelliJ o la
+    // terminal. Devuelve null si falta el archivo.
     static BufferedImage asset(String path) {
         try (InputStream in = BoardView.class.getResourceAsStream("/assets/" + path)) {
             return in == null ? null : ImageIO.read(in);
