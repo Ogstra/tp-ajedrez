@@ -13,9 +13,8 @@ import ports.IPromotionChooser;
 import java.util.Arrays;
 import java.util.List;
 
-// Factory (Clase 3) de las reglas del ajedrez, armadas en un solo lugar. Las usan la consola
-// y la ventana: una regla especial o de tablas nueva se agrega acá y la ven las dos. ChessGame
-// no sabe cuáles son: las recibe por constructor. Los tests arman sus propias listas.
+// Factory de las reglas del ajedrez. La consola y la ventana las toman de acá, así una regla
+// nueva se agrega en un solo lugar. Los tests arman sus propias listas.
 public final class StandardRules {
 
     private StandardRules() { }

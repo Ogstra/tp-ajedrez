@@ -3,7 +3,7 @@ package ports;
 import core.board.Color;
 
 
-// Puerto de salida (Clase 2), parte 2: el estado de la partida.
+// Puerto de salida para el estado de la partida: jaque, mate, ahogado y tablas.
 public interface IGameStatusListener {
     void onInvalidMove(String reason);
     void onCheck(Color colorInCheck);

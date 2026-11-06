@@ -7,11 +7,8 @@ import core.board.Position;
 import java.util.ArrayList;
 import java.util.List;
 
-// Lógica compartida por Torre, Alfil y Reina: deslizar en un conjunto de
-// direcciones hasta chocar con el borde, una pieza propia (no se puede
-// entrar) o una pieza rival (se puede capturar, pero no seguir de largo).
-// No es un patrón de la materia, es DRY (Clase 1) para no repetir este
-// bucle tres veces.
+// Movimiento compartido por la torre, el alfil y la reina: avanza en cada dirección hasta
+// el borde, una pieza propia (no entra) o una rival (la captura y se detiene).
 final class SlidingMovement {
 
     private SlidingMovement() { }

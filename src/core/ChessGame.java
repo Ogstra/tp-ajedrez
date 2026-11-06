@@ -21,13 +21,9 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-// Núcleo del sistema (Clase 2): orquesta la partida. No sabe nada de
-// consola, UI ni ningún detalle técnico: solo reglas de negocio del
-// ajedrez. Todo lo que puede variar entra por constructor, inyectado y
-// contra una interfaz (Clase 3: DIP + inyección de dependencias nivel 4):
-// los listeners (cómo se avisa lo que pasa), las reglas especiales
-// (enroque y coronación) y las reglas de tablas.
-// ChessGame no sabe cuáles son ni cuántas.
+// Núcleo del sistema: coordina la partida y no sabe nada de consola ni de ventana.
+// Lo que puede variar entra por constructor y contra una interfaz (inyección de
+// dependencias nivel 4): los listeners, las reglas especiales y las reglas de tablas.
 public class ChessGame implements IChessGame, IGameContext {
     private final Board board;
     private final List<IMoveListener> moveListeners;
@@ -230,9 +226,8 @@ public class ChessGame implements IChessGame, IGameContext {
         for (IGameStatusListener listener : statusListeners) listener.onInvalidMove(reason);
     }
 
-    // Movimientos legales de una pieza: los pseudo-legales de su Strategy
-    // (+ los destinos extra de las reglas especiales), filtrando los que
-    // dejarían al propio rey en jaque.
+    // Movimientos legales de una pieza: los de su estrategia más los destinos de las
+    // reglas especiales, sin los que dejarían al propio rey en jaque.
     private List<Position> legalMovesFrom(Position from) {
         Piece piece = board.pieceAt(from);
         List<Position> candidates = new ArrayList<>(piece.possibleMoves(board, from));
@@ -251,7 +246,7 @@ public class ChessGame implements IChessGame, IGameContext {
         return legal;
     }
 
-    // ¿El rey de "color" está atacado por alguna pieza rival, en "b"?
+    // Si el rey de "color" está atacado en el tablero "b".
     private boolean isInCheck(Color color, Board b) {
         Position kingPos = b.findKing(color);
         if (kingPos == null) return false; // no debería pasar en una partida real
@@ -268,9 +263,8 @@ public class ChessGame implements IChessGame, IGameContext {
         return false;
     }
 
-    // ¿"color" tiene al menos un movimiento legal disponible? Se usa para
-    // detectar jaque mate (si está en jaque y no tiene movimientos) y
-    // ahogado (si no está en jaque pero tampoco tiene movimientos).
+    // Si "color" tiene al menos una jugada legal. Sin jugadas es mate si está en jaque,
+    // y ahogado si no.
     private boolean hasAnyLegalMove(Color color) {
         for (Position pos : board.positionsOfColor(color)) {
             if (!legalMovesFrom(pos).isEmpty()) {

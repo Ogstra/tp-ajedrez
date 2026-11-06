@@ -11,11 +11,9 @@ import ports.IMoveListener;
 import java.util.HashMap;
 import java.util.Map;
 
-// Adaptador de salida (Clase 2): implementa el puerto IMoveListener e IGameStatusListener con
-// tecnología concreta (consola). El núcleo no sabe que esto existe. Los
-// símbolos unicode y los nombres en español son un detalle de presentación,
-// por eso viven acá y no en PieceType. Una pieza que este adaptador no
-// conoce (una nueva del núcleo) se dibuja con la inicial de su nombre.
+// Adaptador de salida por consola: implementa IMoveListener e IGameStatusListener.
+// Los símbolos y los nombres en español son de presentación, por eso están acá y no en
+// PieceType. Una pieza que no conoce se dibuja con la inicial de su nombre.
 public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
 
     private static final Map<PieceType, String> WHITE_SYMBOLS = new HashMap<>();

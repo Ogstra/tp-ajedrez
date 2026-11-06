@@ -5,9 +5,8 @@ import core.board.Color;
 import core.board.Position;
 import java.util.List;
 
-// Puerto de entrada (Clase 2): lo único que el mundo exterior (consola,
-// ventana) necesita saber de una partida. Los adaptadores dependen de
-// esta interfaz, no de ChessGame (DIP, Clase 3).
+// Puerto de entrada: lo que la consola y la ventana necesitan de una partida.
+// Los adaptadores dependen de esta interfaz y no de ChessGame.
 public interface IChessGame {
     MoveOutcome tryMove(Position from, Position to);
     boolean undo();

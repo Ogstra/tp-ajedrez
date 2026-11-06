@@ -3,8 +3,7 @@ package core;
 import core.board.Position;
 import java.util.Objects;
 
-// Value object inmutable: una jugada es "de esta casilla a esta otra".
-// Igualdad por contenido, igual que Position.
+// Una jugada de una casilla a otra. Inmutable y comparable por contenido, como Position.
 public final class Move {
     private final Position from;
     private final Position to;

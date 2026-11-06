@@ -3,9 +3,8 @@ package core.board;
 import core.movement.IMovementStrategy;
 import java.util.Objects;
 
-// Una sola clase Piece para las seis piezas. Composición sobre herencia
-// (Clase 3): en vez de Pawn extends Piece, Rook extends Piece, etc.,
-// Piece TIENE una IMovementStrategy que le da su comportamiento.
+// Una sola clase para todas las piezas. Composición sobre herencia: en vez de
+// Pawn extends Piece, cada pieza tiene una IMovementStrategy.
 public final class Piece {
     private final PieceType type;
     private final Color color;
