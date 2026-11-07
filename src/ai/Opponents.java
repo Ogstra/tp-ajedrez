@@ -2,12 +2,12 @@ package ai;
 
 import java.util.Random;
 
-// Factory (Clase 3) de oponentes por nivel.
+// Factory de oponentes por nivel.
 public final class Opponents {
 
     private Opponents() { }
 
-    // Devuelve null para NONE (dos jugadores humanos).
+    // Devuelve null para NONE, que es una partida entre dos personas.
     public static IOpponent create(OpponentLevel level, Random random) {
         switch (level) {
             case EASY:   return new RandomOpponent(random);

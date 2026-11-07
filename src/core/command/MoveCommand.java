@@ -10,9 +10,7 @@ import ports.IMoveListener;
 import java.util.Arrays;
 import java.util.List;
 
-// Mismo MoveCommand de la Tarea 03: guarda la pieza capturada recién al
-// ejecutar (todavía no se sabe qué hay en destino hasta ese momento), y con
-// eso alcanza para deshacer el movimiento exacto.
+// Movimiento común. Al ejecutarse guarda la pieza capturada, si la hay, para poder deshacerlo.
 public class MoveCommand implements IMoveCommand {
     private final Board board;
     private final Position from;

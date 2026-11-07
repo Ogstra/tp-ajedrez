@@ -172,7 +172,7 @@ public class SwingIntegrationTests {
             });
             System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
 
-            // Otro tamaño de tablero (lo que puede pedirse en la defensa): la ventana se adapta sola.
+            // Otro tamaño de tablero: la ventana se adapta sola.
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
                 AccountService accounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));

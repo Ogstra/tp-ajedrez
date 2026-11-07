@@ -12,14 +12,9 @@ import core.IGameContext;
 import java.util.ArrayList;
 import java.util.List;
 
-// Regla de enroque. Es lo que antes vivía dentro de ChessGame como banderas
-// (whiteKingMoved, whiteRookH1Moved...) y varios if. No depende del tamaño
-// del tablero: el rey va dos casillas hacia la torre de la esquina y la torre
-// salta a la casilla que el rey cruzó.
-//
-// Condiciones: el rey y esa torre no se tocaron en toda la partida, las
-// casillas entre ambos están vacías, el rey no está en jaque y no cruza ni
-// pisa una casilla atacada.
+// Enroque: el rey va dos casillas hacia la torre de la esquina y la torre pasa a la
+// casilla que el rey cruzó. Pide que ninguno de los dos se haya movido, que el camino
+// esté vacío y que el rey no esté en jaque ni cruce o pise una casilla atacada.
 public class CastlingMove implements ISpecialMove {
 
     @Override
@@ -42,7 +37,7 @@ public class CastlingMove implements ISpecialMove {
         return destinations;
     }
 
-    // side = -1 enroque largo (hacia la columna 0), +1 enroque corto.
+    // side es -1 para el enroque largo (hacia la columna 0) y +1 para el corto.
     private boolean canCastle(IGameContext context, Position kingPos, Color color, int side) {
         Board board = context.getBoard();
         int row = kingPos.getRow();

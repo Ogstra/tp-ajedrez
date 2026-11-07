@@ -4,9 +4,8 @@ import core.board.Color;
 import core.board.PieceType;
 
 
-// Puerto de salida (Clase 2): lo que el núcleo necesita del mundo exterior
-// cuando un peón corona, sin saber cómo se resuelve. La consola pregunta por
-// teclado, Swing abre un diálogo, y un test devuelve siempre reina (un stub).
+// Puerto de salida: el núcleo pregunta a qué pieza corona el peón. La consola pregunta
+// por teclado, la ventana abre un diálogo y en los tests un stub devuelve siempre reina.
 public interface IPromotionChooser {
     PieceType choose(Color color);
 }

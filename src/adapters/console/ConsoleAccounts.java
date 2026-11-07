@@ -7,9 +7,8 @@ import accounts.User;
 import java.util.List;
 import java.util.Scanner;
 
-// Adaptador de entrada y salida (Clase 2) de las cuentas, por consola: pregunta quién
-// juega (iniciar sesión, registrarse o seguir sin usuario) y muestra el ranking.
-// La lógica de las cuentas vive en AccountService; acá solo se lee y se imprime.
+// Adaptador de consola para las cuentas: pregunta quién juega (iniciar sesión, registrarse o
+// seguir sin usuario) y muestra el ranking. La lógica está en AccountService.
 public final class ConsoleAccounts {
 
     private ConsoleAccounts() { }

@@ -9,10 +9,8 @@ import ports.IMoveListener;
 import java.util.Arrays;
 import java.util.List;
 
-// Command (Clase 3), variante de MoveCommand para el enroque: son DOS
-// piezas moviéndose en el mismo turno (rey y torre). No hay captura posible
-// en un enroque (las reglas exigen las casillas vacías), por eso no hace
-// falta guardar ninguna pieza capturada.
+// Comando del enroque: mueve el rey y la torre en la misma jugada. No hay captura,
+// así que no guarda ninguna pieza.
 public class CastlingCommand implements IMoveCommand {
     private final Board board;
     private final Position kingFrom;

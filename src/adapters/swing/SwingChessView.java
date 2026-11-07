@@ -39,11 +39,9 @@ import java.awt.Image;
 import java.util.HashMap;
 import java.util.Map;
 
-// Adaptador de salida Y de entrada (Clase 2): implementa los dos listeners
-// igual que ConsoleRenderer (mismos puertos de salida, otra tecnología),
-// implementa IPromotionChooser con un diálogo, y además traduce clicks del
-// mouse en llamadas a IChessGame.tryMove(): el mismo rol que cumple Main.java
-// con el teclado, pero con Swing. El núcleo no cambió para que esto funcione.
+// Adaptador de entrada y de salida con Swing. Implementa los dos listeners, como
+// ConsoleRenderer, elige la pieza de coronación con un diálogo y convierte los clicks
+// en llamadas a tryMove(). También maneja el menú, el ranking y el turno de la IA.
 public class SwingChessView extends JFrame implements IMoveListener, IGameStatusListener, IPromotionChooser {
 
     private static final int INITIAL_SQUARE = 80; // al empezar; si el tablero no entra en la pantalla, menos
@@ -289,7 +287,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         selection = null;
         render(); // limpia el resaltado de la selección
 
-        if (origin.equals(pos)) return; // clickear la misma casilla = deseleccionar
+        if (origin.equals(pos)) return; // clickear la misma casilla deselecciona
 
         game.tryMove(origin, pos);
         render();
@@ -337,9 +335,7 @@ public class SwingChessView extends JFrame implements IMoveListener, IGameStatus
         }
     }
 
-    // Solo redibuja el tablero. El texto de estado lo manejan exclusivamente
-    // los listeners: si render() también lo tocara, pisaría el mensaje que
-    // onInvalidMove/onMoveMade acaban de poner.
+    // Solo redibuja el tablero. El texto de estado lo ponen los listeners.
     private void render() {
         boardView.render(game.getBoard());
     }

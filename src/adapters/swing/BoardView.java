@@ -31,13 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-// El tablero de la ventana: las casillas, las coordenadas, las piezas y las marcas de la pieza
-// elegida. Antes vivía adentro de SwingChessView, que además maneja las pantallas, la IA y los
-// textos; separado, cada clase tiene una sola razón para cambiar (SRP).
-//
-// Las casillas se adaptan al espacio que hay: cuando la ventana cambia de tamaño, fitTo() calcula
-// el lado de casilla que entra y las piezas se vuelven a armar a ese tamaño. Rehacer las imágenes
-// cuesta, así que se espera a que se deje de arrastrar el borde (un Timer que se reinicia).
+// El tablero de la ventana: casillas, coordenadas, piezas y marcas de la pieza elegida.
+// SwingChessView se ocupa de las pantallas, la partida y los textos.
+// Cuando la ventana cambia de tamaño, fitTo() recalcula el lado de las casillas.
 public class BoardView extends JPanel {
 
     static final int COORDINATE_SIZE = 18; // ancho de los números y alto de las letras
@@ -52,7 +48,7 @@ public class BoardView extends JPanel {
     private static final int ICON_PERCENT = 85; // la pieza ocupa el 85% de la casilla
 
     // Letra de la imagen (wK.png, bQ.png...) y símbolo de texto de respaldo, por tipo de pieza.
-    // Una pieza que este adaptador no conoce (por ejemplo, una agregada en la defensa) se muestra
+    // Una pieza que este adaptador no conoce (por ejemplo, una inventada) se muestra
     // con la inicial de su nombre, sin tocar esta clase.
     private static final Map<PieceType, String> LETTERS = new HashMap<>();
     private static final Map<PieceType, String> WHITE_SYMBOLS = new HashMap<>();
@@ -175,10 +171,8 @@ public class BoardView extends JPanel {
         return IMAGES.get(key);
     }
 
-    // Una imagen de assets/, leída del classpath y no de una ruta en disco como "src/assets/...":
-    // así se encuentra igual en Windows, macOS y Linux, desde IntelliJ o desde la terminal, y
-    // aunque el juego se corra desde otra carpeta. build.sh copia src/assets junto a las clases.
-    // Devuelve null si falta el archivo.
+    // Lee una imagen de assets/ desde el classpath, así se encuentra igual desde IntelliJ o la
+    // terminal y en cualquier sistema. Devuelve null si falta el archivo.
     static BufferedImage asset(String path) {
         try (InputStream in = BoardView.class.getResourceAsStream("/assets/" + path)) {
             return in == null ? null : ImageIO.read(in);

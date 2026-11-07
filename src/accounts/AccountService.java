@@ -5,9 +5,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-// Registro, login y ranking de jugadores. No sabe dónde se guardan los datos:
-// los pide y los entrega por el puerto IAccountStore, que entra por constructor.
-// El login es solo por nombre de usuario: no hay contraseña. El id lo asigna el sistema y es interno.
+// Registro, login y ranking de jugadores. No sabe dónde se guardan los datos: los pide al
+// puerto IAccountStore, que entra por constructor. Se entra solo con el nombre, sin contraseña.
 public class AccountService {
 
     public static final int MAX_NAME_LENGTH = 20;

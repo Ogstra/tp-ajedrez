@@ -4,9 +4,9 @@ import core.board.Color;
 import core.IChessGame;
 import core.Move;
 
-// Decide cuándo juega la IA: cuando la partida sigue y es el turno de su color.
-// chooseMove y play están separados para que la ventana pueda pensar en otro
-// hilo y aplicar la jugada después, en el hilo de la interfaz.
+// Decide cuándo juega la IA: cuando la partida sigue y es el turno de su color. chooseMove
+// y play están separados para que la ventana pueda pensar en otro hilo y aplicar la jugada
+// después, en el hilo de la interfaz.
 public class OpponentController {
 
     private final IChessGame game;
@@ -33,7 +33,7 @@ public class OpponentController {
         game.tryMove(move.getFrom(), move.getTo());
     }
 
-    // Piensa y juega, todo junto. Devuelve false si no era su turno.
+    // Piensa y juega. Devuelve false si no era su turno.
     public boolean playIfItsTurn() {
         if (!isItsTurn()) return false;
         play(chooseMove());

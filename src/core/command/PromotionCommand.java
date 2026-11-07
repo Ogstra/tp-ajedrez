@@ -9,10 +9,8 @@ import ports.IMoveListener;
 import java.util.Arrays;
 import java.util.List;
 
-// Command (Clase 3), variante de MoveCommand para cuando un peón llega a
-// la última fila. En vez de mover la pieza tal cual, la reemplaza por la
-// pieza ya elegida (se la pasa PromotionMove, que es quien le preguntó al
-// jugador). undo() la devuelve a ser un peón.
+// Comando de la coronación: mueve el peón y lo reemplaza por la pieza elegida.
+// undo() vuelve a dejar el peón.
 public class PromotionCommand implements IMoveCommand {
     private final Board board;
     private final Position from;

@@ -13,11 +13,10 @@ import core.Move;
 import java.util.ArrayList;
 import java.util.List;
 
-// Regla de captura al paso: si el peón rival acaba de avanzar dos casillas y
-// quedó al lado de mi peón, puedo capturarlo como si hubiera avanzado una.
-// Solo vale en la jugada inmediata. Simplificación: la simulación de
-// legalidad no quita el peón capturado, así que no detecta el jaque descubierto
-// horizontal que a veces vuelve ilegal esta captura.
+// Captura al paso: si el peón rival acaba de avanzar dos casillas y quedó al lado de un peón
+// propio, se lo puede capturar como si hubiera avanzado una. Solo vale en la jugada siguiente.
+// Al simular la jugada no se saca el peón capturado, así que no se detecta el raro caso de
+// jaque descubierto en la misma fila.
 public class EnPassantMove implements ISpecialMove {
 
     @Override

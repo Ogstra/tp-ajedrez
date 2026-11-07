@@ -2,9 +2,8 @@ package core.state;
 
 import core.board.Color;
 
-// State (Clase 3): cada estado sabe de quién es el turno, si la partida
-// terminó y a qué estado pasa después de una jugada. Los estados terminales
-// (mate, ahogado) devuelven this: de ahí no se sale jugando, solo deshaciendo.
+// State: cada estado sabe de quién es el turno, si la partida terminó y a qué estado
+// pasa después de una jugada. Los finales (mate, ahogado y tablas) devuelven this.
 public interface IGameState {
     Color currentColor();
     boolean isOver();

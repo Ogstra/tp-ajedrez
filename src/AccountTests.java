@@ -79,7 +79,7 @@ public class AccountTests {
         }
     }
 
-    // Fake (Clase 4): una implementación simple pero funcional, en memoria, del puerto de archivo.
+    // Fake: guarda los usuarios en memoria en lugar de un archivo.
     private static class InMemoryAccountStore implements IAccountStore {
         private List<Score> saved = new ArrayList<>();
         int saves = 0;

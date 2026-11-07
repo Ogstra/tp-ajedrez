@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-// Nivel medio: la jugada que captura la pieza de más valor; si ninguna
-// captura, o hay empate, una de las mejores al azar.
+// Nivel medio: captura la pieza de más valor que pueda. Si no hay capturas, o hay
+// varias que valen lo mismo, elige una de ellas al azar.
 public class GreedyOpponent implements IOpponent {
 
     private final Random random;
@@ -27,7 +27,7 @@ public class GreedyOpponent implements IOpponent {
         for (Move move : game.legalMoves()) {
             Piece target = game.getBoard().pieceAt(move.getTo());
             Piece moving = game.getBoard().pieceAt(move.getFrom());
-            // Un peon que captura en diagonal a casilla vacia captura al paso.
+            // Un peón que va en diagonal a una casilla vacía captura al paso.
             if (target == null && moving.getType().equals(PieceType.PAWN)
                     && move.getFrom().getColumn() != move.getTo().getColumn()) {
                 target = game.getBoard().pieceAt(new Position(move.getFrom().getRow(), move.getTo().getColumn()));

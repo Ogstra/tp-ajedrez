@@ -10,13 +10,9 @@ import ports.IMoveListener;
 import java.util.ArrayList;
 import java.util.List;
 
-// Observer (Clase 3): se entera de cómo termina la partida y acredita el resultado a los
-// usuarios que juegan, sin que ChessGame sepa que existen los usuarios. Si el usuario de
-// las negras es null (juega la IA o nadie inició sesión) solo se acredita al de las blancas.
-//
-// Como la partida se puede deshacer y rehacer, también escucha eso: al deshacer el mate o las
-// tablas retira lo que acreditó. Al rehacerlo, la partida vuelve a avisar el final y se acredita
-// de nuevo. Así cada partida cuenta una sola vez.
+// Observer: se entera de cómo termina la partida y acredita el resultado a los usuarios, sin
+// que ChessGame sepa que existen. Si un lado no tiene usuario (la IA o sin sesión), a ese lado
+// no se le acredita nada. Al deshacer el final retira lo acreditado, así cada partida cuenta una vez.
 public class ScoreRecorder implements IGameStatusListener, IMoveListener {
 
     private static class Credit {
@@ -55,8 +51,8 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
         credit(Result.DRAW, Result.DRAW);
     }
 
-    // Deshacer el mate o las tablas retira lo acreditado. Si después se rehace, la partida vuelve
-    // a avisar el final y se acredita de nuevo: no hace falta recordar nada para rehacer.
+    // Deshacer el final retira lo acreditado. Al rehacerlo, la partida vuelve a avisar el final
+    // y se acredita de nuevo.
     @Override
     public void onUndo() {
         for (Credit credit : recorded) accounts.revert(credit.user, credit.result);

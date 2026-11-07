@@ -6,8 +6,7 @@ import ports.IPromotionChooser;
 
 import java.util.Scanner;
 
-// Adaptador de salida (Clase 2): implementa el puerto IPromotionChooser
-// preguntando por teclado. Comparte el Scanner con Main, que es quien lo crea.
+// Elige la pieza de coronación preguntando por teclado. Usa el mismo Scanner que Main.
 public class ConsolePromotionChooser implements IPromotionChooser {
 
     private final Scanner scanner;

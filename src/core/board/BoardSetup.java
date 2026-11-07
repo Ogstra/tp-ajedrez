@@ -1,10 +1,7 @@
 package core.board;
 
-// Factory (Clase 3) del armado inicial. Antes vivía dentro de Board
-// (Board.standardSetup), mezclando "guardar el estado" con "saber cómo
-// arranca una partida". Ahora el tamaño y el orden de la fila trasera son
-// parámetros: un tablero de otro tamaño es una llamada distinta a custom(),
-// no un cambio de código.
+// Factory del armado inicial. Board solo guarda el estado; cómo arranca la partida se
+// decide acá. Para otro tamaño de tablero alcanza con llamar a custom().
 public final class BoardSetup {
 
     private static final PieceType[] STANDARD_BACK_ROW = {

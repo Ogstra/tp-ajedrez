@@ -3,8 +3,7 @@ package ai;
 import core.board.PieceType;
 
 
-// Valor de material de cada pieza, el clásico del ajedrez. Una pieza que la IA
-// no conoce (una inventada) vale 0.
+// Valor de cada pieza, el clásico del ajedrez. Una pieza que no conoce vale 0.
 public final class PieceValues {
 
     private PieceValues() { }
@@ -15,6 +14,6 @@ public final class PieceValues {
         if (type.equals(PieceType.BISHOP)) return 3;
         if (type.equals(PieceType.ROOK)) return 5;
         if (type.equals(PieceType.QUEEN)) return 9;
-        return 0; // el rey no se cuenta: nunca se captura
+        return 0; // el rey no se cuenta porque nunca se captura
     }
 }

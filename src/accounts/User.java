@@ -2,8 +2,8 @@ package accounts;
 
 import java.util.Objects;
 
-// Value object inmutable: quién es un jugador. El id lo asigna el sistema al
-// registrarse y es interno: la persona entra solo con su nombre (no hay contraseña).
+// Un jugador. No cambia después de creado. El id lo asigna el sistema al registrarse y la
+// persona entra solo con su nombre.
 public final class User {
     private final int id;
     private final String name;

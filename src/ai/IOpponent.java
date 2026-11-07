@@ -3,9 +3,8 @@ package ai;
 import core.IChessGame;
 import core.Move;
 
-// Strategy (Clase 3) de dificultad: cada nivel decide la jugada de otra forma.
+// Strategy de dificultad: cada nivel elige la jugada de otra forma.
 public interface IOpponent {
-    // Elige una jugada legal para el bando que tiene el turno. Se llama solo
-    // si la partida no terminó, así que siempre hay alguna.
+    // Una jugada legal para el bando que tiene el turno. Se llama solo si la partida sigue.
     Move chooseMove(IChessGame game);
 }

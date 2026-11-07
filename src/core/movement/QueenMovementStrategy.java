@@ -6,9 +6,7 @@ import core.board.Color;
 import core.board.Position;
 import java.util.List;
 
-// La reina se mueve como torre + alfil combinados. En vez de heredar de
-// ninguna de las dos, COMPONE una de cada una y une los resultados:
-// composición sobre herencia (Clase 3), aplicada dos veces en la misma clase.
+// La reina se mueve como torre y alfil: compone las dos estrategias y une los resultados.
 public class QueenMovementStrategy implements IMovementStrategy {
 
     private final RookMovementStrategy asRook = new RookMovementStrategy();

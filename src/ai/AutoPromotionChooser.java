@@ -4,8 +4,8 @@ import core.board.Color;
 import core.board.PieceType;
 import ports.IPromotionChooser;
 
-// Decorador del chooser humano: cuando corona el bando de la IA elige reina
-// sin preguntar; cuando corona el humano, le pregunta como siempre.
+// Decorator del chooser de la persona: cuando corona la IA elige reina sin preguntar, y
+// cuando corona la persona le pregunta como siempre.
 public class AutoPromotionChooser implements IPromotionChooser {
 
     private final Color opponentColor;

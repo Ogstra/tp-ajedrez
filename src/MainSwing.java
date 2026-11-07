@@ -22,11 +22,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Random;
 
-// Composition root de la variante gráfica. Mismo esquema que Main.java: se crea el
-// adaptador (SwingChessView en vez de ConsoleRenderer, y a la vez es quien elige la pieza
-// de coronación y quien maneja al oponente) y se le da el GameBuilder que arma cada partida
-// con sus dependencias por constructor. ChessGame, Board y todo core/ no tienen ni un
-// import de Swing.
+// Composition root de la versión con ventana. Igual que Main, pero el adaptador es
+// SwingChessView, que también elige la pieza de coronación. El GameBuilder arma cada
+// partida con sus dependencias por constructor.
 public class MainSwing {
     public static void main(String[] args) {
         // En macOS, el nombre que se ve en la barra de menú y en el Dock (si no, dice "MainSwing").
@@ -37,8 +35,8 @@ public class MainSwing {
             Path dataDir = Path.of(System.getProperty("ajedrez.data", "data"));
             AccountService accounts = new AccountService(new FileAccountStore(dataDir.resolve("usuarios.csv")));
 
-            // La ventana pide una partida nueva cada vez que se aprieta Jugar: acá se arma con sus
-            // reglas, el que acredita los puntos y, si corresponde, la IA.
+            // Cada vez que se aprieta Jugar se arma una partida con sus reglas, el que
+            // acredita los puntos y, si corresponde, la IA.
             Random random = new Random();
             GameBuilder builder = (view, white, black, level, aiColor) -> {
                 PieceFactory pieces = PieceFactory.standard();

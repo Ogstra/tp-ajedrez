@@ -3,8 +3,8 @@ package adapters.swing.components;
 import java.awt.Color;
 import java.awt.Font;
 
-// Colores y fuente del título de la ventana, en un solo lugar. Los contrastes de texto
-// están medidos (WCAG): todos superan 4,5:1 sobre el fondo en que se usan.
+// Colores y fuente del título de la ventana, en un solo lugar. Los textos tienen buen
+// contraste con su fondo para que se lean bien.
 public final class Palette {
     public static final Color BACKGROUND = new Color(0xFA, 0xF8, 0xF1);    // crema de la ventana
     public static final Color CARD = Color.WHITE;                          // recuadros y tarjetas

@@ -2,11 +2,9 @@ package core.board;
 
 import java.util.Objects;
 
-// Antes era un enum. Un enum es un conjunto cerrado: agregar una pieza nueva
-// obligaba a editar este archivo (y el switch de PieceFactory), lo que rompe
-// Open/Closed. Como clase de valor, cualquiera puede crear un tipo nuevo
-// (new PieceType("CHANCELLOR")) sin tocar ninguna clase existente.
-// Se identifica por nombre: dos PieceType con el mismo nombre son el mismo tipo.
+// Clase y no enum: agregar una pieza a un enum obliga a editarlo (Open/Closed).
+// Un tipo nuevo se crea con new PieceType("CHANCELLOR"). Dos tipos con el mismo
+// nombre son el mismo tipo.
 public final class PieceType {
     public static final PieceType PAWN = new PieceType("PAWN");
     public static final PieceType ROOK = new PieceType("ROOK");

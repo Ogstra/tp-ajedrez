@@ -14,9 +14,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-// Adaptador de salida (Clase 2): implementa IAccountStore con un archivo de texto, una línea
-// por usuario: id;nombre;victorias;empates;derrotas. Si el archivo todavía no existe, no hay
-// usuarios. Una línea mal formada se saltea en vez de impedir que se lea el resto.
+// Adaptador de salida: guarda los usuarios en un archivo de texto, una línea por usuario con
+// id;nombre;victorias;empates;derrotas. Una línea mal formada se saltea.
 public class FileAccountStore implements IAccountStore {
 
     private final Path file;
@@ -51,8 +50,8 @@ public class FileAccountStore implements IAccountStore {
         try {
             Path folder = file.toAbsolutePath().getParent();
             Files.createDirectories(folder);
-            // Se escribe en un archivo temporal y después se reemplaza el verdadero:
-            // si algo falla a mitad de camino, no se pierde lo que ya había.
+            // Primero se escribe un archivo temporal y después reemplaza al verdadero, así un
+            // error a mitad de camino no borra lo que había.
             temp = Files.createTempFile(folder, "usuarios-", ".tmp");
             Files.write(temp, lines, StandardCharsets.UTF_8);
             try {

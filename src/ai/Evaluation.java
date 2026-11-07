@@ -7,17 +7,13 @@ import core.board.PieceType;
 import core.board.Position;
 
 
-// Cuánto vale una posición para un bando: el material, que es lo principal, y
-// un poco de criterio posicional para que no juegue al azar cuando ninguna
-// jugada gana ni pierde material. Son reglas simples y conocidas:
-//   los peones avanzan por el centro,
-//   los caballos y alfiles se desarrollan y van al centro,
-//   mientras haya damas el rey se queda en su fila (y se enroca),
-//   en el final, con menos piezas, el rey va hacia el centro.
-// Todo es relativo al tamaño del tablero, igual que el resto del proyecto.
+// Cuánto vale una posición para un bando. Lo principal es el material; además suma un
+// poco de criterio para que no juegue al azar cuando ninguna jugada gana material: los
+// peones avanzan por el centro, los caballos y alfiles salen hacia el centro, el rey se
+// queda atrás mientras haya damas y en el final va hacia el centro.
 public final class Evaluation {
 
-    private static final int MATERIAL_UNIT = 100; // un peón vale 100; el criterio posicional suma pocas unidades
+    private static final int MATERIAL_UNIT = 100; // un peón vale 100; el resto suma pocas unidades
 
     private Evaluation() { }
 
@@ -50,13 +46,13 @@ public final class Evaluation {
         }
         if (type.equals(PieceType.KING)) {
             if (!queensOnBoard) return 6 * centrality; // en el final, el rey participa
-            int castled = stepsFromHome == 0 && centrality <= 2 ? 25 : 0; // en una esquina, y no en el medio
+            int castled = stepsFromHome == 0 && centrality <= 2 ? 25 : 0; // en una esquina y no en el medio
             return castled - 40 * stepsFromHome;
         }
         return 2 * centrality; // torre, dama y piezas desconocidas: apenas hacia el centro
     }
 
-    // 0 en una esquina, más grande cuanto más cerca del centro del tablero.
+    // 0 en una esquina y más cuanto más cerca del centro.
     private static int centrality(Board board, Position position) {
         double dx = Math.abs(position.getColumn() - (board.getColumns() - 1) / 2.0);
         double dy = Math.abs(position.getRow() - (board.getRows() - 1) / 2.0);

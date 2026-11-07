@@ -1,7 +1,7 @@
 package accounts;
 
-// Value object inmutable: lo que lleva acumulado un jugador. Los puntos son
-// los del ajedrez por torneos: 3 por victoria, 1 por empate, 0 por derrota.
+// Lo que lleva acumulado un jugador. No cambia: cada resultado devuelve un Score nuevo.
+// 3 puntos por victoria, 1 por empate y 0 por derrota.
 public final class Score {
     public static final int POINTS_PER_WIN = 3;
     public static final int POINTS_PER_DRAW = 1;

@@ -14,10 +14,8 @@ import ports.IPromotionChooser;
 import java.util.Collections;
 import java.util.List;
 
-// Regla de coronación: un peón que llega a la última fila se reemplaza por
-// otra pieza. No agrega destinos nuevos (el peón ya llega por su movimiento
-// normal); solo cambia qué comando se ejecuta. A qué pieza corona se lo
-// pregunta al puerto IPromotionChooser, que cada adaptador resuelve a su manera.
+// Coronación: un peón que llega a la última fila se reemplaza por otra pieza. No agrega
+// destinos, solo cambia el comando que se ejecuta. La pieza la elige IPromotionChooser.
 public class PromotionMove implements ISpecialMove {
 
     private final PieceFactory pieces;

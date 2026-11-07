@@ -28,10 +28,8 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
 
-// Adaptador de entrada (Clase 2) + composition root: acá, y solo acá, se
-// arma todo. El núcleo (ChessGame) recibe sus dependencias por constructor
-// (Clase 3: inyección de dependencias), ya armadas. Sumar una pieza o una
-// regla nueva es agregar una línea en este armado.
+// Adaptador de entrada por consola y composition root: acá se arma todo.
+// ChessGame recibe sus dependencias ya armadas por constructor.
 public class Main {
 
     public static void main(String[] args) {

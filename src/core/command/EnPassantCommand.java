@@ -9,8 +9,8 @@ import ports.IMoveListener;
 import java.util.Arrays;
 import java.util.List;
 
-// Command (Clase 3) de la captura al paso: el peón se mueve en diagonal a una
-// casilla vacía y el peón capturado, que está al lado, sale del tablero.
+// Command de la captura al paso: el peón va en diagonal a una casilla vacía y el peón
+// capturado, que estaba al lado, sale del tablero.
 public class EnPassantCommand implements IMoveCommand {
     private final Board board;
     private final Position from;
