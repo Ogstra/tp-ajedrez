@@ -8,11 +8,13 @@ import core.board.Color;
 import core.board.PieceFactory;
 import core.board.Position;
 import ai.AutoPromotionChooser;
+import ai.IOpponent;
 import ai.OpponentController;
 import ai.OpponentLevel;
 import ai.Opponents;
 import core.ChessGame;
 import core.IChessGame;
+import core.Move;
 import core.MoveOutcome;
 import core.StandardRules;
 import ports.IGameStatusListener;
@@ -25,6 +27,7 @@ import accounts.User;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -59,15 +62,19 @@ public class Main {
             StandardRules.drawRules());
 
         // La IA juega con negras; el humano con blancas.
+        Random random = new Random();
         OpponentController opponent = level == OpponentLevel.NONE
             ? null
-            : new OpponentController(game, Opponents.create(level, new Random()), Color.BLACK);
+            : new OpponentController(game, Opponents.create(level, random), Color.BLACK);
+        // La pista la da el nivel difícil, para el bando que tenga el turno.
+        IOpponent hint = Opponents.create(OpponentLevel.HARD, random);
 
         renderer.render(board);
         System.out.println("Ajedrez");
         System.out.println("Blancas: " + (white == null ? "sin usuario" : white)
             + " | Negras: " + (level != OpponentLevel.NONE ? "la IA" : black == null ? "sin usuario" : black));
         System.out.println("Movimiento: 'e2 e4' (u 'e2e4'). 'undo' deshace, 'redo' rehace, 'ranking' muestra la tabla, 'salir' termina.");
+        System.out.println("También: 'jugadas', 'pista', 'tablas', 'abandonar' y, al terminar, 'revisar'.");
 
         while (true) {
             System.out.print("\nTurno de " + (game.getTurn() == Color.WHITE ? "Blancas" : "Negras") + " > ");
@@ -80,6 +87,45 @@ public class Main {
             }
             if (input.equalsIgnoreCase("ranking")) {
                 ConsoleAccounts.printRanking(accounts);
+                continue;
+            }
+            if (input.equalsIgnoreCase("jugadas")) {
+                System.out.println(numbered(game.moveList()));
+                continue;
+            }
+            if (input.equalsIgnoreCase("pista")) {
+                if (game.isGameOver()) {
+                    System.out.println("La partida ya terminó.");
+                } else {
+                    Move move = hint.chooseMove(game);
+                    System.out.println("Pista: " + move.getFrom() + " " + move.getTo());
+                }
+                continue;
+            }
+            if (input.equalsIgnoreCase("tablas")) {
+                if (game.isGameOver()) {
+                    System.out.println("La partida ya terminó.");
+                } else if (opponent != null && !opponent.acceptsDraw()) {
+                    System.out.println("La IA rechaza las tablas.");
+                } else if (opponent != null || accepts(scanner, game.getTurn().opposite())) {
+                    game.agreeDraw();
+                    printRankingIfOver(game, accounts, white, black);
+                } else {
+                    System.out.println("Tablas rechazadas, sigue la partida.");
+                }
+                continue;
+            }
+            if (input.equalsIgnoreCase("abandonar")) {
+                game.resign();
+                printRankingIfOver(game, accounts, white, black);
+                continue;
+            }
+            if (input.equalsIgnoreCase("revisar")) {
+                if (!game.isGameOver()) {
+                    System.out.println("La partida se revisa cuando termina.");
+                } else {
+                    review(scanner, game, renderer);
+                }
                 continue;
             }
             if (input.equalsIgnoreCase("undo")) {
@@ -107,13 +153,52 @@ public class Main {
                     opponent.playIfItsTurn();
                     renderer.render(board);
                 }
-                // Al terminar la partida, el ranking ya incluye el resultado.
-                if (game.isGameOver() && (white != null || black != null)) {
-                    ConsoleAccounts.printRanking(accounts);
-                }
+                printRankingIfOver(game, accounts, white, black);
             }
         }
         scanner.close();
+    }
+
+    // Al terminar la partida, el ranking ya incluye el resultado.
+    private static void printRankingIfOver(IChessGame game, AccountService accounts, User white, User black) {
+        if (game.isGameOver() && (white != null || black != null)) {
+            ConsoleAccounts.printRanking(accounts);
+        }
+    }
+
+    // Entre dos personas, el rival dice si acepta las tablas.
+    private static boolean accepts(Scanner scanner, Color rival) {
+        System.out.print("¿Las " + (rival == Color.WHITE ? "blancas" : "negras") + " aceptan las tablas? (s/n) > ");
+        return scanner.hasNextLine() && scanner.nextLine().trim().equalsIgnoreCase("s");
+    }
+
+    // Las jugadas numeradas de a dos: "1. e4 e5 2. Cf3".
+    private static String numbered(List<String> moves) {
+        if (moves.isEmpty()) return "Todavía no hay jugadas.";
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < moves.size(); i++) {
+            if (i % 2 == 0) text.append(i / 2 + 1).append(". ");
+            text.append(moves.get(i)).append(' ');
+        }
+        return text.toString().trim();
+    }
+
+    // Recorre la partida terminada jugada por jugada, sin tocarla: muestra copias del tablero.
+    private static void review(Scanner scanner, IChessGame game, ConsoleRenderer renderer) {
+        List<Board> positions = game.positions();
+        List<String> moves = game.moveList();
+        int index = 0;
+        while (true) {
+            renderer.render(positions.get(index));
+            System.out.println(index == 0 ? "Posición inicial."
+                : "Después de la jugada " + ((index + 1) / 2) + ": " + moves.get(index - 1));
+            System.out.print("Enter = siguiente, 'a' = anterior, 'fin' = volver > ");
+            if (!scanner.hasNextLine()) return;
+            String answer = scanner.nextLine().trim();
+            if (answer.equalsIgnoreCase("fin")) return;
+            if (answer.equalsIgnoreCase("a")) index = Math.max(0, index - 1);
+            else index = Math.min(positions.size() - 1, index + 1);
+        }
     }
 
     private static OpponentLevel askLevel(Scanner scanner) {

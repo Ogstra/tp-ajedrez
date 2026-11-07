@@ -42,6 +42,11 @@ public class ScoreRecorder implements IGameStatusListener, IMoveListener {
     }
 
     @Override
+    public void onResignation(Color winner) {
+        onCheckmate(winner); // para el ranking, abandonar cuenta igual que perder por mate
+    }
+
+    @Override
     public void onStalemate() {
         credit(Result.DRAW, Result.DRAW);
     }

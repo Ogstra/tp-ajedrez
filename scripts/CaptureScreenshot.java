@@ -38,7 +38,7 @@ public class CaptureScreenshot {
                     StandardRules.drawRules());
                 return new Match(g, null);
             };
-            view = new SwingChessView(acc, b);
+            view = new SwingChessView(acc, b, ai.Opponents.create(ai.OpponentLevel.HARD, new java.util.Random(7)));
             view.setVisible(true);
             ((JComboBox<?>) named(view.getContentPane(), "white")).setSelectedIndex(2);
             ((JComboBox<?>) named(view.getContentPane(), "black")).setSelectedIndex(3);

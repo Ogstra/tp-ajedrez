@@ -42,7 +42,7 @@ public class SwingIntegrationTests {
         try {
             SwingUtilities.invokeAndWait(() -> {
                 AccountService accounts = new AccountService(new FileAccountStore(data.resolve("usuarios.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 8));
+                view = new SwingChessView(accounts, builder(accounts, 8), Opponents.create(OpponentLevel.HARD, new java.util.Random(7)));
                 view.setVisible(true);
                 Container root = view.getContentPane();
 
@@ -172,11 +172,59 @@ public class SwingIntegrationTests {
             });
             System.out.println("[OK]   Swing: menu, registro, 1 contra 1, IA en tres niveles y dos colores, tablero girado, deshacer, rehacer y ranking");
 
+            // Lista de jugadas, pista, abandono y revisión de la partida terminada (1 contra 1).
+            Board[] afterE4 = new Board[1];
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                clickLater("Salir al menú"); // la partida contra la IA sigue en juego
+                button(root, "Menú").doClick();
+                ((ChoiceControl) named(root, "mode")).setSelectedIndex(0);
+                button(root, "Jugar").doClick();
+                inspect(root);
+                square("e2", false).doClick();
+                square("e4", false).doClick();
+                afterE4[0] = game.getBoard().cloneBoard();
+                square("e7", false).doClick();
+                square("e5", false).doClick();
+                String moves = texts((Container) named(root, "moves")).trim();
+                require(moves.equals("1. e4 e5"), "la lista debe mostrar '1. e4 e5' y muestra '" + moves + "'");
+                require(!button(root, "Anterior").isShowing(), "mientras se juega no se revisa");
+                button(root, "Pista").doClick();
+            });
+            boolean[] hinted = {false};
+            for (int i = 0; i < 1500 && !hinted[0]; i++) {
+                SwingUtilities.invokeAndWait(() -> hinted[0] = menuButton().isEnabled());
+                if (!hinted[0]) Thread.sleep(10);
+            }
+            SwingUtilities.invokeAndWait(() -> {
+                Container root = view.getContentPane();
+                require(hinted[0], "la pista no debe congelar la ventana");
+                require(game.getTurn() == core.board.Color.WHITE, "la pista no juega sola");
+                // La pieza de la pista se elige con un solo click y después se juega en su destino.
+                String[] hint = label(root, l -> l.startsWith("Pista: mover de ")).getText()
+                    .replace("Pista: mover de ", "").replace(".", "").split(" a ");
+                square(hint[0], false).doClick();
+                square(hint[1], false).doClick();
+                require(game.getTurn() == core.board.Color.BLACK, "un click en la pieza de la pista y otro en el destino la juegan");
+                game.undo();
+                clickLater("Abandonar");
+                button(root, "Abandonar").doClick();
+                require(game.isGameOver() && button(root, "Anterior").isShowing() && !button(root, "Pista").isShowing(),
+                    "al abandonar termina la partida y aparecen los botones para revisarla");
+                require(!button(root, "Deshacer").isEnabled(), "un abandono no se deshace: Deshacer queda apagado");
+                button(root, "Anterior").doClick();
+                require(currentBoardShows(afterE4[0]), "Anterior muestra la posición después de e4");
+                require(label(root, "Después de 1. e4") != null, "la revisión dice qué jugada se está viendo");
+                require(game.getBoard().equals(before) == false && game.moveList().size() == 2,
+                    "revisar no cambia la partida");
+            });
+            System.out.println("[OK]   Swing: lista de jugadas, pista, abandono y revisión");
+
             // Otro tamaño de tablero: la ventana se adapta sola.
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
                 AccountService accounts = new AccountService(new FileAccountStore(data.resolve("otro.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 10));
+                view = new SwingChessView(accounts, builder(accounts, 10), Opponents.create(OpponentLevel.HARD, new java.util.Random(7)));
                 view.setVisible(true);
                 Container root = view.getContentPane();
                 button(root, "Jugar").doClick();
@@ -196,7 +244,7 @@ public class SwingIntegrationTests {
             SwingUtilities.invokeAndWait(() -> {
                 view.dispose();
                 AccountService accounts = new AccountService(new FileAccountStore(data.resolve("crece.csv")));
-                view = new SwingChessView(accounts, builder(accounts, 8));
+                view = new SwingChessView(accounts, builder(accounts, 8), Opponents.create(OpponentLevel.HARD, new java.util.Random(7)));
                 view.setVisible(true);
                 button(view.getContentPane(), "Jugar").doClick();
                 inspect(view.getContentPane());
@@ -215,6 +263,31 @@ public class SwingIntegrationTests {
         } finally {
             SwingUtilities.invokeAndWait(() -> { if (view != null) view.dispose(); });
         }
+    }
+
+    // Los textos de las etiquetas visibles, en orden y separados por un espacio.
+    private static String texts(Container container) {
+        StringBuilder text = new StringBuilder();
+        for (Component component : container.getComponents()) {
+            if (!component.isVisible()) continue;
+            if (component instanceof JLabel && !((JLabel) component).getText().isEmpty()) {
+                text.append(((JLabel) component).getText()).append(' ');
+            }
+            if (component instanceof Container) text.append(texts((Container) component));
+        }
+        return text.toString();
+    }
+
+    // Si cada casilla del tablero en pantalla tiene ícono justo donde "board" tiene una pieza.
+    private static boolean currentBoardShows(Board board) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Position pos = new Position(row, col);
+                boolean hasIcon = square(pos.toAlgebraic(), false).getIcon() != null;
+                if (hasIcon != (board.pieceAt(pos) != null)) return false;
+            }
+        }
+        return true;
     }
 
     // Espera a que la IA termine de pensar y sea el turno de la persona (color indicado).
@@ -241,6 +314,18 @@ public class SwingIntegrationTests {
         });
         timer.setRepeats(false);
         timer.start();
+    }
+
+    private static JLabel label(Container container, java.util.function.Predicate<String> matches) {
+        for (Component component : container.getComponents()) {
+            if (component instanceof JLabel && ((JLabel) component).getText() != null
+                    && matches.test(((JLabel) component).getText())) return (JLabel) component;
+            if (component instanceof Container) {
+                JLabel found = label((Container) component, matches);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static JLabel label(Container container, String text) {

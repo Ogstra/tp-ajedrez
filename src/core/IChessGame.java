@@ -17,4 +17,16 @@ public interface IChessGame {
 
     // Todas las jugadas legales del bando que tiene el turno (vacía si la partida terminó).
     List<Move> legalMoves();
+
+    // El bando que tiene el turno abandona y gana el otro.
+    void resign();
+
+    // Tablas de común acuerdo. Si la oferta se acepta lo decide quien llama.
+    void agreeDraw();
+
+    // Las jugadas hechas, en notación algebraica y en orden.
+    List<String> moveList();
+
+    // Copias del tablero al empezar y después de cada jugada, para revisar la partida.
+    List<Board> positions();
 }

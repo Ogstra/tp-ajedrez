@@ -119,4 +119,9 @@ public class ConsoleRenderer implements IMoveListener, IGameStatusListener {
     public void onDraw(String reason) {
         System.out.println("Tablas: " + reason + ".");
     }
+
+    @Override
+    public void onResignation(Color winner) {
+        System.out.println(name(winner.opposite()) + " abandonan. Ganan " + name(winner) + ".");
+    }
 }

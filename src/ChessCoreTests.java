@@ -13,6 +13,8 @@ import core.special.ISpecialMove;
 import ai.AutoPromotionChooser;
 import ai.GreedyOpponent;
 import ai.MinimaxOpponent;
+import ai.OpponentLevel;
+import ai.Opponents;
 import ai.OpponentController;
 import ai.RandomOpponent;
 import java.util.Random;
@@ -122,6 +124,16 @@ public class ChessCoreTests {
         testHardLevelDevelopsPiecesInTheOpening();
         testMinimaxRespectsLostCastlingRights();
         testGreedyOpponentPrefersEnPassantToQuietMoves();
+
+        testMoveListUsesAlgebraicNotation();
+        testMoveListMarksCastlingAndPromotion();
+        testMoveListDisambiguatesTwoKnights();
+        testUndoRemovesTheMoveFromTheList();
+        testResignEndsTheGameAndCannotBeUndone();
+        testAgreedDrawEndsTheGame();
+        testPositionsKeepEveryBoardOfTheGame();
+        testOpponentAcceptsDrawOnlyWhenLosing();
+        testHintDoesNotTakeAPoisonedPawn();
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
     }
@@ -950,6 +962,174 @@ public class ChessCoreTests {
         @Override public void onCheck(Color colorInCheck) { events.add("check"); }
         @Override public void onCheckmate(Color winner) { events.add("checkmate"); }
         @Override public void onStalemate() { events.add("stalemate"); }
+        @Override public void onResignation(Color winner) { events.add("resignation"); }
+    }
+
+    // Lista de jugadas, abandono, tablas acordadas y revisión
+
+    private static void testMoveListUsesAlgebraicNotation() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+
+        // Act: mate del loco.
+        game.tryMove(at("f2"), at("f3"));
+        game.tryMove(at("e7"), at("e5"));
+        game.tryMove(at("g2"), at("g4"));
+        game.tryMove(at("d8"), at("h4"));
+
+        // Assert
+        assertTrue("testMoveListUsesAlgebraicNotation",
+            game.moveList().equals(Arrays.asList("f3", "e5", "g4", "Dh4#")),
+            "esperaba [f3, e5, g4, Dh4#] y quedó " + game.moveList());
+    }
+
+    private static void testMoveListMarksCastlingAndPromotion() {
+        // Arrange
+        Board board = castlingBoard();
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("b2"));
+        IChessGame game = newGame(board);
+
+        // Act: enroque corto blanco y el peón negro corona capturando la torre de a1.
+        game.tryMove(at("e1"), at("g1"));
+        game.tryMove(at("b2"), at("a1"));
+
+        // Assert
+        assertTrue("testMoveListMarksCastlingAndPromotion",
+            game.moveList().equals(Arrays.asList("O-O", "bxa1=D")),
+            "esperaba [O-O, bxa1=D] y quedó " + game.moveList());
+    }
+
+    private static void testMoveListDisambiguatesTwoKnights() {
+        // Arrange: los dos caballos blancos pueden ir a d2.
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.ROOK, Color.BLACK), at("h8")); // para que no sean tablas por material
+        board.placePiece(piece(PieceType.KNIGHT, Color.WHITE), at("b1"));
+        board.placePiece(piece(PieceType.KNIGHT, Color.WHITE), at("f3"));
+        IChessGame game = newGame(board);
+
+        // Act
+        game.tryMove(at("b1"), at("d2"));
+
+        // Assert
+        assertTrue("testMoveListDisambiguatesTwoKnights", game.moveList().equals(Arrays.asList("Cbd2")),
+            "esperaba [Cbd2] y quedó " + game.moveList());
+    }
+
+    private static void testUndoRemovesTheMoveFromTheList() {
+        // Arrange
+        IChessGame game = newGame(BoardSetup.standard(PIECES));
+        game.tryMove(at("e2"), at("e4"));
+        game.tryMove(at("e7"), at("e5"));
+
+        // Act
+        game.undo();
+        List<String> afterUndo = game.moveList();
+        game.redo();
+
+        // Assert
+        assertTrue("testUndoRemovesTheMoveFromTheList",
+            afterUndo.equals(Arrays.asList("e4")) && game.moveList().equals(Arrays.asList("e4", "e5")),
+            "deshacer saca la jugada de la lista y rehacer la vuelve a poner");
+    }
+
+    private static void testResignEndsTheGameAndCannotBeUndone() {
+        // Arrange
+        RecordingObserver observer = new RecordingObserver();
+        IChessGame game = newGame(BoardSetup.standard(PIECES), observer);
+        game.tryMove(at("e2"), at("e4"));
+
+        // Act: abandonan las negras, que tienen el turno.
+        game.resign();
+        boolean undone = game.undo();
+
+        // Assert
+        assertTrue("testResignEndsTheGameAndCannotBeUndone",
+            game.isGameOver() && !undone && observer.events.contains("resignation")
+                && game.tryMove(at("e7"), at("e5")) == MoveOutcome.INVALID,
+            "la partida termina, avisa el abandono y no se puede deshacer ni seguir jugando");
+    }
+
+    private static void testAgreedDrawEndsTheGame() {
+        // Arrange
+        RecordingObserver observer = new RecordingObserver();
+        IChessGame game = newGame(BoardSetup.standard(PIECES), observer);
+        game.tryMove(at("e2"), at("e4"));
+
+        // Act
+        game.agreeDraw();
+
+        // Assert
+        assertTrue("testAgreedDrawEndsTheGame",
+            game.isGameOver() && observer.events.equals(Arrays.asList("move", "draw")),
+            "esperaba [move, draw] y llegó " + observer.events);
+    }
+
+    private static void testPositionsKeepEveryBoardOfTheGame() {
+        // Arrange
+        Board board = BoardSetup.standard(PIECES);
+        Board start = board.cloneBoard();
+        IChessGame game = newGame(board);
+        game.tryMove(at("e2"), at("e4"));
+        Board afterFirst = board.cloneBoard();
+        game.tryMove(at("e7"), at("e5"));
+
+        // Act
+        List<Board> positions = game.positions();
+        positions.get(0).removePiece(at("e1")); // es una copia: no toca la partida
+
+        // Assert
+        assertTrue("testPositionsKeepEveryBoardOfTheGame",
+            positions.size() == 3 && positions.get(1).equals(afterFirst) && positions.get(2).equals(board)
+                && game.positions().get(0).equals(start),
+            "la posición inicial y una por jugada, en orden y como copias");
+    }
+
+    private static void testOpponentAcceptsDrawOnlyWhenLosing() {
+        // Arrange: a las negras les falta la dama.
+        Board board = BoardSetup.standard(PIECES);
+        IChessGame game = newGame(board);
+        OpponentController black = new OpponentController(game, new RandomOpponent(new Random(7)), Color.BLACK);
+        OpponentController white = new OpponentController(game, new RandomOpponent(new Random(7)), Color.WHITE);
+        board.removePiece(at("d8"));
+
+        // Act
+        boolean blackAccepts = black.acceptsDraw();
+        boolean whiteAccepts = white.acceptsDraw();
+
+        // Assert
+        assertTrue("testOpponentAcceptsDrawOnlyWhenLosing", blackAccepts && !whiteAccepts,
+            "la IA que va perdiendo acepta las tablas y la que va ganando no");
+    }
+
+    // La pista no se tienta con una captura que pierde la dama: el peón de d5 está defendido
+    // por el de e6. El nivel medio, que solo mira capturas, sí lo come.
+    private static void testHintDoesNotTakeAPoisonedPawn() {
+        // Arrange
+        Board board = new Board();
+        board.placePiece(piece(PieceType.KING, Color.WHITE), at("e1"));
+        board.placePiece(piece(PieceType.QUEEN, Color.WHITE), at("d1"));
+        board.placePiece(piece(PieceType.KING, Color.BLACK), at("e8"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("d5"));
+        board.placePiece(piece(PieceType.PAWN, Color.BLACK), at("e6"));
+        IChessGame game = newGame(board);
+        Move poisoned = new Move(at("d1"), at("d5"));
+
+        // Act: la misma pista que usan la consola y la ventana, con varias semillas al azar.
+        boolean hintTakes = false;
+        boolean hintIsLegal = true;
+        for (int seed = 1; seed <= 20; seed++) {
+            Move hint = Opponents.create(OpponentLevel.HARD, new Random(seed)).chooseMove(game);
+            if (hint.equals(poisoned)) hintTakes = true;
+            if (!game.legalMoves().contains(hint)) hintIsLegal = false;
+        }
+        Move greedy = new GreedyOpponent(new Random(7)).chooseMove(game);
+
+        // Assert
+        assertTrue("testHintDoesNotTakeAPoisonedPawn",
+            game.legalMoves().contains(poisoned) && !hintTakes && hintIsLegal && greedy.equals(poisoned),
+            "Dxd5 es legal y el nivel medio la juega, pero la pista nunca la sugiere");
     }
 
     // El armado que hace Main, sin consola. Un solo lugar para armar partidas de prueba.

@@ -26,9 +26,12 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 // El tablero de la ventana: casillas, coordenadas, piezas y marcas de la pieza elegida.
@@ -45,6 +48,8 @@ public class BoardView extends JPanel {
     private static final java.awt.Color CAPTURE = new java.awt.Color(0xE9, 0x8F, 0x7B);        // destino con captura
     private static final java.awt.Color FRAME = new java.awt.Color(0x6B, 0x5B, 0x1E);          // marco de las casillas marcadas
     private static final java.awt.Color CAPTURE_FRAME = new java.awt.Color(0x8F, 0x3E, 0x2E); // marco de las capturas
+    private static final java.awt.Color HINT = new java.awt.Color(0x9D, 0xC4, 0xE8);          // pista, en azul para no confundirla
+    private static final java.awt.Color HINT_FRAME = new java.awt.Color(0x2B, 0x5C, 0x8F);
     private static final int ICON_PERCENT = 85; // la pieza ocupa el 85% de la casilla
 
     // Letra de la imagen (wK.png, bQ.png...) y símbolo de texto de respaldo, por tipo de pieza.
@@ -82,6 +87,7 @@ public class BoardView extends JPanel {
     private JButton[][] squares = new JButton[0][0];
     private Board board;
     private int squareSize = MIN_SQUARE;
+    private Set<Position> lastMove = new HashSet<>(); // casillas de la última jugada, teñidas de amarillo
 
     public BoardView(Consumer<Position> onSquareClicked) {
         super(new BorderLayout());
@@ -101,6 +107,7 @@ public class BoardView extends JPanel {
     // Arma las casillas para este tablero. Si la persona juega con negras se gira, para verlas abajo.
     public void setup(Board board, boolean flipped, int squareSize) {
         this.board = board;
+        this.lastMove = new HashSet<>();
         int rows = board.getRows();
         int columns = board.getColumns();
         squares = new JButton[rows][columns];
@@ -141,14 +148,23 @@ public class BoardView extends JPanel {
 
     public int getSquareSize() { return squareSize; }
 
-    // Redibuja las piezas y los colores de las casillas. Borra lo que hubiera marcado.
+    // Las casillas de la última jugada (de dónde salió y adónde llegó) quedan teñidas, así se
+    // ve qué movió el rival y, al revisar, qué cambió. Se aplican en el próximo render().
+    public void setLastMove(Collection<Position> squares) {
+        lastMove = new HashSet<>(squares);
+    }
+
+    // Redibuja las piezas y los colores de las casillas. Borra lo que hubiera marcado, salvo la
+    // última jugada.
     public void render(Board board) {
         this.board = board;
         for (int row = 0; row < squares.length; row++) {
             for (int col = 0; col < squares[row].length; col++) {
                 JButton button = squares[row][col];
-                applyIcon(button, board.pieceAt(new Position(row, col)));
-                button.setBackground((row + col) % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT);
+                Position pos = new Position(row, col);
+                applyIcon(button, board.pieceAt(pos));
+                java.awt.Color base = (row + col) % 2 == 0 ? Palette.BOARD_DARK : Palette.BOARD_LIGHT;
+                button.setBackground(lastMove.contains(pos) ? mix(base, SELECTED) : base);
                 button.setBorderPainted(false); // quita el marco de una selección anterior
             }
         }
@@ -164,6 +180,13 @@ public class BoardView extends JPanel {
             boolean captures = board.pieceAt(move.getTo()) != null;
             mark(move.getTo(), captures ? CAPTURE : LEGAL, captures ? CAPTURE_FRAME : FRAME);
         }
+    }
+
+    // Marca la jugada que sugiere la pista, en azul: de dónde sale y adónde va.
+    public void showHint(Move move) {
+        render(board);
+        mark(move.getFrom(), HINT, HINT_FRAME);
+        mark(move.getTo(), HINT, HINT_FRAME);
     }
 
     // El menú usa las mismas imágenes para mostrar el color de cada lado.
@@ -222,6 +245,11 @@ public class BoardView extends JPanel {
         JLabel label = new JLabel(text, SwingConstants.CENTER);
         label.setForeground(Palette.MUTED);
         return label;
+    }
+
+    // Mitad y mitad de los dos colores: la casilla clara y la oscura siguen distinguiéndose.
+    private static java.awt.Color mix(java.awt.Color a, java.awt.Color b) {
+        return new java.awt.Color((a.getRed() + b.getRed()) / 2, (a.getGreen() + b.getGreen()) / 2, (a.getBlue() + b.getBlue()) / 2);
     }
 
     // Pinta la casilla y le pone un marco, así dos casillas marcadas pegadas

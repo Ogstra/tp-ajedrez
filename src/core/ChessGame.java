@@ -3,6 +3,7 @@ package core;
 import core.board.Board;
 import core.board.Color;
 import core.board.Piece;
+import core.board.PieceType;
 import core.board.Position;
 import core.command.IMoveCommand;
 import core.command.MoveCommand;
@@ -12,6 +13,7 @@ import core.state.BlackTurnState;
 import core.state.CheckmateState;
 import core.state.DrawState;
 import core.state.IGameState;
+import core.state.ResignationState;
 import core.state.StalemateState;
 import core.state.WhiteTurnState;
 import ports.IGameStatusListener;
@@ -36,6 +38,7 @@ public class ChessGame implements IChessGame, IGameContext {
     private final Board initialBoard;
     private final Color initialColor;
     private IGameState state;
+    private boolean agreed = false; // terminó por abandono o por acuerdo: no se deshace
 
     public ChessGame(Board board, List<IMoveListener> moveListeners,
                      List<IGameStatusListener> statusListeners, List<ISpecialMove> specialMoves,
@@ -90,6 +93,7 @@ public class ChessGame implements IChessGame, IGameContext {
         }
 
         redoStack.clear(); // una jugada nueva borra lo que se podía rehacer
+        String disambiguation = disambiguation(piece, from, to);
         IMoveCommand command = createCommand(from, to);
         command.execute();
         HistoryEntry entry = new HistoryEntry(command, state, board.cloneBoard());
@@ -125,6 +129,7 @@ public class ChessGame implements IChessGame, IGameContext {
         entry.stateAfter = state;
         entry.outcome = outcome;
         entry.drawReason = drawReason;
+        entry.notation = MoveNotation.of(command, disambiguation, check, outcome == MoveOutcome.CHECKMATE);
         announceStatus(entry, mover);
         return outcome;
     }
@@ -145,6 +150,7 @@ public class ChessGame implements IChessGame, IGameContext {
 
     @Override
     public boolean undo() {
+        if (agreed) return rejectAfterAgreement();
         if (history.isEmpty()) return false;
         HistoryEntry entry = history.pop();
         entry.command.undo();
@@ -156,6 +162,7 @@ public class ChessGame implements IChessGame, IGameContext {
 
     @Override
     public boolean redo() {
+        if (agreed) return rejectAfterAgreement();
         if (redoStack.isEmpty()) return false;
         HistoryEntry entry = redoStack.pop();
         entry.command.execute();
@@ -179,6 +186,45 @@ public class ChessGame implements IChessGame, IGameContext {
             }
         }
         return moves;
+    }
+
+    @Override
+    public void resign() {
+        if (state.isOver()) {
+            notifyInvalid("La partida ya terminó.");
+            return;
+        }
+        Color loser = state.currentColor();
+        state = new ResignationState(loser);
+        agreed = true;
+        for (IGameStatusListener listener : statusListeners) listener.onResignation(loser.opposite());
+    }
+
+    @Override
+    public void agreeDraw() {
+        if (state.isOver()) {
+            notifyInvalid("La partida ya terminó.");
+            return;
+        }
+        String reason = "acuerdo entre los jugadores";
+        state = new DrawState(state.currentColor(), reason);
+        agreed = true;
+        for (IGameStatusListener listener : statusListeners) listener.onDraw(reason);
+    }
+
+    @Override
+    public List<String> moveList() {
+        List<String> moves = new ArrayList<>();
+        for (HistoryEntry entry : history) moves.add(0, entry.notation); // history va de la última a la primera
+        return moves;
+    }
+
+    @Override
+    public List<Board> positions() {
+        List<Board> boards = new ArrayList<>();
+        boards.add(initialBoard.cloneBoard());
+        for (HistoryEntry entry : history) boards.add(1, entry.boardAfter.cloneBoard());
+        return boards;
     }
 
     // IGameContext: lo que las reglas pueden preguntar.
@@ -236,6 +282,31 @@ public class ChessGame implements IChessGame, IGameContext {
             if (command != null) return command;
         }
         return new MoveCommand(board, from, to);
+    }
+
+    // Si otra pieza igual del mismo bando también podía ir a "to", la notación agrega la
+    // columna de salida; si comparten columna, la fila; y si tampoco alcanza, las dos.
+    private String disambiguation(Piece piece, Position from, Position to) {
+        if (piece.getType().equals(PieceType.PAWN)) return "";
+        boolean conflict = false, sameColumn = false, sameRow = false;
+        for (Position other : board.positionsOfColor(piece.getColor())) {
+            if (other.equals(from) || !board.pieceAt(other).getType().equals(piece.getType())) continue;
+            if (!legalMovesFrom(other).contains(to)) continue;
+            conflict = true;
+            if (other.getColumn() == from.getColumn()) sameColumn = true;
+            if (other.getRow() == from.getRow()) sameRow = true;
+        }
+        if (!conflict) return "";
+        String square = from.toAlgebraic();
+        if (!sameColumn) return square.substring(0, 1);
+        if (!sameRow) return square.substring(1);
+        return square;
+    }
+
+    // Un abandono o unas tablas acordadas no se deshacen, como en una partida real.
+    private boolean rejectAfterAgreement() {
+        notifyInvalid("La partida terminó por abandono o por acuerdo y no se puede deshacer.");
+        return false;
     }
 
     private void notifyInvalid(String reason) {

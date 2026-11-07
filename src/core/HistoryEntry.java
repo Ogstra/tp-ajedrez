@@ -13,6 +13,7 @@ final class HistoryEntry {
     IGameState stateAfter;
     MoveOutcome outcome;  // cómo quedó la partida: redo() lo vuelve a anunciar
     String drawReason;    // el motivo, si fueron tablas
+    String notation;      // la jugada en notación algebraica
 
     HistoryEntry(IMoveCommand command, IGameState stateBefore, Board boardAfter) {
         this.command = command;

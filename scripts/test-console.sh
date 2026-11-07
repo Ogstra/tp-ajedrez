@@ -39,3 +39,20 @@ if ! printf '%s' "$output" | grep -Eq '^ *1  Beto +1 +1 +0 +0 +3$' || ! printf '
     exit 1
 fi
 echo '[OK]   Consola: login por nombre y ranking persistente'
+
+# 4. Lista de jugadas, pista, tablas rechazadas, abandono y revisión de la partida terminada.
+output=$(printf '0\n3\n3\ne2 e4\ne7 e5\njugadas\npista\ntablas\nn\nabandonar\nrevisar\n\na\nfin\nundo\nsalir\n' | java -Dstdout.encoding=UTF-8 -Dajedrez.data="$data/extras" -cp out Main)
+if ! printf '%s' "$output" | grep -q '> 1\. e4 e5$' || ! printf '%s' "$output" | grep -q '> Pista: '; then
+    echo '[FAIL] La consola debe mostrar las jugadas numeradas y dar una pista.'
+    exit 1
+fi
+if ! printf '%s' "$output" | grep -q 'Tablas rechazadas' || ! printf '%s' "$output" | grep -q 'Blancas abandonan. Ganan Negras.'; then
+    echo '[FAIL] Las tablas rechazadas siguen la partida y abandonar la termina.'
+    exit 1
+fi
+if ! printf '%s' "$output" | grep -q 'Posición inicial.' || ! printf '%s' "$output" | grep -q 'Después de la jugada 1: e4' \
+    || ! printf '%s' "$output" | grep -q 'no se puede deshacer'; then
+    echo '[FAIL] La partida terminada se revisa y el abandono no se deshace.'
+    exit 1
+fi
+echo '[OK]   Consola: jugadas, pista, tablas, abandono y revisión'

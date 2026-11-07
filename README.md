@@ -3,7 +3,7 @@
 Ajedrez para jugar en consola o en una ventana, hecho para el TPO de Ingeniería de Software (UADE). La idea del trabajo es que las reglas del juego no dependan de cómo se muestra ni de cómo se juega, así que casi todo el código está pensado para poder cambiarse sin romper el resto.
 
 <p align="center">
-  <img src="docs/captura.png" alt="La ventana, con una partida a medias" width="460">
+  <img src="docs/captura.png" alt="La ventana, con una partida a medias" width="560">
 </p>
 
 ## Cómo correrlo
@@ -17,7 +17,7 @@ java -cp out MainSwing
 ./scripts/test.sh
 ```
 
-En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios (el lado de la IA dice IA; si se elige "Nuevo usuario..." en un lado aparece el campo para registrarlo). En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. El ranking también se abre en la misma ventana.
+En la consola se elige al arrancar contra quién se juega (dos personas o la IA en tres niveles) y se mueve escribiendo `e2 e4`. Con `undo` se deshace, con `redo` se rehace y con `salir` se termina. Además, `jugadas` muestra la lista en notación algebraica, `pista` sugiere una jugada, `tablas` ofrece tablas, `abandonar` termina la partida y, cuando terminó, `revisar` la recorre jugada por jugada. La ventana es una sola y tiene tres pantallas. En el menú se elige 1 contra 1 o contra la IA, la dificultad (fácil, medio o difícil), el color con el que se juega (el tablero se gira si son las negras), los usuarios (el lado de la IA dice IA; si se elige "Nuevo usuario..." en un lado aparece el campo para registrarlo). En la partida se hace click en la pieza (se marcan a dónde puede ir: en ámbar los destinos libres y en rojizo las capturas) y después en el destino. Arriba hay una sola barra con Menú, lo que acaba de pasar, quién juega y los botones Deshacer, Rehacer y Ranking. A la derecha del tablero está la lista de jugadas en notación algebraica, con los botones Pista, Tablas y Abandonar; la última jugada queda marcada en el tablero. Cuando la partida termina, esos botones se cambian por Anterior y Siguiente para revisarla (también con las flechas del teclado o haciendo click en una jugada de la lista). El ranking también se abre en la misma ventana.
 
 ## Usuarios y ranking
 
@@ -29,7 +29,7 @@ Los datos quedan en `data/usuarios.csv` (no se sube al repo). Para usar otra car
 
 ## Verificación
 
-`./scripts/test.sh` corre 66 pruebas del juego y la IA, 19 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10 y el tablero que crece con la ventana):
+`./scripts/test.sh` corre 74 pruebas del juego y la IA, 20 de usuarios y ranking, y las regresiones de consola (deshacer y repetir un mate, registro con ranking, login persistente, y jugadas, pista, tablas, abandono y revisión). Para comprobar la ventana real (menú, registro, 1 contra 1, la IA en los tres niveles con blancas y con negras, deshacer, rehacer, ranking, un tablero de 10x10 y el tablero que crece con la ventana):
 
 ```bash
 java --class-path out scripts/SwingIntegrationTests.java
@@ -37,7 +37,7 @@ java --class-path out scripts/SwingIntegrationTests.java
 
 ## Qué reglas tiene
 
-Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahogado, enroque, coronación (se elige la pieza), captura al paso, tablas por material insuficiente, por la regla de los 50 movimientos y por repetición, y deshacer y rehacer. El peón corona sin preguntar cuando juega la IA.
+Todas las piezas con sus movimientos, turnos, capturas, jaque, jaque mate y ahogado, enroque, coronación (se elige la pieza), captura al paso, tablas por material insuficiente, por la regla de los 50 movimientos y por repetición, deshacer y rehacer, tablas de común acuerdo y abandono (que no se pueden deshacer, como en una partida real), lista de jugadas en notación algebraica, pista y revisión de la partida terminada. El peón corona sin preguntar cuando juega la IA, y la IA acepta tablas solo si va perdiendo.
 
 ## Cómo está armado
 

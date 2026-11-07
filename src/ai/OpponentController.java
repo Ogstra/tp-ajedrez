@@ -21,6 +21,11 @@ public class OpponentController {
 
     public Color getColor() { return color; }
 
+    // Acepta una oferta de tablas solo si, según su evaluación, va perdiendo.
+    public boolean acceptsDraw() {
+        return Evaluation.score(game.getBoard(), color) < 0;
+    }
+
     public boolean isItsTurn() {
         return !game.isGameOver() && game.getTurn() == color;
     }

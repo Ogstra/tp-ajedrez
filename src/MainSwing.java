@@ -55,7 +55,8 @@ public class MainSwing {
                 return new Match(game, opponent);
             };
 
-            new SwingChessView(accounts, builder).setVisible(true);
+            // La pista la da el nivel difícil, para el bando que tenga el turno.
+            new SwingChessView(accounts, builder, Opponents.create(OpponentLevel.HARD, random)).setVisible(true);
         });
     }
 }

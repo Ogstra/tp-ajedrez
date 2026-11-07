@@ -62,6 +62,7 @@ public class AccountTests {
         testUndoRevertsTheResult();
         testRedoReappliesTheResult();
         testRedoOfAnEarlierMoveDoesNotReapply();
+        testResignationCreditsTheWinner();
 
         System.out.println("\n" + passed + " pasados, " + failed + " fallados.");
         System.exit(failed > 0 ? 1 : 0);
@@ -355,6 +356,25 @@ public class AccountTests {
     // ---------- registro del resultado de la partida ----------
 
     // TDD: en un mate gana uno y pierde el otro, y se guarda.
+    private static void testResignationCreditsTheWinner() {
+        // Arrange
+        AccountService service = newService();
+        User ana = service.register("Ana");
+        User beto = service.register("Beto");
+        ChessGame game = newGame(BoardSetup.standard(PieceFactory.standard()), new ScoreRecorder(service, ana, beto));
+        game.tryMove(at("e2"), at("e4"));
+
+        // Act: abandonan las negras (Beto), que tenían el turno.
+        game.resign();
+
+        // Assert
+        Score a = scoreOf(service, ana);
+        Score b = scoreOf(service, beto);
+        assertTrue("testResignationCreditsTheWinner",
+            a.getWins() == 1 && b.getLosses() == 1,
+            "Ana " + a.getWins() + "-" + a.getDraws() + "-" + a.getLosses() + ", Beto " + b.getWins() + "-" + b.getDraws() + "-" + b.getLosses());
+    }
+
     private static void testCheckmateCreditsWinnerAndLoser() {
         // Arrange
         AccountService service = newService();
